@@ -1,0 +1,49 @@
+import React from 'react';
+import { TextInput, StyleSheet, ViewStyle, TextStyle, KeyboardTypeOptions } from 'react-native';
+
+interface CustomTextInputProps {
+  placeholder: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  keyboardType?: KeyboardTypeOptions; // Supports different keyboard types
+  inputStyle?: ViewStyle;
+  textStyle?: TextStyle;
+  placeholderStyle?: TextStyle; // Secondary placeholder style
+}
+
+const CustomTextInput: React.FC<CustomTextInputProps> = ({ 
+  placeholder, 
+  value, 
+  onChangeText, 
+  keyboardType = 'default', 
+  inputStyle, 
+  textStyle, 
+  placeholderStyle 
+}) => {
+  return (
+    <TextInput
+      style={[styles.input, inputStyle]}
+      placeholder={placeholder}
+      placeholderTextColor={placeholderStyle?.color || '#A0A3BD'} // Default to light gray
+      value={value}
+      onChangeText={onChangeText}
+      keyboardType={keyboardType}
+    />
+  );
+};
+
+const styles = StyleSheet.create({
+  input: {
+    backgroundColor: '#0E1333', // Dark blue background
+    borderWidth: 1,
+    borderColor: '#A0A3BD', // Light gray border
+    borderRadius: 10, // Rounded corners
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    color: '#FFFFFF', // White text color
+    width: '100%',
+  },
+});
+
+export default CustomTextInput;
