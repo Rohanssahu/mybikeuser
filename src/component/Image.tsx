@@ -19,6 +19,7 @@ const images = {
 };
 const icon = {
   downwhite: require('../assets/icons/Drop_Arrow.png'),
+  close: require('../assets/icons/Close2x.png'),
   coins: require('../assets/icons/coins.png'),
   facebook: require('../assets/icons/Facebook2x.png'),
   apple: require('../assets/icons/AppleButton2x.png'),

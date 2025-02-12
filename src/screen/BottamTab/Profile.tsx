@@ -5,6 +5,7 @@ import { color } from '../../constant';
 import { icon } from '../../component/Image';
 import ProfileMenuList from '../../component/ProfileList';
 import ScreenNameEnum from '../../routes/screenName.enum';
+import LogoutModal from '../modal/LogoutModal';
 
 // Define navigation type
 type RootStackParamList = {
@@ -22,11 +23,13 @@ interface ProfileMenuItem {
 }
 
 const Profile: React.FC<Props> = ({ navigation }) => {
+
     return (
         <View style={styles.container}>
             <Text style={styles.headerText}>Profile</Text>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 <ProfileMenuList data={profileData} />
+               
             </ScrollView>
         </View>
     );
