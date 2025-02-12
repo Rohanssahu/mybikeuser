@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, FlatList, Image, Text, StyleSheet, Dimensions } from 'react-native';
+import { hp } from './utils/Constant';
 
 // Define the data type for bike items
 interface BikeItem {
@@ -25,7 +26,7 @@ const HorizontalList: React.FC<HorizontalListProps> = ({ data }) => {
       contentContainerStyle={styles.listContainer}
       renderItem={({ item }) => (
         <View style={styles.card}>
-          <Image source={item.image} style={styles.image} resizeMode="contain" />
+          <Image source={item.img} style={styles.image} resizeMode="contain" />
           <Text style={styles.text}>{item.name}</Text>
         </View>
       )}
@@ -40,8 +41,10 @@ const styles = StyleSheet.create({
   card: {
     width: SCREEN_WIDTH * 0.3,
     backgroundColor: '#FFFFFF',
-    borderRadius: 15,
+    borderRadius: 20,
+    marginTop:20,
     padding: 10,
+    height:hp(15),
     alignItems: 'center',
     justifyContent: 'center',
     marginHorizontal: 10,

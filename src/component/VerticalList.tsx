@@ -1,12 +1,13 @@
 import React from 'react';
-import { View, FlatList, Image, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, FlatList, Image, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import ScreenNameEnum from '../routes/screenName.enum';
 
 // Define the data type
 interface ListItem {
   id: string;
-  title: string;
+  name: string;
   description: string;
-  image: any; // Can be a local or remote image
+  logo: any; // Can be a local or remote image
 }
 
 // Define props for the component
@@ -16,20 +17,24 @@ interface VerticalListProps {
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-const VerticalList: React.FC<VerticalListProps> = ({ data }) => {
+const VerticalList: React.FC<VerticalListProps> = ({ data ,navigation }) => {
   return (
     <FlatList
       data={data}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.listContainer}
       renderItem={({ item }) => (
-        <View style={styles.card}>
+        <TouchableOpacity
+        onPress={()=>{
+          navigation.navigate(ScreenNameEnum.BIKE_DETAILS)
+        }}
+        style={styles.card}>
           <View style={styles.textContainer}>
-            <Text style={styles.title}>{item.title}</Text>
+            <Text style={styles.title}>{item.name}</Text>
             <Text style={styles.description}>{item.description}</Text>
           </View>
-          <Image source={item.image} style={styles.image} resizeMode="contain" />
-        </View>
+          <Image source={item.logo} style={styles.image} resizeMode="contain" />
+        </TouchableOpacity>
       )}
     />
   );
@@ -61,7 +66,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 14,
-    color: '#A0A3BD', // Light gray text
+    color: '#fff', // Light gray text
     marginTop: 5,
   },
   image: {

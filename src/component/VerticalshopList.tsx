@@ -1,15 +1,18 @@
 import React from 'react';
-import { View, FlatList, Image, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, FlatList, Image, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import Icon from './Icon';
+import { icon } from './Image';
+import ScreenNameEnum from '../routes/screenName.enum';
 
 // Define the data type for list items
+
 interface ListItem {
-  id: string;
-  title: string;
-  address: string;
+  name: string;
+  description: string;
+  rating: string;
   distance: string;
-  rating: number;
-  image: any; // Local or remote image
+  images: any;
 }
 
 // Define props for the component
@@ -19,26 +22,30 @@ interface VerticalListProps {
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-const VerticalshopList: React.FC<VerticalListProps> = ({ data }) => {
+const VerticalshopList: React.FC<VerticalListProps> = ({ data,navigation }) => {
   return (
     <FlatList
       data={data}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.listContainer}
       renderItem={({ item }) => (
-        <View style={styles.card}>
-          <Image source={item.image} style={styles.image} resizeMode="cover" />
+        <TouchableOpacity
+        onPress={()=>{
+          navigation.navigate(ScreenNameEnum.GARAGE_DETAILS)
+        }}
+        style={styles.card}>
+          <Image source={item.images} style={styles.image} resizeMode="cover" />
           <View style={styles.textContainer}>
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.address}>{item.address}</Text>
+            <Text style={styles.title}>{item.name}</Text>
+            <Text style={styles.address}>{item.description}</Text>
             <View style={styles.infoContainer}>
-              <MaterialIcons name="place" size={16} color="#FFD700" />
+              <Icon size={16}source={icon.pin} />
               <Text style={styles.infoText}>{item.distance}</Text>
-              <MaterialIcons name="star" size={16} color="#FFD700" />
+              <Icon source={icon.star} size={16}  />
               <Text style={styles.infoText}>{item.rating}</Text>
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
       )}
     />
   );
@@ -60,8 +67,8 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   image: {
-    width: 70,
-    height: 70,
+    width: 80,
+    height: 80,
     borderRadius: 10,
     marginRight: 15,
   },
@@ -76,17 +83,18 @@ const styles = StyleSheet.create({
   address: {
     fontSize: 14,
     color: '#A0A3BD', // Light gray text
-    marginVertical: 5,
+    marginBottom: 5,
   },
   infoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   infoText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#FFFFFF',
     marginLeft: 5,
     marginRight: 10,
+    fontWeight:'500'
   },
 });
 

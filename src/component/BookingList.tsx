@@ -1,6 +1,10 @@
 import React from 'react';
 import { View, FlatList, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import Icon from './Icon';
+import { icon } from './Image';
+import { wp } from './utils/Constant';
+import ScreenNameEnum from '../routes/screenName.enum';
 
 // Define the data type for each booking item
 interface BookingItem {
@@ -17,7 +21,7 @@ interface BookingListProps {
   data: BookingItem[];
 }
 
-const BookingList: React.FC<BookingListProps> = ({ data }) => {
+const BookingList: React.FC<BookingListProps> = ({ data ,navigation}) => {
   return (
     <FlatList
       data={data}
@@ -31,7 +35,7 @@ const BookingList: React.FC<BookingListProps> = ({ data }) => {
           </View>
           <View style={styles.row}>
             <Text style={styles.value}>{item.bookingId}</Text>
-            <Text style={styles.amount}>${item.amount}</Text>
+            <Text style={styles.value}>${item.amount}</Text>
           </View>
 
           <View style={styles.row}>
@@ -41,9 +45,13 @@ const BookingList: React.FC<BookingListProps> = ({ data }) => {
 
           <View style={styles.footer}>
             <TouchableOpacity style={styles.callButton} onPress={item.onCallPress}>
-              <MaterialIcons name="phone" size={24} color="#FFD700" />
+              <Icon source={icon.phone} size={40}  />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.billButton} onPress={item.onViewBillPress}>
+            <TouchableOpacity
+             onPress={()=>{
+              navigation.navigate(ScreenNameEnum.SERVICE_SUMMERY)
+            }}
+            style={styles.billButton} >
               <Text style={styles.billText}>View Bill</Text>
             </TouchableOpacity>
           </View>
@@ -60,7 +68,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#2C2F5B', // Dark blue background
-    borderRadius: 15,
+    borderRadius:20,
     padding: 15,
     marginBottom: 15,
     width: '100%',
@@ -87,21 +95,25 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   footer: {
-    flexDirection: 'row',
+   
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 10,
   },
   callButton: {
-    backgroundColor: '#FFFFFF',
+   
     padding: 10,
     borderRadius: 30,
+    position:'absolute',right:0,bottom:65
   },
   billButton: {
     backgroundColor: '#FFFFFF',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingVertical: 12,
+ marginTop:30,
     borderRadius: 8,
+    width:wp(80),
+    alignItems:'center',
+    justifyContent:'center'
   },
   billText: {
     fontSize: 14,

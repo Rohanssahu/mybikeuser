@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { View, FlatList, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import Icon from './Icon';
+import { icon } from './Image';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -12,10 +14,11 @@ interface ScratchCard {
 // Define props
 interface ScratchCardListProps {
   data: ScratchCard[];
+  navigation:any,
   onCollectPrize: (id: string) => void;
 }
 
-const ScratchCardList: React.FC<ScratchCardListProps> = ({ data, onCollectPrize }) => {
+const ScratchCardList: React.FC<ScratchCardListProps> = ({ data, onCollectPrize,navigation }) => {
   const [scratchedCards, setScratchedCards] = useState<{ [key: string]: boolean }>({});
 
   const handleScratch = (id: string) => {
@@ -36,14 +39,21 @@ const ScratchCardList: React.FC<ScratchCardListProps> = ({ data, onCollectPrize 
         >
           {scratchedCards[item.id] && item.amount !== null ? (
             <>
-              <Text style={styles.winText}>🎁 You Won</Text>
-              <Text style={styles.amount}>💰 {item.amount.toFixed(2)}</Text>
+            <Icon  source={icon.gift}  size={30} />
+              <Text style={styles.winText}> You Won</Text>
+              <View style={{flexDirection:'row',alignItems:'center',marginTop:10}}>
+              <Icon  source={icon.coins}  size={20} />
+              <Text style={styles.amount}> {item.amount.toFixed(2)}</Text>
+              </View>
               <TouchableOpacity style={styles.collectButton} onPress={() => onCollectPrize(item.id)}>
                 <Text style={styles.collectText}>Collect</Text>
               </TouchableOpacity>
             </>
           ) : (
-            <Text style={styles.scratchText}>SCRATCH CARD</Text>
+            <View style={{backgroundColor:'#9397ac',width:'100%',paddingVertical:8,alignItems:'center'}}>
+
+              <Text style={styles.scratchText}>SCRATCH CARD</Text>
+            </View>
           )}
         </TouchableOpacity>
       )}
@@ -58,7 +68,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: SCREEN_WIDTH * 0.4,
-    height: 120,
+    height: 170,
     backgroundColor: '#2C2F5B', // Dark background
     borderRadius: 10,
     margin: 10,
@@ -79,12 +89,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     color: '#000',
+    marginTop:10
   },
   amount: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#000',
-    marginTop: 5,
+
   },
   collectButton: {
     marginTop: 10,

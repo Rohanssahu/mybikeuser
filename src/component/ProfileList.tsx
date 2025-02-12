@@ -1,14 +1,15 @@
 import React from 'react';
 import { View, FlatList, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+
 import { useNavigation } from '@react-navigation/native';
+import Icon from './Icon';
+import { icon } from './Image';
 
 // Define the data type for menu items
 interface MenuItem {
   id: string;
   title: string;
-  icon: string;
+  icon: any;
   screen: string;
 }
 
@@ -28,9 +29,9 @@ const ProfileMenuList: React.FC<ProfileMenuListProps> = ({ data }) => {
       contentContainerStyle={styles.listContainer}
       renderItem={({ item }) => (
         <TouchableOpacity style={styles.card} onPress={() => navigation.navigate(item.screen as never)}>
-          <FontAwesome5 name={item.icon} size={20} color="#FFFFFF" style={styles.icon} />
+          <Icon source={item.icon} size={50}  />
           <Text style={styles.text}>{item.title}</Text>
-          <MaterialIcons name="keyboard-arrow-right" size={24} color="#FFD700" />
+          <Icon  size={24}  source={icon.rightarrow} />
         </TouchableOpacity>
       )}
     />
@@ -45,7 +46,7 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0E1333', // Dark background
+   
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 10,
@@ -60,6 +61,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: '#FFFFFF',
+    marginLeft:20
   },
 });
 

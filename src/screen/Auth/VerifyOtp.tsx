@@ -1,73 +1,115 @@
-import { View, Text, StyleSheet } from 'react-native'
-import React, { useState } from 'react'
-import { color } from '../../constant'
-import Icon from '../../component/Icon'
-import { icon } from '../../component/Image'
-import { hp } from '../../component/utils/Constant'
-import { CodeField, Cursor, useBlurOnFulfill, useClearByFocusCell } from
-    'react-native-confirmation-code-field';
-export default function VerifyOtp() {
-    const [value, setValue] = useState('');
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { color } from '../../constant';
+import Icon from '../../component/Icon';
+import { icon } from '../../component/Image';
+import { hp } from '../../component/utils/Constant';
+import {
+    CodeField,
+    Cursor,
+    useBlurOnFulfill,
+    useClearByFocusCell
+} from 'react-native-confirmation-code-field';
+import CustomButton from '../../component/CustomButton';
+import ScreenNameEnum from '../../routes/screenName.enum';
+import { StackNavigationProp } from '@react-navigation/stack';
+
+interface VerifyOtpProps {
+    navigation: StackNavigationProp<any, any>;
+}
+
+const VerifyOtp: React.FC<VerifyOtpProps> = ({ navigation }) => {
+    const [value, setValue] = useState<string>('');
     const ref = useBlurOnFulfill({ value, cellCount: 4 });
 
     const [props, getCellOnLayoutHandler] = useClearByFocusCell({
         value,
         setValue,
     });
+
     return (
         <View style={styles.container}>
-            <View style={{ paddingHorizontal: 15 }}>
+            <TouchableOpacity
+                onPress={() => navigation.goBack()}
+                style={{ paddingHorizontal: 15 }}>
                 <Icon source={icon.back} size={50} />
-            </View>
+            </TouchableOpacity>
 
-            <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: hp(10) }}>
-                <Text style={{ fontSize: 20, color: color.white, fontWeight: '500' }}>Check Your Cell Phone</Text>
+            <View style={styles.content}>
+                <Text style={styles.title}>Check Your Cell Phone</Text>
+                <Text style={styles.subtitle}>Please put the 4 digits sent to you</Text>
 
-                <Text style={{ fontSize: 14, color: color.white, fontWeight: '400', marginTop: 5 }}>Please put the 4 digits sent to you</Text>
-                <View
-                    style={{ height: hp(10), width: '50%', marginTop: hp(8), alignSelf: 'center', }} >
+                <View style={styles.codeContainer}>
                     <CodeField
                         ref={ref}
                         {...props}
-
                         value={value}
                         onChangeText={setValue}
                         cellCount={4}
-                        rootStyle={{}}
-
                         keyboardType="number-pad"
                         textContentType="oneTimeCode"
                         renderCell={({ index, symbol, isFocused }) => (
-                            <View style={{ backgroundColor: '#E9E9E9', borderRadius: 15, }}>
-
-
+                            <View key={index} style={styles.cellContainer}>
                                 <Text
-                                    key={index}
                                     style={[styles.cell, isFocused && styles.focusCell]}
-                                    onLayout={getCellOnLayoutHandler(index)}>
+                                    onLayout={getCellOnLayoutHandler(index)}
+                                >
                                     {symbol || (isFocused ? <Cursor /> : null)}
                                 </Text>
                             </View>
                         )}
                     />
                 </View>
+
                 <View>
-                    <Text style={{ fontSize: 14, color: color.white, borderBottomWidth: 0.8, borderColor: '#fff' }}>RESEND OTP</Text>
+                    <Text style={styles.resendOtp}>RESEND OTP</Text>
                 </View>
             </View>
-            <View>
-                
+
+            <View style={styles.buttonContainer}>
+                <CustomButton
+                    title="Submit"
+                    onPress={() => {
+                        navigation.navigate(ScreenNameEnum.PROFILE_DETAILS);
+                    }}
+                    buttonStyle={styles.button}
+                />
             </View>
         </View>
-    )
-}
+    );
+};
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: color.baground,
     },
-    codeFieldRoot: { marginTop: 20, },
+    content: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: hp(10),
+    },
+    title: {
+        fontSize: 20,
+        color: color.white,
+        fontWeight: '500',
+    },
+    subtitle: {
+        fontSize: 14,
+        color: color.white,
+        fontWeight: '400',
+        marginTop: 5,
+    },
+    codeContainer: {
+        height: hp(10),
+        width: '50%',
+        marginTop: hp(8),
+        alignSelf: 'center',
+    },
+    cellContainer: {
+        backgroundColor: '#E9E9E9',
+        borderRadius: 15,
+    },
     cell: {
         width: 40,
         height: 40,
@@ -78,13 +120,24 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: '#000',
         borderRadius: 10,
-        // backgroundColor:'#E9E9E9',
-
     },
     focusCell: {
         borderColor: '#009838',
-
         borderRadius: 10,
-
     },
-})
+    resendOtp: {
+        fontSize: 14,
+        color: color.white,
+        borderBottomWidth: 0.8,
+        borderColor: '#fff',
+    },
+    buttonContainer: {
+        position: 'absolute',
+        bottom: 40,
+        width: '100%',
+        paddingHorizontal: 20,
+    },
+    button: {},
+});
+
+export default VerifyOtp;
