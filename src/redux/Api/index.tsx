@@ -12,29 +12,28 @@ export const base_url = 'https://mrbikedoctors.com/api';
 
 export const callMultipleApis = async (requests: ApiRequest[]) => {
   try {
-    const apiCalls = requests.map((req) => {
-      const isFormData = req.data instanceof FormData;
+    const responses = await Promise.all(
+      requests.map((req) => {
+        const config: AxiosRequestConfig = {
+          method: req.method || 'GET',
+          url: `${base_url}${req.endpoint}`,
+          data: req.method === 'POST' ? req.data : undefined,
+          headers: {
+            'Content-Type': req.data instanceof FormData ? 'multipart/form-data' : 'application/json',
+            ...(req.token ? { Authorization: `Bearer ${req.token}` } : {}),
+            ...req.headers,
+          },
+        };
+        return axios(config);
+      })
+    );
 
-      const config: AxiosRequestConfig = {
-        method: req.method || 'GET',
-        url: `${base_url}${req.endpoint}`, // Automatically prepend base URL
-        data: req.method === 'POST' ? req.data : undefined,
-        headers: {
-          'Content-Type': isFormData ? 'multipart/form-data' : 'application/json',
-          ...(req.token ? { Authorization: `Bearer ${req.token}` } : {}), // Add token if provided
-          ...req.headers, // Merge additional headers
-        },
-      };
-
-      return axios(config);
-    });
-
-    const responses = await Promise.all(apiCalls);
-    return responses.map((res) => res.data); // Return API response data
+    return responses.map((res) => res.data);
   } catch (error) {
     console.error('API Error:', error);
     throw error;
   }
 };
+
 
 

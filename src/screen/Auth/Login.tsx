@@ -41,36 +41,38 @@ const btnData: BtnData[] = [
 
 const Login: React.FC = ({ navigation }) => {
 
-    const [phoneNumber,setPhoneNumber] = useState<string>('')
-    const [isLoading,setisLoading] = useState<boolean>(false)
+    const [phoneNumber, setPhoneNumber] = useState<string>('')
+    const [isLoading, setisLoading] = useState<boolean>(false)
 
-const Login = async (): Promise<void> => {
-    setisLoading(true)
-    if (!phoneNumber) {
-      return errorToast('Please Enter Phone Number');
-    }
-    if (phoneNumber.length !== 10) {
-      return errorToast('Please Enter Valid Phone Number');
-    }
-  
-    // Construct the phone number with country code and call Login_witPhone
-    const response = await Login_witPhone(`+91${phoneNumber}`);
-  
-    // Handle the response
-    if (response.success) {
-      console.log('Login successful: ', response.message);
-      navigation.navigate(ScreenNameEnum.OTP_SCREEN,{phone:`+91${phoneNumber}`})
-      response.user && console.log('User Info:', response.user);
-    } else {
-      console.log('Login failed: ', response.message);
-    }
-    setisLoading(false)
-  };
-  
+    const Login = async (): Promise<void> => {
+        setisLoading(true)
+        if (!phoneNumber) {
+            return errorToast('Please Enter Phone Number');
+        }
+        if (phoneNumber.length !== 10) {
+            return errorToast('Please Enter Valid Phone Number');
+        }
+
+        // Construct the phone number with country code and call Login_witPhone
+        const response = await Login_witPhone(`+91${phoneNumber}`);
+
+        // Handle the response
+        if (response.success) {
+            console.log('Login successful: ', response.message);
+            navigation.navigate(ScreenNameEnum.OTP_SCREEN, { phone: `+91${phoneNumber}` })
+            response.user && console.log('User Info:', response.user);
+            setisLoading(false)
+        } else {
+            console.log('Login failed: ', response.message);
+            setisLoading(false)
+        }
+
+    };
+
     return (
         <View style={styles.container}>
             <SafeAreaView>
-                {isLoading&&<Loading />}
+                {isLoading && <Loading />}
                 <StatusBar backgroundColor={color.baground} />
 
                 {/* Logo */}
@@ -97,6 +99,8 @@ const Login = async (): Promise<void> => {
                                 style={styles.textInput}
                                 placeholderTextColor={color.white}
                                 keyboardType="phone-pad"
+                                value={phoneNumber}
+                                onChangeText={(txt) => setPhoneNumber(txt)}
                             />
                         </View>
                     </View>
@@ -105,7 +109,7 @@ const Login = async (): Promise<void> => {
                     <CustomButton
                         title="Login"
                         onPress={() => {
-                         
+
                             Login()
                         }}
                         buttonStyle={styles.button}
@@ -206,8 +210,8 @@ const styles = StyleSheet.create({
         marginTop: 30,
     },
     socialLoginContainer: {
-        position: 'absolute',
-        bottom: 0,
+
+        marginTop: hp(10),
         width: wp(100),
         height: hp(30),
         justifyContent: 'center',

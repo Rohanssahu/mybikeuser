@@ -1,9 +1,10 @@
 
 import axios, { AxiosRequestConfig } from 'axios';
-import { callMultipleApis } from '.';
+
 import { endpoint } from './endpoints';
 import { successToast } from '../../configs/customToast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { callMultipleApis } from '.';
 
 // Interface for API request
 interface ApiRequest {
@@ -15,6 +16,10 @@ interface ApiRequest {
 }
 
 const Login_witPhone = async (phoneNumber: string) => {
+
+    console.log('====================================');
+    console.log(phoneNumber);
+    console.log('====================================');
     // Prepare the request body for login API
     const requestBody = { phone: phoneNumber };
 
