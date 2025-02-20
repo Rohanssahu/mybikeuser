@@ -13,6 +13,9 @@ import {
 import CustomButton from '../../component/CustomButton';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useRoute } from '@react-navigation/native';
+import { verify_otp } from '../../redux/feature/authSlice';
+import { errorToast } from '../../configs/customToast';
 
 interface VerifyOtpProps {
     navigation: StackNavigationProp<any, any>;
@@ -20,12 +23,42 @@ interface VerifyOtpProps {
 
 const VerifyOtp: React.FC<VerifyOtpProps> = ({ navigation }) => {
     const [value, setValue] = useState<string>('');
+    const [isLoading, setisLoading] = useState<boolean>(false);
+
+    const route = useRoute();
+    const { phone } = route.params
+
     const ref = useBlurOnFulfill({ value, cellCount: 4 });
 
     const [props, getCellOnLayoutHandler] = useClearByFocusCell({
         value,
         setValue,
     });
+
+    const Verify_otps = async (): Promise<void> => {
+        setisLoading(true)
+        if (!value) {
+            return errorToast('Please Enter 4 Digit Otp');
+        }
+        if (value.length !== 4) {
+            return errorToast('Please Enter Valid Otp');
+        }
+
+        // Construct the phone number with country code and call Login_witPhone
+        const response = await verify_otp(phone,value);
+
+        // Handle the response
+        if (response.success) {
+            console.log('Login successful: ', response.message);
+            navigation.navigate(ScreenNameEnum.OTP_SCREEN, { phone: `+91${phoneNumber}` })
+            response.user && console.log('User Info:', response.user);
+            setisLoading(false)
+        } else {
+            console.log('Login failed: ', response.message);
+            setisLoading(false)
+        }
+
+    };
 
     return (
         <View style={styles.container}>
@@ -70,7 +103,8 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ navigation }) => {
                 <CustomButton
                     title="Submit"
                     onPress={() => {
-                        navigation.navigate(ScreenNameEnum.PROFILE_DETAILS);
+                        Verify_otps()
+                        
                     }}
                     buttonStyle={styles.button}
                 />

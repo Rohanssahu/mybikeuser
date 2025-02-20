@@ -1,16 +1,19 @@
 import axios, { AxiosRequestConfig } from 'axios';
 
-interface ApiRequest {
-  endpoint: string; // Only endpoint, base URL is added automatically
+export interface ApiRequest {
+  endpoint: string;
   method?: 'GET' | 'POST';
-  data?: any; // Supports JSON & FormData
+  data?: any;
   headers?: Record<string, string>;
-  token?: string; // Optional Auth Token (per request)
+  token?: string;
 }
 
 export const base_url = 'https://mrbikedoctors.com/api';
 
 export const callMultipleApis = async (requests: ApiRequest[]) => {
+  
+  console.log('callMultipleApis called'); // Debugging purpose
+
   try {
     const responses = await Promise.all(
       requests.map((req) => {
@@ -28,12 +31,9 @@ export const callMultipleApis = async (requests: ApiRequest[]) => {
       })
     );
 
-    return responses.map((res) => res.data);
+    return responses?.map((res) => res.data);
   } catch (error) {
     console.error('API Error:', error);
     throw error;
   }
 };
-
-
-

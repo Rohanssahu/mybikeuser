@@ -66,7 +66,7 @@ const Login: React.FC = ({ navigation }) => {
             console.log('Login failed: ', response.message);
             setisLoading(false)
         }
-
+setisLoading(false)
     };
 
     return (
