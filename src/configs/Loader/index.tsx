@@ -14,8 +14,8 @@ export default class Loading extends React.Component {
   render() {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size={Platform.OS == 'ios' ? 1 : 40} color={'#009838'} />
-        <Text style={{fontStyle:'italic',color:'#009838'}}>please Wait......</Text>
+        <ActivityIndicator size={Platform.OS == 'ios' ? 1 : 40} color={'#fff'} />
+        <Text style={{fontStyle:'italic',color:'#fff'}}>please Wait......</Text>
       </View>
     );
   }

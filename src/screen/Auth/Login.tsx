@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -16,6 +16,10 @@ import { hp, wp } from '../../component/utils/Constant';
 import Icon from '../../component/Icon';
 import CustomButton from '../../component/CustomButton';
 import ScreenNameEnum from '../../routes/screenName.enum';
+import { errorToast } from '../../configs/customToast';
+import { Login_witPhone } from '../../redux/Api/apiRequests';
+import Loader from '../../component/Loader';
+import Loading from '../../configs/Loader';
 
 // Define interface for button data
 interface BtnData {
@@ -34,10 +38,39 @@ const btnData: BtnData[] = [
     },
 ];
 
+
 const Login: React.FC = ({ navigation }) => {
+
+    const [phoneNumber,setPhoneNumber] = useState<string>('')
+    const [isLoading,setisLoading] = useState<boolean>(false)
+
+const Login = async (): Promise<void> => {
+    setisLoading(true)
+    if (!phoneNumber) {
+      return errorToast('Please Enter Phone Number');
+    }
+    if (phoneNumber.length !== 10) {
+      return errorToast('Please Enter Valid Phone Number');
+    }
+  
+    // Construct the phone number with country code and call Login_witPhone
+    const response = await Login_witPhone(`+91${phoneNumber}`);
+  
+    // Handle the response
+    if (response.success) {
+      console.log('Login successful: ', response.message);
+      navigation.navigate(ScreenNameEnum.OTP_SCREEN,{phone:`+91${phoneNumber}`})
+      response.user && console.log('User Info:', response.user);
+    } else {
+      console.log('Login failed: ', response.message);
+    }
+    setisLoading(false)
+  };
+  
     return (
         <View style={styles.container}>
             <SafeAreaView>
+                {isLoading&&<Loading />}
                 <StatusBar backgroundColor={color.baground} />
 
                 {/* Logo */}
@@ -72,7 +105,8 @@ const Login: React.FC = ({ navigation }) => {
                     <CustomButton
                         title="Login"
                         onPress={() => {
-                            navigation.navigate(ScreenNameEnum.OTP_SCREEN)
+                         
+                            Login()
                         }}
                         buttonStyle={styles.button}
                     />
