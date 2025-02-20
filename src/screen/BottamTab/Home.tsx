@@ -1,5 +1,5 @@
 import { View, Text, ScrollView } from 'react-native'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { color } from '../../constant'
 import BannerSlider from '../../component/BannerSlider'
 import { useNavigation } from '@react-navigation/native'
@@ -11,10 +11,28 @@ import SeeallHeader from '../../component/SeeallHeader'
 import VerticalList from '../../component/VerticalList'
 import GarageList from '../../component/GarageList'
 import ScreenNameEnum from '../../routes/screenName.enum'
+import { get_bannerlist, get_servicelist } from '../../redux/Api/apiRequests'
 
 export default function Home({ }) {
 
   const navigation = useNavigation()
+const [Servicelist,setServicelist] = useState([])
+const [bannerlist,setbannerlist] = useState([])
+
+  useEffect(()=>{
+    servicelist()
+  },[])
+  const servicelist =async()=>{
+     const res = await get_servicelist()
+     const banner = await get_bannerlist()
+
+   if(res.data?.length >0 ){
+    setServicelist(res.data)
+   }
+   if(banner.data?.length >0 ){
+    setbannerlist(res.data)
+   }
+  }
   return (
     <View style={{ flex: 1, backgroundColor: color.baground }}>
       <ScrollView >
@@ -26,13 +44,13 @@ export default function Home({ }) {
         onNotificationPress={() => console.log("Notifications Pressed")}
       />
 
-      <BannerSlider navigation={navigation} />
+      <BannerSlider navigation={navigation} data={bannerlist} />
       <View>
         <SeeallHeader
-          title="Your Category"
+          title="Over Services"
           onSeeAllPress={() => {navigation.navigate(ScreenNameEnum.ALL_SERVICES)}}
         />
-        <HorizontalList data={data} />
+        <HorizontalList data={Servicelist} />
       </View>
       <SeeallHeader
         title="Near By You"
@@ -48,23 +66,7 @@ export default function Home({ }) {
   )
 }
 
-const data = [
-  {
-    name: 'Standard',
-    img: images.bikes
 
-  },
-  {
-    name: 'Sport',
-    img: images.honda
-
-  },
-  {
-    name: 'Scooter',
-    img: images.scuty
-
-  },
-]
 
 const shopList = [
   {

@@ -35,7 +35,7 @@ const Login_witPhone = async (phoneNumber: string) => {
     ];
 
     console.log(apiRequests);
-    
+
 
     try {
         // Call the multiple APIs and await the result
@@ -91,7 +91,7 @@ const resend_Otp = async (phoneNumber: string) => {
         if (response.success) {
             if (response.message === "OTP sent successfully") {
                 successToast("Otp Resent Successfully")
-               
+
                 return { success: true, message: "OTP sent", user: response.user || null };
             } else if (response.message === "User created and OTP sent to your mobile.") {
                 successToast(response.message)
@@ -133,7 +133,7 @@ const otp_Verify = async (phoneNumber: string, otp: string) => {
         if (response.success) {
             if (response.message === "OTP verified successfully") {
 
-               await AsyncStorage.setItem('token',response.token)
+                await AsyncStorage.setItem('token', response.token)
                 successToast(response.message)
 
                 return { success: true, message: "OTP verified successfully", user: response.user || null };
@@ -141,6 +141,49 @@ const otp_Verify = async (phoneNumber: string, otp: string) => {
                 successToast(response.message)
 
                 await AsyncStorage.setItem('token', response.token)
+                return { success: true, message: "User not found", user: response.user || null };
+            }
+        }
+        return { success: false, message: "Unexpected response", user: null };
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, user: null };
+    }
+};
+const add_Profile = async (phone: string, first_name: string, last_name: string, state: string, city: string, address: string, pincode: string, image: string) => {
+    // Prepare the request body for login API
+    const requestBody = { phone: phone, first_name: first_name, last_name: last_name, state: state, city: city, address: address, pincode: pincode, image: image };
+    const token = await AsyncStorage.getItem('token')
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.addProfile,
+            method: 'POST',
+            data: requestBody,
+
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            token: token,
+        },
+    ];
+
+    try {
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+        console.log('API Response:', results);
+
+
+        const response = results[0];
+
+
+        if (response.success) {
+            if (response.message === "OTP verified successfully") {
+
+
+                return { success: true, message: "OTP verified successfully", user: response.user || null };
+            } else if (response.message === "User not found") {
+
                 return { success: true, message: "User not found", user: response.user || null };
             }
         }
@@ -182,16 +225,16 @@ const get_states = async () => {
     }
 };
 const get_citys = async (City: string) => {
-    console.log('====================================',City);
+    console.log('====================================', City);
 
 
     console.log(endpoint.CityByState?.replace(':stateId', City));
-         
+
     const apiRequests: ApiRequest[] = [
         {
 
-           
-         
+
+
             endpoint: endpoint.CityByState?.replace(':stateId', City),
             method: 'GET',
             headers: {
@@ -222,7 +265,67 @@ const get_citys = async (City: string) => {
         return { success: false, message: error.message, state: [] };
     }
 };
+const get_servicelist = async () => {
+
+    const token = await AsyncStorage.getItem('token')
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.servicelist,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                "token": token
+            },
+        },
+    ];
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+        console.log('API get_servicelist=>>>>>>>>>>:', response);
+        if (response?.data.length > 0) {
+            return { success: true, data: response?.data };
+        }
+        else {
+
+            return { success: false, message: "Unexpected response", data: [] };
+        }
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, data: [] };
+    }
+};
+const get_bannerlist = async () => {
+
+    const token = await AsyncStorage.getItem('token')
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.bannerlist,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                "token": token
+            },
+        },
+    ];
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+        console.log('API get_servicelist=>>>>>>>>>>:', response);
+        if (response?.data.length > 0) {
+            return { success: true, data: response?.data };
+        }
+        else {
+
+            return { success: false, message: "Unexpected response", data: [] };
+        }
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, data: [] };
+    }
+};
 
 
 
-export { Login_witPhone, otp_Verify, get_states, get_citys,resend_Otp }  
+export { Login_witPhone, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist,get_bannerlist }  

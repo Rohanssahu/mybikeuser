@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { color } from '../../constant';
 import CustomHeader from '../../component/CustomHeaderProps';
 import images, { icon } from '../../component/Image';
@@ -10,8 +10,9 @@ import CustomButton from '../../component/CustomButton';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import { StackNavigationProp } from '@react-navigation/stack';
 import CustomDropdown from '../../component/CustomDropdown';
-import { get_states ,get_citys } from '../../redux/Api/apiRequests';
+import { get_states, get_citys, add_Profile } from '../../redux/Api/apiRequests';
 import { captureImage } from '../../redux/Api';
+import Loading from '../../configs/Loader';
 
 interface ProfileDetailsProps {
     navigation: StackNavigationProp<any, any>;
@@ -27,6 +28,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
     const [StateData, setStateData] = useState([]);
     const [cityData, setcityData] = useState([]);
     const [image, setImage] = useState('');
+    const [isLoading, setisLoading] = useState(false);
 
 
     // Error states
@@ -91,117 +93,132 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
         return isValid;
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
+        setisLoading(true)
         if (validateFields()) {
-            navigation.navigate(ScreenNameEnum.PROFILE_DETAILS);
+
+            const states = await add_Profile('',
+                first_name,
+                last_name,
+                state,
+                city,
+                address,
+                pincode,
+                'image')
+
+            setisLoading(false)
+
         }
+
+       
+        setisLoading(false)
     };
     const handleCapture = async () => {
         const image = await captureImage();
         if (image) {
-          console.log('Captured Image:', image);
-          // Handle the captured image (e.g., upload, display, save, etc.)
+            console.log('Captured Image:', image);
+            // Handle the captured image (e.g., upload, display, save, etc.)
         } else {
-          console.log('Image capture canceled or failed.');
+            console.log('Image capture canceled or failed.');
         }
-      };
+    };
     return (
         <View style={{ flex: 1, backgroundColor: color.baground }}>
-            {/* Header */}
-            <CustomHeader navigation={navigation} title='Add Profile Details'
-                onSkipPress={() => { navigation.navigate(ScreenNameEnum.BOTTAM_TAB); }} showSkip={true}
+            <ScrollView>
+                {isLoading && <Loading />}
+                <CustomHeader navigation={navigation} title='Add Profile Details'
+                    onSkipPress={() => { navigation.navigate(ScreenNameEnum.BOTTAM_TAB); }} showSkip={true}
 
 
-            />
-
-            {/* Profile Image Section */}
-            <View style={styles.profileImageContainer}>
-                <Image source={image?{uri:image}:images.profileUpdate} style={styles.profileImage} />
-                <TouchableOpacity
-                onPress={()=>{
-                    handleCapture()
-                }}
-                style={styles.addIcon}>
-                    <Icon source={icon.add} size={20} />
-                </TouchableOpacity>
-            </View>
-
-            {/* Form Fields */}
-            <View style={styles.formContainer}>
-                <CustomTextInput
-                    placeholder='First Name'
-                    onChangeText={setFirstName}
-                    value={firstName}
-                    inputStyle={[styles.input, errors.firstName && styles.errorInput]}
                 />
-                {errors.firstName ? <Text style={styles.errorText}>{errors.firstName}</Text> : null}
 
-                <CustomTextInput
-                    placeholder='Last Name'
-                    onChangeText={setLastName}
-                    value={lastName}
-                    inputStyle={[styles.input, errors.lastName && styles.errorInput, { marginTop: 15 }]}
-                />
-                {errors.lastName ? <Text style={styles.errorText}>{errors.lastName}</Text> : null}
+                {/* Profile Image Section */}
+                <View style={styles.profileImageContainer}>
+                    <Image source={image ? { uri: image } : images.profileUpdate} style={styles.profileImage} />
+                    <TouchableOpacity
+                        onPress={() => {
+                            handleCapture()
+                        }}
+                        style={styles.addIcon}>
+                        <Icon source={icon.add} size={20} />
+                    </TouchableOpacity>
+                </View>
 
-                <CustomDropdown
-                    data={StateData}
-                    onSelect={(value) =>{
+                {/* Form Fields */}
+                <View style={styles.formContainer}>
+                    <CustomTextInput
+                        placeholder='First Name'
+                        onChangeText={setFirstName}
+                        value={firstName}
+                        inputStyle={[styles.input, errors.firstName && styles.errorInput]}
+                    />
+                    {errors.firstName ? <Text style={styles.errorText}>{errors.firstName}</Text> : null}
 
-                        get_citys_list(value)
-                        setState(value)
-                    } }
-                    placeholder="State"
-                    label={'name'}
-                    value={'id'}
-                />
-                {errors.state ? <Text style={styles.errorText}>{errors.state}</Text> : null}
+                    <CustomTextInput
+                        placeholder='Last Name'
+                        onChangeText={setLastName}
+                        value={lastName}
+                        inputStyle={[styles.input, errors.lastName && styles.errorInput, { marginTop: 15 }]}
+                    />
+                    {errors.lastName ? <Text style={styles.errorText}>{errors.lastName}</Text> : null}
 
-                <CustomDropdown
-                    data={cityData}
-                    onSelect={(value) => setCity(value)}
-                    placeholder="City"
-                    label={'name'}
-                    value={'id'}
-                />
-                {errors.city ? <Text style={styles.errorText}>{errors.city}</Text> : null}
+                    <CustomDropdown
+                        data={StateData}
+                        onSelect={(value) => {
 
-                <CustomTextInput
-                    placeholder='Address'
-                    onChangeText={setAddress}
-                    value={address}
-                    inputStyle={[styles.input, errors.address && styles.errorInput, { marginTop: 15 }]}
-                />
-                {errors.address ? <Text style={styles.errorText}>{errors.address}</Text> : null}
+                            get_citys_list(value.id)
+                            setState(value.name)
+                        }}
+                        placeholder="State"
+                        label={'name'}
+                        value={'id'}
+                    />
+                    {errors.state ? <Text style={styles.errorText}>{errors.state}</Text> : null}
 
-                <CustomTextInput
-                    placeholder='Pin-code'
-                    onChangeText={setPinCode}
-                    value={pinCode}
-                    inputStyle={[styles.input, errors.pinCode && styles.errorInput, { marginTop: 15 }]}
-                />
-                {errors.pinCode ? <Text style={styles.errorText}>{errors.pinCode}</Text> : null}
-            </View>
+                    <CustomDropdown
+                        data={cityData}
+                        onSelect={(value) => {
 
-            {/* Submit Button */}
-            <View style={styles.buttonContainer}>
-                <CustomButton
-                    title="Submit"
-                    onPress={() => { navigation.navigate(ScreenNameEnum.BOTTAM_TAB); }}
-                    buttonStyle={styles.button}
-                />
-            </View>
+                            get_citys_list(value.id)
+                            setCity(value.name)
+                        }}
+
+                        placeholder="City"
+                        label={'name'}
+                        value={'id'}
+                    />
+                    {errors.city ? <Text style={styles.errorText}>{errors.city}</Text> : null}
+
+                    <CustomTextInput
+                        placeholder='Address'
+                        onChangeText={setAddress}
+                        value={address}
+                        inputStyle={[styles.input, errors.address && styles.errorInput, { marginTop: 15 }]}
+                    />
+                    {errors.address ? <Text style={styles.errorText}>{errors.address}</Text> : null}
+
+                    <CustomTextInput
+                        placeholder='Pin-code'
+                        onChangeText={setPinCode}
+                        value={pinCode}
+                        inputStyle={[styles.input, errors.pinCode && styles.errorInput, { marginTop: 15 }]}
+                    />
+                    {errors.pinCode ? <Text style={styles.errorText}>{errors.pinCode}</Text> : null}
+                </View>
+
+                {/* Submit Button */}
+                <View style={styles.buttonContainer}>
+                    <CustomButton
+                        title="Submit"
+                        onPress={() => { handleSubmit() }}
+                        buttonStyle={styles.button}
+                    />
+                </View>
+            </ScrollView>
         </View>
     );
 };
 
-const bikeCompanies = [
-    { label: 'Yamaha', value: 'yamaha' },
-    { label: 'Honda', value: 'honda' },
-    { label: 'Suzuki', value: 'suzuki' },
-    { label: 'Kawasaki', value: 'kawasaki' },
-    { label: 'Ducati', value: 'ducati' },
-];
 const styles = StyleSheet.create({
     profileImageContainer: {
         marginTop: 20,
@@ -229,7 +246,7 @@ const styles = StyleSheet.create({
         borderColor: '#fff',
         borderRadius: 15,
         padding: 10,
-        color: '#000',
+        color: '#fff',
     },
     errorInput: {
         borderColor: 'red',
@@ -241,12 +258,14 @@ const styles = StyleSheet.create({
         marginLeft: 5,
     },
     buttonContainer: {
-        position: 'absolute',
+        marginTop: 60,
         bottom: 40,
         width: '100%',
         paddingHorizontal: 20,
     },
-    button: {},
+    button: {
+
+    },
 });
 
 export default ProfileDetails;

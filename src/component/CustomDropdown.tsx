@@ -38,7 +38,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({ data, placeholder = 'Se
         onBlur={() => setIsFocus(false)}
         onChange={(item) => {
           setValue(item.id);
-          onSelect(item.id);
+          onSelect(item);
         }}
         renderRightIcon={() => (
           <Icon  size={20} source={icon.downwhite}/>

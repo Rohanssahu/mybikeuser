@@ -50,7 +50,7 @@ const demoBanners: Banner[] = [
     },
 ];
 
-const BannerSlider: React.FC<BannerSliderProps> = ({ navigation }) => {
+const BannerSlider: React.FC<BannerSliderProps> = ({ navigation,data }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const flatListRef = useRef<FlatList<Banner>>(null);
 
@@ -62,12 +62,12 @@ const BannerSlider: React.FC<BannerSliderProps> = ({ navigation }) => {
 
     const renderItem = ({ item }: { item: Banner }) => (
         <View style={styles.bannerContainer}>
-            <Image source={item.imageUrl}
+            <Image source={{uri:item?.banner_image}}
                 resizeMode='cover'
                 style={styles.bannerImage} />
             <View style={styles.overlay} />
             <View style={styles.textContainer}>
-                <Text style={styles.title}>{item.title}</Text>
+                <Text style={styles.title}>{item.name}</Text>
                 <Text style={styles.description}>{item.description}</Text>
                 <View>
                     <TouchableOpacity
@@ -85,7 +85,7 @@ const BannerSlider: React.FC<BannerSliderProps> = ({ navigation }) => {
         <View style={styles.container}>
             <FlatList
                 ref={flatListRef}
-                data={demoBanners}
+                data={data}
                 horizontal
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}

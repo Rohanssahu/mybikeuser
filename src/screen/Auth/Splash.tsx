@@ -12,17 +12,20 @@ type RootStackParamList = {
     Home: undefined; // Change 'Home' to your actual destination screen name
 };
 
-const Splash: React.FC = () => {
+const Splash: React.FC = async() => {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const checkLogout = async () => {
-        const token = AsyncStorage.getItem('token')
+        const token = await AsyncStorage.getItem('token')
+        console.log('====================================');
+        console.log('token',token);
+        console.log('====================================');
         if (!token) {
 
             navigation.navigate(ScreenNameEnum.LOGIN_SCREEN);
         }
         if (token) {
 
-            navigation.navigate(ScreenNameEnum.PROFILE_DETAILS);
+            navigation.navigate(ScreenNameEnum.BOTTAM_TAB);
         }
     };
     useEffect(() => {
