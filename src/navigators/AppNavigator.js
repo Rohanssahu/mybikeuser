@@ -8,11 +8,12 @@ import { PersistGate } from 'redux-persist/integration/react';
 
 import Toast from 'react-native-toast-message';
 import toastConfig from '../configs/customToast';
-import { persistor, store } from '../redux/Store';
+
 import RegistrationRoutes from './RegistrationRoutes';
 
 import { ThemeProvider } from '../component/utils/ThemeProvider';
 import { LanguageProvider } from '../component/Localization/LanguageContext';
+import { persistor, store } from '../redux/Store';
 
 export default function AppNavigator() {
   return (
