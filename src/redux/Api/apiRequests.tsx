@@ -132,6 +132,8 @@ const otp_Verify = async (phoneNumber: string, otp: string) => {
 
         if (response.success) {
             if (response.message === "OTP verified successfully") {
+
+               await AsyncStorage.setItem('token',response.token)
                 successToast(response.message)
 
                 return { success: true, message: "OTP verified successfully", user: response.user || null };

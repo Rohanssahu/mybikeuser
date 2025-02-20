@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { color } from '../../constant';
 import images from '../../component/Image';
 import ScreenNameEnum from '../../routes/screenName.enum';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Define the navigation type
 type RootStackParamList = {
@@ -13,10 +14,20 @@ type RootStackParamList = {
 
 const Splash: React.FC = () => {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    const checkLogout = async () => {
+        const token = AsyncStorage.getItem('token')
+        if (!token) {
 
+            navigation.navigate(ScreenNameEnum.LOGIN_SCREEN);
+        }
+        if (token) {
+
+            navigation.navigate(ScreenNameEnum.PROFILE_DETAILS);
+        }
+    };
     useEffect(() => {
         const timer = setTimeout(() => {
-            navigation.replace(ScreenNameEnum.LOGIN_SCREEN); // Navigate to the 'Home' screen
+            checkLogout()
         }, 3000); // 3 seconds delay
 
         return () => clearTimeout(timer); // Cleanup timeout on unmount

@@ -14,8 +14,10 @@ import CustomButton from '../../component/CustomButton';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useRoute } from '@react-navigation/native';
-import { verify_otp } from '../../redux/feature/authSlice';
-import { errorToast } from '../../configs/customToast';
+
+import { errorToast, successToast } from '../../configs/customToast';
+import { otp_Verify, resend_Otp } from '../../redux/Api/apiRequests';
+import Loading from '../../configs/Loader';
 
 interface VerifyOtpProps {
     navigation: StackNavigationProp<any, any>;
@@ -30,12 +32,17 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ navigation }) => {
 
     const ref = useBlurOnFulfill({ value, cellCount: 4 });
 
+
+    console.log('phone', phone);
+
     const [props, getCellOnLayoutHandler] = useClearByFocusCell({
         value,
         setValue,
     });
 
     const Verify_otps = async (): Promise<void> => {
+        console.log('==================Verify_otps==================');
+
         setisLoading(true)
         if (!value) {
             return errorToast('Please Enter 4 Digit Otp');
@@ -45,12 +52,33 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ navigation }) => {
         }
 
         // Construct the phone number with country code and call Login_witPhone
-        const response = await verify_otp(phone,value);
+        const response = await otp_Verify(phone, value);
 
         // Handle the response
         if (response.success) {
-            console.log('Login successful: ', response.message);
-            navigation.navigate(ScreenNameEnum.OTP_SCREEN, { phone: `+91${phoneNumber}` })
+            console.log('Login successful: ', response);
+            navigation.navigate(ScreenNameEnum.PROFILE_DETAILS)
+            response.user && console.log('User Info:', response.user);
+            setisLoading(false)
+        } else {
+            console.log('Login failed: ', response.message);
+            setisLoading(false)
+        }
+
+    };
+    const resend_otps = async (): Promise<void> => {
+
+        setisLoading(true)
+
+
+        // Construct the phone number with country code and call Login_witPhone
+        const response = await resend_Otp(phone);
+
+        // Handle the response
+        if (response.success) {
+            console.log('otp successful: ', response);
+
+            successToast('Otp Resent Successfully')
             response.user && console.log('User Info:', response.user);
             setisLoading(false)
         } else {
@@ -62,6 +90,7 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
+            {isLoading&&<Loading />}
             <TouchableOpacity
                 onPress={() => navigation.goBack()}
                 style={{ paddingHorizontal: 15 }}>
@@ -94,9 +123,13 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ navigation }) => {
                     />
                 </View>
 
-                <View>
+                <TouchableOpacity
+                    onPress={() => {
+                        resend_otps()
+                    }}
+                >
                     <Text style={styles.resendOtp}>RESEND OTP</Text>
-                </View>
+                </TouchableOpacity>
             </View>
 
             <View style={styles.buttonContainer}>
@@ -104,7 +137,7 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ navigation }) => {
                     title="Submit"
                     onPress={() => {
                         Verify_otps()
-                        
+
                     }}
                     buttonStyle={styles.button}
                 />

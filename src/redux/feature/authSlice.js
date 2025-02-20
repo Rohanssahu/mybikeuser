@@ -103,7 +103,7 @@ export const reset_password = createAsyncThunk('reset_password', async (params, 
   }
 });
 export const verify_otp = createAsyncThunk('verify_otp', async (params, thunkApi) => {
-  console.log('===============login=====================', params);
+  console.log('===============Verify_otps=====================', params);
 
   try {
 

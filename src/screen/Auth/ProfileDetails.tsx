@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { color } from '../../constant';
 import CustomHeader from '../../component/CustomHeaderProps';
@@ -10,6 +10,8 @@ import CustomButton from '../../component/CustomButton';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import { StackNavigationProp } from '@react-navigation/stack';
 import CustomDropdown from '../../component/CustomDropdown';
+import { get_states ,get_citys } from '../../redux/Api/apiRequests';
+import { captureImage } from '../../redux/Api';
 
 interface ProfileDetailsProps {
     navigation: StackNavigationProp<any, any>;
@@ -22,6 +24,10 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
     const [city, setCity] = useState('');
     const [address, setAddress] = useState('');
     const [pinCode, setPinCode] = useState('');
+    const [StateData, setStateData] = useState([]);
+    const [cityData, setcityData] = useState([]);
+    const [image, setImage] = useState('');
+
 
     // Error states
     const [errors, setErrors] = useState({
@@ -33,7 +39,40 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
         pinCode: ''
     });
 
-    // Validation function
+
+    useEffect(() => {
+        get_states_list()
+    }, [])
+
+
+    const get_states_list = async () => {
+
+
+        const state = await get_states()
+
+        if (state.success) {
+
+            setStateData(state.state)
+        } else {
+            setStateData([])
+        }
+
+
+    }
+    const get_citys_list = async (city) => {
+
+
+        const state = await get_citys(city)
+
+        if (state.success) {
+
+            setcityData(state.state)
+        } else {
+            setcityData([])
+        }
+
+
+    }
     const validateFields = () => {
         let isValid = true;
         let newErrors = {
@@ -57,16 +96,32 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
             navigation.navigate(ScreenNameEnum.PROFILE_DETAILS);
         }
     };
-
+    const handleCapture = async () => {
+        const image = await captureImage();
+        if (image) {
+          console.log('Captured Image:', image);
+          // Handle the captured image (e.g., upload, display, save, etc.)
+        } else {
+          console.log('Image capture canceled or failed.');
+        }
+      };
     return (
         <View style={{ flex: 1, backgroundColor: color.baground }}>
             {/* Header */}
-            <CustomHeader navigation={navigation} title='Add Profile Details' onSkipPress={() => { }} showSkip={true} />
+            <CustomHeader navigation={navigation} title='Add Profile Details'
+                onSkipPress={() => { navigation.navigate(ScreenNameEnum.BOTTAM_TAB); }} showSkip={true}
+
+
+            />
 
             {/* Profile Image Section */}
             <View style={styles.profileImageContainer}>
-                <Image source={images.profileUpdate} style={styles.profileImage} />
-                <TouchableOpacity style={styles.addIcon}>
+                <Image source={image?{uri:image}:images.profileUpdate} style={styles.profileImage} />
+                <TouchableOpacity
+                onPress={()=>{
+                    handleCapture()
+                }}
+                style={styles.addIcon}>
                     <Icon source={icon.add} size={20} />
                 </TouchableOpacity>
             </View>
@@ -89,17 +144,25 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                 />
                 {errors.lastName ? <Text style={styles.errorText}>{errors.lastName}</Text> : null}
 
-                <CustomDropdown 
-                      data={bikeCompanies}
-                    onSelect={(value) => setState(value)} 
+                <CustomDropdown
+                    data={StateData}
+                    onSelect={(value) =>{
+
+                        get_citys_list(value)
+                        setState(value)
+                    } }
                     placeholder="State"
+                    label={'name'}
+                    value={'id'}
                 />
                 {errors.state ? <Text style={styles.errorText}>{errors.state}</Text> : null}
 
-                <CustomDropdown 
-                   data={bikeCompanies}
-                    onSelect={(value) => setCity(value)} 
+                <CustomDropdown
+                    data={cityData}
+                    onSelect={(value) => setCity(value)}
                     placeholder="City"
+                    label={'name'}
+                    value={'id'}
                 />
                 {errors.city ? <Text style={styles.errorText}>{errors.city}</Text> : null}
 
@@ -124,7 +187,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
             <View style={styles.buttonContainer}>
                 <CustomButton
                     title="Submit"
-                    onPress={()=>{ navigation.navigate(ScreenNameEnum.BOTTAM_TAB);}}
+                    onPress={() => { navigation.navigate(ScreenNameEnum.BOTTAM_TAB); }}
                     buttonStyle={styles.button}
                 />
             </View>
@@ -155,7 +218,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: color.white,
         borderRadius: 30,
-        padding:1,
+        padding: 1,
     },
     formContainer: {
         paddingHorizontal: 25,
@@ -164,7 +227,7 @@ const styles = StyleSheet.create({
     input: {
         borderWidth: 1,
         borderColor: '#fff',
-        borderRadius:15,
+        borderRadius: 15,
         padding: 10,
         color: '#000',
     },

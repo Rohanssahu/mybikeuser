@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Icon from './Icon';
@@ -8,7 +8,7 @@ import { icon } from './Image';
 // Define dropdown item type
 interface DropdownItem {
   label: string;
-  value: string;
+  values: string;
 }
 
 // Define props for the component
@@ -16,10 +16,12 @@ interface CustomDropdownProps {
   data: DropdownItem[];
   placeholder?: string;
   onSelect: (value: string) => void;
+  label: string;
+  value: string;
 }
 
-const CustomDropdown: React.FC<CustomDropdownProps> = ({ data, placeholder = 'Select', onSelect }) => {
-  const [value, setValue] = useState<string | null>(null);
+const CustomDropdown: React.FC<CustomDropdownProps> = ({ data, placeholder = 'Select', onSelect,label,value }) => {
+  const [values, setValue] = useState<string | null>(null);
   const [isFocus, setIsFocus] = useState(false);
 
   return (
@@ -27,16 +29,16 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({ data, placeholder = 'Se
       <Dropdown
         style={[styles.dropdown, isFocus && styles.focusedDropdown]}
         data={data}
-        labelField="label"
-        valueField="value"
+        labelField={label}
+        valueField={value}
         placeholderStyle={{color:'#fff'}}
         placeholder={placeholder}
-        value={value}
+        value={values}
         onFocus={() => setIsFocus(true)}
         onBlur={() => setIsFocus(false)}
         onChange={(item) => {
-          setValue(item.value);
-          onSelect(item.value);
+          setValue(item.id);
+          onSelect(item.id);
         }}
         renderRightIcon={() => (
           <Icon  size={20} source={icon.downwhite}/>
@@ -44,12 +46,39 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({ data, placeholder = 'Se
         itemTextStyle={styles.itemText}
         selectedTextStyle={styles.selectedText}
         containerStyle={styles.dropdownContainer}
+        renderItem={(item, isSelected) => (
+          <View style={[styles.itemContainer, isSelected && styles.selectedItem]}>
+            <Text style={[styles.itemText, isSelected && {color:'#000'}]}>
+              {item[label]}
+            </Text>
+          </View>
+        )}
       />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  itemContainer: {
+    paddingVertical:15,
+    paddingHorizontal: 15,
+    backgroundColor: '#2C2F5B', // Default background for all items
+  },
+  selectedItem: {
+    backgroundColor: '#FFFFFF', // ✅ White background for selected item
+  },
+  itemText: {
+    color: '#FFFFFF', // ✅ White text for all dropdown items
+  },
+  selectedItemText: {
+    color: '#000000', // ✅ Black text for selected item
+    fontWeight: 'bold',
+  },
+  selectedText: {
+    fontSize: 16,
+    color: '#000000', // ✅ Black text for the selected value inside the dropdown
+    fontWeight: 'bold',
+  },
   container: {
     width: '100%',
     marginVertical: 10,
