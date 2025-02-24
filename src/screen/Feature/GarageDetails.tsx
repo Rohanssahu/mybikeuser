@@ -31,7 +31,11 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
         {/* Garage Image */}
         <Image source={images.grage} style={styles.garageImage} resizeMode="cover" />
 
-<TouchableOpacity style={{position:'absolute',top:40,left:10}}>
+<TouchableOpacity 
+onPress={()=>{
+  navigation.goBack()
+}}
+style={{position:'absolute',top:40,left:10}}>
     <Icon source={icon.back}  size={30} />
 </TouchableOpacity>
 <View style={{position:'absolute',top:hp(18),left:10}}>

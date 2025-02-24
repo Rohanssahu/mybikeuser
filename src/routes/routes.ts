@@ -15,6 +15,7 @@ import AllServices from "../screen/Feature/AllServices";
 import BikeDetails from "../screen/Feature/BikeDetails";
 import BookingComplete from "../screen/Feature/BookingComplete";
 import GarageDetails from "../screen/Feature/GarageDetails";
+import MyBikes from "../screen/Feature/MyBikes";
 import NearByShops from "../screen/Feature/NearByShops";
 import ServiceSummary from "../screen/Feature/ServiceSummary";
 import AboutUsScreen from "../screen/profile/AboutUsScreen";
@@ -94,6 +95,10 @@ const _routes = {
     {
       name: ScreenNameEnum.SELECT_LOCATION,
       Component: SelectLocation,
+    },
+    {
+      name: ScreenNameEnum.MY_BIKES,
+      Component: MyBikes,
     },
 
   ],

@@ -44,14 +44,9 @@ const RegistrationRoutes: FunctionComponent = () => {
         if (json.status === 'OK' && json.results.length) {
 
 
-          console.log('============json========================');
-          console.log(json);
-          console.log('====================================');
+         
           const city = getFormattedAddress(json);
 
-          console.log('====================================');
-          console.log('city',city);
-          console.log('====================================');
         setLocationName(city);
           // _update_location(latitude, longitude);
         }

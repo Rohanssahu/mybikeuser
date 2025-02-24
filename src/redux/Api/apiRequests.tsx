@@ -265,6 +265,7 @@ const get_citys = async (City: string) => {
         return { success: false, message: error.message, state: [] };
     }
 };
+
 const get_servicelist = async () => {
 
     const token = await AsyncStorage.getItem('token')
@@ -281,7 +282,7 @@ const get_servicelist = async () => {
     try {
         const results = await callMultipleApis(apiRequests);
         const response = results[0];
-       
+
         if (response?.data.length > 0) {
             return { success: true, data: response?.data };
         }
@@ -295,11 +296,9 @@ const get_servicelist = async () => {
         return { success: false, message: error.message, data: [] };
     }
 };
-const get_nearyBydeler = async (lat:string,long:string) => {
+const get_nearyBydeler = async (lat: string, long: string) => {
 
-    console.log('====================================');
     console.log(`${endpoint.nearbydeler}?userLat=${lat}&userLon=${long}`);
-    console.log('====================================');
     const token = await AsyncStorage.getItem('token')
     const apiRequests: ApiRequest[] = [
         {
@@ -314,7 +313,7 @@ const get_nearyBydeler = async (lat:string,long:string) => {
     try {
         const results = await callMultipleApis(apiRequests);
         const response = results[0];
-       
+
         if (response?.data.length > 0) {
             return { success: true, data: response?.data };
         }
@@ -361,7 +360,42 @@ const get_bannerlist = async () => {
         return { success: false, message: error.message, data: [] };
     }
 };
+const get_userbooking = async () => {
+    console.log('===============get_userbooking=====================', endpoint.userbooking);
+    const token = await AsyncStorage.getItem('token')
+
+    console.log(token);
+
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.userbooking,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjdhYjQ3YjlhMDhmYmU0MGM3NDZjNWVlIiwidHlwZSI6ImxvZ2dlZCIsInVzZXJfdHlwZSI6NCwiaWF0IjoxNzQwMzgxMjQxLCJleHAiOjY5MjQzODEyNDF9.QWMx4c1JArruKImxIArvTMPuKcJCJOTzWIQg8FHfUzo'
+            },
+        },
+    ];
 
 
+    try {
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
 
-export { Login_witPhone,get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist,get_bannerlist }  
+        const response = results[0];
+       
+        if (response?.data.length > 0) {
+            return { success: true, message: "success", data: response?.data };
+        }
+        else {
+            return { success: false, message: "Unexpected response", data: [] };
+        }
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, data: [] };
+    }
+};
+
+
+export { get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  

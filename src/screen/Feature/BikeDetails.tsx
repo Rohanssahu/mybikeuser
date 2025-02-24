@@ -38,7 +38,7 @@ const BikeDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
         navigation.navigate(ScreenNameEnum.NEARBY_SHOPS)
         // if (validateForm()) {
         //     console.log('Form submitted successfully!');
-          
+
         // }
     };
 
@@ -48,26 +48,32 @@ const BikeDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
 
             <View style={styles.formContainer}>
                 {/* Bike Company */}
-                <CustomDropdown 
-                    data={bikeCompanies} 
-                    onSelect={(value) => setSelectedBike(value)} 
+                <CustomDropdown
+                    data={bikeCompanies}
+                    onSelect={(value) => setSelectedBike(value)}
                     placeholder="Bike Company"
+                    label="label"
+                    value="value"
                 />
                 {errors.selectedBike && <Text style={styles.errorText}>{errors.selectedBike}</Text>}
 
                 {/* Model Name */}
-                <CustomDropdown 
-                    data={Array.isArray(bikeModels[selectedBike]) ? bikeModels[selectedBike] : []} 
-                    onSelect={(value) => setModelName(value)} 
+                <CustomDropdown
+                    data={Array.isArray(bikeModels[selectedBike]) ? bikeModels[selectedBike] : []}
+                    onSelect={(value) => setModelName(value)}
                     placeholder="Model Name"
+                    label="label"
+                    value="value"
                 />
                 {errors.modelName && <Text style={styles.errorText}>{errors.modelName}</Text>}
 
                 {/* Variant */}
-                <CustomDropdown 
-                    data={Array.isArray(bikeVariants[modelName]) ? bikeVariants[modelName] : []} 
-                    onSelect={(value) => setVariant(value)} 
+                <CustomDropdown
+                    data={Array.isArray(bikeVariants[modelName]) ? bikeVariants[modelName] : []}
+                    onSelect={(value) => setVariant(value)}
                     placeholder="Variant"
+                    label="label"
+                    value="value"
                 />
                 {errors.variant && <Text style={styles.errorText}>{errors.variant}</Text>}
 
@@ -76,6 +82,7 @@ const BikeDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
                     placeholder="Plate Number"
                     onChangeText={(text) => setPlateNumber(text)}
                     value={plateNumber}
+
                     inputStyle={[styles.input, errors.plateNumber && styles.inputError]}
                 />
                 {errors.plateNumber && <Text style={styles.errorText}>{errors.plateNumber}</Text>}

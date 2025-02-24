@@ -99,13 +99,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2C2F5B', // Dropdown background
     borderRadius: 10,
   },
-  itemText: {
-    color: '#FFFFFF', // White text for dropdown items
-  },
-  selectedText: {
-    fontSize: 16,
-    color: '#FFFFFF', // White text for selected value
-  },
+
 });
 
 export default CustomDropdown;

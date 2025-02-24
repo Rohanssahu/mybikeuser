@@ -53,6 +53,8 @@
                         data={bikeCompanies} 
                         onSelect={(value) => setSelectedBike(value)} 
                         placeholder="Bike Company"
+                           label="label"
+                    value="value"
                     />
                     {errors.selectedBike && <Text style={styles.errorText}>{errors.selectedBike}</Text>}
     
@@ -61,6 +63,8 @@
                         data={Array.isArray(bikeModels[selectedBike]) ? bikeModels[selectedBike] : []} 
                         onSelect={(value) => setModelName(value)} 
                         placeholder="Model Name"
+                           label="label"
+                    value="value"
                     />
                     {errors.modelName && <Text style={styles.errorText}>{errors.modelName}</Text>}
     
@@ -69,6 +73,8 @@
                         data={Array.isArray(bikeVariants[modelName]) ? bikeVariants[modelName] : []} 
                         onSelect={(value) => setVariant(value)} 
                         placeholder="Variant"
+                           label="label"
+                    value="value"
                     />
                     {errors.variant && <Text style={styles.errorText}>{errors.variant}</Text>}
     
@@ -78,6 +84,7 @@
                         onChangeText={(text) => setPlateNumber(text)}
                         value={plateNumber}
                         inputStyle={[styles.input, errors.plateNumber && styles.inputError]}
+                        
                     />
                     {errors.plateNumber && <Text style={styles.errorText}>{errors.plateNumber}</Text>}
                 </View>

@@ -16,11 +16,12 @@ export const image_url = 'https://mrbikedoctors.com/image/';
 
 export const callMultipleApis = async (requests: ApiRequest[]) => {
   
-  console.log('callMultipleApis called'); // Debugging purpose
 
   try {
     const responses = await Promise.all(
       requests.map((req) => {
+          console.log('callMultipleApis called',`${base_url}${req.endpoint}`); // Debugging purpose
+
         const config: AxiosRequestConfig = {
           method: req.method || 'GET',
           url: `${base_url}${req.endpoint}`,
@@ -39,6 +40,47 @@ export const callMultipleApis = async (requests: ApiRequest[]) => {
   } catch (error) {
     console.error('API Error:', error);
     throw error;
+  }
+};
+
+export const callApi = async (
+  method: string, 
+  url: string, 
+  headers: any = {}, 
+  data: any = null
+): Promise<any> => {
+  try {
+    // Configure the API request
+    const config: AxiosRequestConfig = {
+      method: method,
+      url: url,
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers, // Add custom headers if provided
+      },
+      data: data, // Add request body if method is POST/PUT
+    };
+
+    // Make the API call using axios
+    const response: AxiosResponse = await axios(config);
+
+    // Return the response data
+    return response.data;
+
+  } catch (error) {
+    console.error('Error occurred while making API call:', error);
+
+    // Handle error, you can throw or return a custom error message
+    if (error.response) {
+      // Server responded with an error
+      throw new Error(`API call failed: ${error.response.status} - ${error.response.data.message || error.response.statusText}`);
+    } else if (error.request) {
+      // No response was received
+      throw new Error('No response received from API');
+    } else {
+      // Something else went wrong
+      throw new Error(`API call failed: ${error.message}`);
+    }
   }
 };
 

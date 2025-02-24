@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, FlatList, Image, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, FlatList, Image, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { hp } from './utils/Constant';
 import images from './Image';
 import { image_url } from '../redux/Api';
+import { useNavigation } from '@react-navigation/native';
+import ScreenNameEnum from '../routes/screenName.enum';
 
 // Define the data type for bike items
 interface BikeItem {
@@ -20,6 +22,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const HorizontalList: React.FC<HorizontalListProps> = ({ data }) => {
 
+  const navigation = useNavigation()
   return (
     <FlatList
       data={data}
@@ -28,10 +31,14 @@ const HorizontalList: React.FC<HorizontalListProps> = ({ data }) => {
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.listContainer}
       renderItem={({ item }) => (
-        <View style={styles.card}>
+        <TouchableOpacity 
+        onPress={()=>{
+          navigation.navigate(ScreenNameEnum.BIKE_DETAILS)
+        }}
+        style={styles.card}>
           <Image source={{ uri: `${image_url}${item.image}` }} style={styles.image} resizeMode="contain" />
           <Text style={styles.text}>{item.name}</Text>
-        </View>
+        </TouchableOpacity>
       )}
     />
   );

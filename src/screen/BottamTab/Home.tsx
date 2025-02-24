@@ -17,61 +17,58 @@ import { useLocation } from '../../component/LocationContext'
 export default function Home({ }) {
 
   const navigation = useNavigation()
-const [Servicelist,setServicelist] = useState([])
-const [bannerlist,setbannerlist] = useState([])
-const [dealerlist,setdealerlist] = useState([])
-const [LocationNames, setLocationNames] = useState('');
-const { locationName, setLocationName } = useLocation();
+  const [Servicelist, setServicelist] = useState([])
+  const [bannerlist, setbannerlist] = useState([])
+  const [dealerlist, setdealerlist] = useState([])
+  const [LocationNames, setLocationNames] = useState('');
+  const { locationName, setLocationName } = useLocation();
 
-  useEffect(()=>{
+  useEffect(() => {
     servicelist()
-  },[])
-  const servicelist =async()=>{
-     const res = await get_servicelist()
-     const banner = await get_bannerlist()
-     const dealer = await get_nearyBydeler('40.7128','74.006')
-
-
-
-     
-   if(dealer.data?.length >0 ){
-    setdealerlist(res.data)
-   }
-   if(res.data?.length >0 ){
-    setServicelist(res.data)
-   }
-   if(banner.data?.length >0 ){
-    setbannerlist(res.data)
-   }
+  }, [])
+  const servicelist = async () => {
+    const res = await get_servicelist()
+    const banner = await get_bannerlist()
+    const dealer = await get_nearyBydeler('40.7128', '74.006')
+    if (dealer.data?.length > 0) {
+      setdealerlist(dealer.data)
+    }
+    if (res.data?.length > 0) {
+      setServicelist(res.data)
+    }
+    if (banner.data?.length > 0) {
+      setbannerlist(res.data)
+    }
   }
+
   return (
     <View style={{ flex: 1, backgroundColor: color.baground }}>
-      <ScrollView >
-      <HomeHeader
-        navigation={navigation}
-        location={locationName ? locationName : LocationNames ? LocationNames : 'Fetching'}
-        hasNotifications={true}
-        onLocationPress={() => {navigation.navigate(ScreenNameEnum.SELECT_LOCATION)}}
-        onNotificationPress={() => console.log("Notifications Pressed")}
-      />
+      <ScrollView showsVerticalScrollIndicator={false} >
+        <HomeHeader
+          navigation={navigation}
+          location={locationName ? locationName : LocationNames ? LocationNames : 'Fetching'}
+          hasNotifications={true}
+          onLocationPress={() => { navigation.navigate(ScreenNameEnum.SELECT_LOCATION) }}
+          onNotificationPress={() => console.log("Notifications Pressed")}
+        />
 
-      <BannerSlider navigation={navigation} data={bannerlist} />
-      <View>
+        <BannerSlider navigation={navigation} data={bannerlist} />
+        <View>
+          <SeeallHeader
+            title="Over Services"
+            onSeeAllPress={() => { navigation.navigate(ScreenNameEnum.ALL_SERVICES) }}
+          />
+          <HorizontalList data={Servicelist} />
+        </View>
         <SeeallHeader
-          title="Over Services"
-          onSeeAllPress={() => {navigation.navigate(ScreenNameEnum.ALL_SERVICES)}}
+          title="Near By You"
+          onSeeAllPress={() => console.log("See All Pressed")}
         />
-        <HorizontalList data={Servicelist} />
-      </View>
-      <SeeallHeader
-        title="Near By You"
-        onSeeAllPress={() => console.log("See All Pressed")}
-      />
-      <View style={{ flex: 1, marginTop: 20 }}>
-        <GarageList
-          data={shopList}
-        />
-      </View>
+        <View style={{ flex: 1, marginTop: 20 }}>
+          <GarageList
+            data={dealerlist}
+          />
+        </View>
       </ScrollView>
     </View>
   )
@@ -84,12 +81,12 @@ const shopList = [
     name: 'GearUp Garage',
     location: 'Grand Park New',
     distance: '2.5',
-    logo:images.superbike
+    logo: images.superbike
   },
   {
     name: 'GearUp Garage',
     location: 'Grand Park New',
     distance: '2.5',
-    logo:images.superbike
+    logo: images.superbike
   },
 ]

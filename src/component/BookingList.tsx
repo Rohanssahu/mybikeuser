@@ -8,10 +8,10 @@ import ScreenNameEnum from '../routes/screenName.enum';
 
 // Define the data type for each booking item
 interface BookingItem {
-  id: string;
+  _id: string;
   bookingId: string;
-  amount: string;
-  date: string;
+  status: string;
+  create_date: string;
   onCallPress: () => void;
   onViewBillPress: () => void;
 }
@@ -25,23 +25,23 @@ const BookingList: React.FC<BookingListProps> = ({ data ,navigation}) => {
   return (
     <FlatList
       data={data}
-      keyExtractor={(item) => item.id}
+      keyExtractor={(item) => item._id}
       contentContainerStyle={styles.listContainer}
       renderItem={({ item }) => (
         <View style={styles.card}>
           <View style={styles.row}>
             <Text style={styles.label}>Booking ID</Text>
-            <Text style={styles.label}>Amount:</Text>
+            <Text style={styles.label}>Status:</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.value}>{item.bookingId}</Text>
-            <Text style={styles.value}>${item.amount}</Text>
+            <Text style={styles.value}>{item.status}</Text>
           </View>
 
           <View style={styles.row}>
             <Text style={styles.label}>Date</Text>
           </View>
-          <Text style={styles.value}>{item.date}</Text>
+          <Text style={styles.value}>{item.create_date}</Text>
 
           <View style={styles.footer}>
             <TouchableOpacity style={styles.callButton} onPress={item.onCallPress}>
