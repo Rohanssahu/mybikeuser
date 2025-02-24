@@ -8,6 +8,7 @@ interface CustomTextInputProps {
   keyboardType?: KeyboardTypeOptions; // Supports different keyboard types
   inputStyle?: ViewStyle;
   textStyle?: TextStyle;
+  editable:boolean;
   placeholderStyle?: TextStyle; // Secondary placeholder style
 }
 
@@ -16,6 +17,7 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
   value, 
   onChangeText, 
   keyboardType = 'default', 
+  editable = true, 
   inputStyle, 
   textStyle, 
   placeholderStyle 
@@ -26,6 +28,7 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
       placeholder={placeholder}
       placeholderTextColor={placeholderStyle?.color || '#A0A3BD'} // Default to light gray
       value={value}
+      editable={editable}
       onChangeText={onChangeText}
       keyboardType={keyboardType}
     />

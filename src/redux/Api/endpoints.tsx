@@ -12,4 +12,7 @@ export const endpoint = {
   userbooking: '/bikedoctor/bookings/getuserbookings',
   mybikes: '/bikedoctor/customers/getMyBikes',
   addUserBike: '/bikedoctor/customers/addUserBike',
+  getbikecompanies: '/bikedoctor/bike/get-bike-companies',
+  getbikemodels: '/bikedoctor/bike/get-bike-models/:company_id',
+  getbikevariants: '/bikedoctor/bike//get-bike-variants/:model_id',
 };

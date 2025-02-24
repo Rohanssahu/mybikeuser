@@ -479,5 +479,125 @@ const get_mybikes = async () => {
     }
 };
 
+const get_BikeCompany = async () => {
+    console.log('===============getbikecompanies=====================', endpoint.getbikecompanies);
+    const token = await AsyncStorage.getItem('token')
 
-export { add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  
+    console.log(token);
+
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.getbikecompanies,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'token': token
+            },
+        },
+    ];
+
+
+    try {
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+
+        const response = results[0];
+
+        if (response?.data.length > 0) {
+            return { success: true, message: "success", data: response?.data };
+        }
+        else {
+            return { success: false, message: "Data Not Found", data: [] };
+        }
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, data: [] };
+    }
+};
+const get_BikeModel = async (id: string) => {
+    console.log('=============getbikemodels=======================', id);
+
+    const token = await AsyncStorage.getItem('token')
+
+    console.log(endpoint.getbikemodels?.replace(':company_id', id));
+
+    const apiRequests: ApiRequest[] = [
+        {
+
+
+
+            endpoint: endpoint.getbikemodels?.replace(':company_id', id),
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                "token":token
+            },
+        },
+    ];
+
+    try {
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+        console.log('API Response=>>>>>>>>>>:', results);
+
+
+        const response = results[0];
+
+
+        if (response?.data.length > 0) {
+            return { success: true, message: "Success", data: response?.data , };
+        }
+        else {
+
+            return { success: false, message: "Unexpected response", data: [] };
+        }
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, state: [] };
+    }
+};
+const get_BikeVariant = async (id: string) => {
+    console.log('==============get_BikeVariant======================', id);
+    const token = await AsyncStorage.getItem('token')
+
+
+    console.log(endpoint.getbikevariants?.replace(':model_id', id));
+
+    const apiRequests: ApiRequest[] = [
+        {
+
+            endpoint: endpoint.getbikevariants?.replace(':model_id', id),
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'token':token
+            },
+        },
+    ];
+
+    try {
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+        console.log('API Response=>>>>>>>>>>:', results);
+
+
+        const response = results[0];
+
+
+        if (response?.data.length > 0) {
+            return { success: true, message: "Success", data: response.data , };
+        }
+        else {
+
+            return { success: false, message: "Unexpected response", data: [] };
+        }
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, state: [] };
+    }
+};
+
+export {get_BikeVariant,get_BikeModel, get_BikeCompany,add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  
