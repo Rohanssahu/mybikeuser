@@ -281,7 +281,37 @@ const get_servicelist = async () => {
     try {
         const results = await callMultipleApis(apiRequests);
         const response = results[0];
-        console.log('API get_servicelist=>>>>>>>>>>:', response);
+       
+        if (response?.data.length > 0) {
+            return { success: true, data: response?.data };
+        }
+        else {
+
+            return { success: false, message: "Unexpected response", data: [] };
+        }
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, data: [] };
+    }
+};
+const get_nearyBydeler = async (lat:string,long:string) => {
+
+    const token = await AsyncStorage.getItem('token')
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: `${endpoint.nearbydeler}?userLat=${lat}&userLon=${long}`,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                "token": token
+            },
+        },
+    ];
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+       
         if (response?.data.length > 0) {
             return { success: true, data: response?.data };
         }
@@ -298,6 +328,9 @@ const get_servicelist = async () => {
 const get_bannerlist = async () => {
 
     const token = await AsyncStorage.getItem('token')
+    console.log('====================================');
+    console.log(token);
+    console.log('====================================');
     const apiRequests: ApiRequest[] = [
         {
             endpoint: endpoint.bannerlist,
@@ -311,7 +344,7 @@ const get_bannerlist = async () => {
     try {
         const results = await callMultipleApis(apiRequests);
         const response = results[0];
-        console.log('API get_servicelist=>>>>>>>>>>:', response);
+
         if (response?.data.length > 0) {
             return { success: true, data: response?.data };
         }
@@ -328,4 +361,4 @@ const get_bannerlist = async () => {
 
 
 
-export { Login_witPhone, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist,get_bannerlist }  
+export { Login_witPhone,get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist,get_bannerlist }  

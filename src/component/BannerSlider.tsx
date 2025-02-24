@@ -14,6 +14,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import images from './Image';
 import { color } from '../constant';
 import { wp } from './utils/Constant';
+import { image_url } from '../redux/Api';
 
 const { width } = Dimensions.get('window');
 
@@ -62,7 +63,7 @@ const BannerSlider: React.FC<BannerSliderProps> = ({ navigation,data }) => {
 
     const renderItem = ({ item }: { item: Banner }) => (
         <View style={styles.bannerContainer}>
-            <Image source={{uri:item?.banner_image}}
+            <Image source={{uri:`${image_url}${item?.banner_image}`}}
                 resizeMode='cover'
                 style={styles.bannerImage} />
             <View style={styles.overlay} />
@@ -116,7 +117,8 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         backgroundColor: color.baground,
         position: 'relative',
-        marginHorizontal: 10,
+        marginHorizontal: 20,
+    
     },
     bannerImage: {
         width: wp(100),

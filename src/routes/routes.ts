@@ -1,5 +1,6 @@
 
 import { icon } from "../component/Image";
+import SelectLocation from "../component/SelectLocation";
 import TabNavigator from "../navigators/TabNavigator";
 import Login from "../screen/Auth/Login";
 import ProfileDetails from "../screen/Auth/ProfileDetails";
@@ -89,6 +90,10 @@ const _routes = {
     {
       name: ScreenNameEnum.PRIVACY_POLICY,
       Component: Privacy,
+    },
+    {
+      name: ScreenNameEnum.SELECT_LOCATION,
+      Component: SelectLocation,
     },
 
   ],

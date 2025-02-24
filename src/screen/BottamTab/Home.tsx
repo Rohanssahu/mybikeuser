@@ -11,13 +11,17 @@ import SeeallHeader from '../../component/SeeallHeader'
 import VerticalList from '../../component/VerticalList'
 import GarageList from '../../component/GarageList'
 import ScreenNameEnum from '../../routes/screenName.enum'
-import { get_bannerlist, get_servicelist } from '../../redux/Api/apiRequests'
+import { get_bannerlist, get_nearyBydeler, get_servicelist } from '../../redux/Api/apiRequests'
+import { useLocation } from '../../component/LocationContext'
 
 export default function Home({ }) {
 
   const navigation = useNavigation()
 const [Servicelist,setServicelist] = useState([])
 const [bannerlist,setbannerlist] = useState([])
+const [dealerlist,setdealerlist] = useState([])
+const [LocationNames, setLocationNames] = useState('');
+const { locationName, setLocationName } = useLocation();
 
   useEffect(()=>{
     servicelist()
@@ -25,7 +29,14 @@ const [bannerlist,setbannerlist] = useState([])
   const servicelist =async()=>{
      const res = await get_servicelist()
      const banner = await get_bannerlist()
+     const dealer = await get_nearyBydeler('40.7128','74.006')
 
+
+
+     
+   if(dealer.data?.length >0 ){
+    setdealerlist(res.data)
+   }
    if(res.data?.length >0 ){
     setServicelist(res.data)
    }
@@ -38,9 +49,9 @@ const [bannerlist,setbannerlist] = useState([])
       <ScrollView >
       <HomeHeader
         navigation={navigation}
-        location="Wallace, Australia"
+        location={locationName ? locationName : LocationNames ? LocationNames : 'Fetching'}
         hasNotifications={true}
-        onLocationPress={() => console.log("Location Pressed")}
+        onLocationPress={() => {navigation.navigate(ScreenNameEnum.SELECT_LOCATION)}}
         onNotificationPress={() => console.log("Notifications Pressed")}
       />
 

@@ -1,13 +1,74 @@
 import 'react-native-gesture-handler';
-import React, {FunctionComponent} from 'react';
+import React, {FunctionComponent, useEffect} from 'react';
 
 import ScreenNameEnum from '../routes/screenName.enum';
 
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import _routes from '../routes/routes';
+import { getCurrentLocation, locationPermission } from '../component/helperFunction';
+import { useLocation } from '../component/LocationContext';
 const Stack = createNativeStackNavigator();
 
 const RegistrationRoutes: FunctionComponent = () => {
+
+  const { locationName, setLocationName } = useLocation();
+
+  function findCityName(response) {
+    const results = response.results;
+    for (let i = 0; i < results.length; i++) {
+        const addressComponents = results[i].address_components;
+        console.log('====================addressComponents================',addressComponents);
+  
+        for (let j = 0; j < addressComponents.length; j++) {
+            const types = addressComponents[j].types;
+            if (types.includes('locality') || types.includes('administrative_area_level_2')) {
+                return addressComponents[j].long_name; // Return the city name
+            }
+        }
+    }
+    return null; // Return null if city name not found
+  }
+  useEffect(() => {
+    const fetchLocationData = async () => {
+      try {
+        const locPermission = await locationPermission();
+        if (locPermission !== 'granted') {
+          console.log('Location permission denied');
+          return;
+        }
+
+        // Get current location
+        const { latitude, longitude } = await getCurrentLocation();
+
+
+
+        // Fetch geocode
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyADzwSBu_YTmqWZj7ys5kp5UcFDG9FQPVY`;
+
+
+        const res = await fetch(url);
+        const json = await res.json();
+
+        if (json.status === 'OK' && json.results.length) {
+
+          const city = findCityName(json);
+
+          console.log('====================================');
+          console.log('city',city);
+          console.log('====================================');
+        setLocationName(city);
+          // _update_location(latitude, longitude);
+        }
+
+
+      } catch (error) {
+        console.log("Error fetching location:", error);
+      }
+    };
+
+    fetchLocationData();
+  }, []); // Empty dependency array ensures this runs only once on mount
+
   return (
     <Stack.Navigator
       initialRouteName={ScreenNameEnum.SPLASH_SCREEN}

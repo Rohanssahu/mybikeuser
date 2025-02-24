@@ -8,5 +8,6 @@ export const endpoint = {
     addProfile:'/bikedoctor/userAuth/addProfile',
     servicelist:'/bikedoctor/service/servicelist',
     bannerlist:'/bikedoctor/banner/bannerlist',
+    nearbydeler:'//bikedoctor/dealer/dealerWithInRange2',
   };
   

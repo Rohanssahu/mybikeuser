@@ -14,20 +14,26 @@ import RegistrationRoutes from './RegistrationRoutes';
 import { ThemeProvider } from '../component/utils/ThemeProvider';
 import { LanguageProvider } from '../component/Localization/LanguageContext';
 import { persistor, store } from '../redux/Store';
+import { LocationProvider, useLocation } from '../component/LocationContext';
+import { locationPermission } from '../component/helperFunction';
 
 export default function AppNavigator() {
+
+
   return (
     <Provider store={store}>
 
       <PersistGate loading={null} persistor={persistor}>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <ThemeProvider>
-            <LanguageProvider>
-              <NavigationContainer>
-                <RegistrationRoutes />
-                <Toast config={toastConfig} />
-              </NavigationContainer>
-            </LanguageProvider>
+            <LocationProvider>
+              <LanguageProvider>
+                <NavigationContainer>
+                  <RegistrationRoutes />
+                  <Toast config={toastConfig} />
+                </NavigationContainer>
+              </LanguageProvider>
+            </LocationProvider>
           </ThemeProvider>
         </GestureHandlerRootView>
       </PersistGate>

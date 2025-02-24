@@ -2,6 +2,7 @@ import React from 'react';
 import { View, FlatList, Image, Text, StyleSheet, Dimensions } from 'react-native';
 import { hp } from './utils/Constant';
 import images from './Image';
+import { image_url } from '../redux/Api';
 
 // Define the data type for bike items
 interface BikeItem {
@@ -18,6 +19,7 @@ interface HorizontalListProps {
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const HorizontalList: React.FC<HorizontalListProps> = ({ data }) => {
+
   return (
     <FlatList
       data={data}
@@ -27,7 +29,7 @@ const HorizontalList: React.FC<HorizontalListProps> = ({ data }) => {
       contentContainerStyle={styles.listContainer}
       renderItem={({ item }) => (
         <View style={styles.card}>
-          <Image source={true?images.bikes:{uri:item.image}} style={styles.image} resizeMode="contain" />
+          <Image source={{ uri: `${image_url}${item.image}` }} style={styles.image} resizeMode="contain" />
           <Text style={styles.text}>{item.name}</Text>
         </View>
       )}
@@ -43,9 +45,9 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH * 0.3,
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    marginTop:20,
+    marginTop: 20,
     padding: 10,
-    height:hp(15),
+    height: hp(15),
     alignItems: 'center',
     justifyContent: 'center',
     marginHorizontal: 10,

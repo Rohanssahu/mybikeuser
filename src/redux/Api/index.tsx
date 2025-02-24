@@ -11,6 +11,8 @@ export interface ApiRequest {
 }
 
 export const base_url = 'https://mrbikedoctors.com/api';
+export const image_url = 'https://mrbikedoctors.com/image/';
+
 
 export const callMultipleApis = async (requests: ApiRequest[]) => {
   
