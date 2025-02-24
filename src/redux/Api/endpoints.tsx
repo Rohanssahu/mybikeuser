@@ -10,4 +10,6 @@ export const endpoint = {
   bannerlist: '/bikedoctor/banner/bannerlist',
   nearbydeler: '/bikedoctor/dealer/dealerWithInRange2',
   userbooking: '/bikedoctor/bookings/getuserbookings',
+  mybikes: '/bikedoctor/customers/getMyBikes',
+  addUserBike: '/bikedoctor/customers/addUserBike',
 };

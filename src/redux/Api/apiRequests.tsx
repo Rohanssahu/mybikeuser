@@ -194,6 +194,52 @@ const add_Profile = async (phone: string, first_name: string, last_name: string,
         return { success: false, message: error.message, user: null };
     }
 };
+const add_Bikes = async (name: string, model: string, bike_cc: string, plate_number: string,) => {
+    
+
+    
+    // Prepare the request body for login API
+    const requestBody = { name, model, bike_cc, plate_number };
+    const token = await AsyncStorage.getItem('token')
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.addUserBike,
+            method: 'POST',
+            data: requestBody,
+
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            token: token,
+        },
+    ];
+
+    try {
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+        console.log('API Response:', results);
+
+
+        const response = results[0];
+
+
+        if (response.status == 200) {
+            if (response.message === "Bike added successfully") {
+
+
+                successToast(response.message)
+            } else {
+
+                successToast(response.message)
+            }
+        }
+        return { success: false, message: "Unexpected response", user: null };
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, user: null };
+    }
+};
 const get_states = async () => {
 
     const apiRequests: ApiRequest[] = [
@@ -372,7 +418,7 @@ const get_userbooking = async () => {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjdhYjQ3YjlhMDhmYmU0MGM3NDZjNWVlIiwidHlwZSI6ImxvZ2dlZCIsInVzZXJfdHlwZSI6NCwiaWF0IjoxNzQwMzgxMjQxLCJleHAiOjY5MjQzODEyNDF9.QWMx4c1JArruKImxIArvTMPuKcJCJOTzWIQg8FHfUzo'
+                'token': token
             },
         },
     ];
@@ -383,12 +429,48 @@ const get_userbooking = async () => {
         const results = await callMultipleApis(apiRequests);
 
         const response = results[0];
-       
+
         if (response?.data.length > 0) {
             return { success: true, message: "success", data: response?.data };
         }
         else {
-            return { success: false, message: "Unexpected response", data: [] };
+            return { success: false, message: "Data Not Found", data: [] };
+        }
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, data: [] };
+    }
+};
+const get_mybikes = async () => {
+    console.log('===============get_userbooking=====================', endpoint.userbooking);
+    const token = await AsyncStorage.getItem('token')
+
+    console.log(token);
+
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.mybikes,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'token': token
+            },
+        },
+    ];
+
+
+    try {
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+
+        const response = results[0];
+
+        if (response?.data.length > 0) {
+            return { success: true, message: "success", data: response?.data };
+        }
+        else {
+            return { success: false, message: "Data Not Found", data: [] };
         }
 
     } catch (error) {
@@ -398,4 +480,4 @@ const get_userbooking = async () => {
 };
 
 
-export { get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  
+export { add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  

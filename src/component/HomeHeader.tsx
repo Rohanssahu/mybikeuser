@@ -23,6 +23,7 @@ const HomeHeader: React.FC<HomeHeaderProps> = ({
     return (
         <View style={styles.container}>
             {/* Location Section */}
+            
             <TouchableOpacity onPress={onLocationPress} style={styles.locationContainer}>
                 <Image source={icon.pin} style={styles.locationIcon} />
                 <Text style={styles.locationText}>{location}</Text>

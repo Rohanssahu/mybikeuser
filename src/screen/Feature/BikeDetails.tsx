@@ -8,6 +8,7 @@ import CustomDropdown from '../../component/CustomDropdown';
 import CustomButton from '../../component/CustomButton';
 import CustomHeader from '../../component/CustomHeaderProps';
 import ScreenNameEnum from '../../routes/screenName.enum';
+import { add_Bikes } from '../../redux/Api/apiRequests';
 
 const BikeDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
     // Form states
@@ -35,11 +36,11 @@ const BikeDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
 
     // Form submission
     const handleSubmit = () => {
-        navigation.navigate(ScreenNameEnum.NEARBY_SHOPS)
-        // if (validateForm()) {
-        //     console.log('Form submitted successfully!');
-
-        // }
+        
+       const res = add_Bikes(selectedBike,modelName,variant,plateNumber)
+       console.log('=========add_Bikes===========================');
+       console.log(res);
+ 
     };
 
     return (

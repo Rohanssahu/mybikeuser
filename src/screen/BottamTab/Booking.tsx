@@ -1,6 +1,5 @@
-
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, Text } from 'react-native';
+import { View, StyleSheet, ScrollView, Text, StatusBar } from 'react-native';
 import CustomHeader from '../../component/CustomHeaderProps';
 import { color } from '../../constant';
 import VerticalshopList from '../../component/VerticalshopList';
@@ -20,47 +19,50 @@ type Props = NativeStackScreenProps<RootStackParamList, 'NearByShops'>;
 
 // Define Shop Item type
 interface ShopItem {
-
     bookingId: string;
     amount: string;
     date: string;
 }
 
 const Booking: React.FC<Props> = ({ navigation }) => {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [Booking, setBooking] = useState([]);
-    const isFocus = useIsFocused()
+    const [searchQuery, setSearchQuery] = useState<string>('');
+    const [booking, setBooking] = useState<ShopItem[]>([]);
+    const isFocus = useIsFocused();
+
     useEffect(() => {
-        booking_list()
-    }, [isFocus])
+        booking_list();
+    }, [isFocus]);
+
     const booking_list = async () => {
-        const booking = await get_userbooking()
-        
-        setBooking(booking?.data)
-
-
-    }
+        try {
+            const response = await get_userbooking();
+            if (response?.data) {
+                setBooking(response.data);
+            } else {
+                setBooking([]);
+            }
+        } catch (error) {
+            console.error("Error fetching bookings:", error);
+            setBooking([]);
+        }
+    };
 
     return (
         <View style={styles.container}>
-            <Text style={{ fontWeight: '600', fontSize: 18, color: "#fff", paddingHorizontal: 20, marginTop: 20 }}>Booking</Text>
+               <StatusBar  backgroundColor={color.baground} />
+            <Text style={styles.headerText}>Booking</Text>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                <View style={{ marginHorizontal: 15 }}>
-
+                <View style={styles.searchContainer}>
                     <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
                 </View>
-                <Text style={{ fontWeight: '600', fontSize: 18, color: "#fff", marginVertical: 15, paddingHorizontal: 20, marginTop: 20 }}>Today</Text>
-                {Booking?.length > 0
-                    ? <BookingList data={Booking} navigation={navigation} /> :
-
-                    <View style={{
-                        justifyContent: 'center',
-                        alignItems: 'center'
-
-                    }}>
-                        <Text style={{ fontWeight: '400', color: '#fff' }}>No Booking Found</Text>
+                <Text style={styles.subHeaderText}>Today</Text>
+                {booking.length > 0 ? (
+                    <BookingList data={booking} navigation={navigation} />
+                ) : (
+                    <View style={styles.noBookingContainer}>
+                        <Text style={styles.noBookingText}>No Booking Found</Text>
                     </View>
-                }
+                )}
             </ScrollView>
         </View>
     );
@@ -73,30 +75,35 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: color.baground,
     },
+    headerText: {
+        fontWeight: '600',
+        fontSize: 18,
+        color: "#fff",
+        paddingHorizontal: 20,
+        marginTop: 20,
+    },
     scrollContent: {
         marginTop: 30,
     },
+    searchContainer: {
+        marginHorizontal: 15,
+    },
+    subHeaderText: {
+        fontWeight: '600',
+        fontSize: 18,
+        color: "#fff",
+        marginVertical: 15,
+        paddingHorizontal: 20,
+        marginTop: 20,
+    },
+    noBookingContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    noBookingText: {
+        fontWeight: '400',
+        color: '#fff',
+    },
 });
 
-// Sample shop list data
-const shopList: ShopItem[] = [
-    {
 
-        bookingId: '536548755222',
-        amount: " 105.44",
-        date: '25-10-2025'
-    },
-    {
-
-        bookingId: '536548755222',
-        amount: " 105.44",
-        date: '25-10-2025'
-    },
-    {
-
-        bookingId: '536548755222',
-        amount: " 105.44",
-        date: '25-10-2025'
-    },
-
-];

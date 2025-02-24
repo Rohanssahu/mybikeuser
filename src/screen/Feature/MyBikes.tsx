@@ -1,62 +1,140 @@
 
-  import React from 'react';
-  import { View, StyleSheet,ScrollView } from 'react-native';
-  import images from '../../component/Image';
-  import VerticalList from '../../component/VerticalList';
-  import CustomHeader from '../../component/CustomHeaderProps';
-  import { NativeStackScreenProps } from '@react-navigation/native-stack';
-  import { color } from '../../constant';
-  
-  // Define the navigation type
-  type RootStackParamList = {
-    AllServices: undefined;
-    // Add other screens if needed
-  };
-  
-  // Define props for the component
-  type Props = NativeStackScreenProps<RootStackParamList, 'AllServices'>;
-  
-  const MyBikes: React.FC<Props> = ({ navigation }) => {
-    return (
-      <View style={styles.container}>
-        <CustomHeader navigation={navigation} title="Category" onSkipPress={() => { }} showSkip={false} />
-       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{marginTop:20}}>
-        <VerticalList data={shopList} navigation={navigation} />
-        </ScrollView>
-      </View>
-    );
-  };
-  
-  // Define the type for shop list items
-  interface ShopItem {
-    name: string;
-    description: string;
-    distance: string;
-    logo: any;
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, ScrollView, Text, FlatList, TouchableOpacity, Image, Dimensions } from 'react-native';
+import images from '../../component/Image';
+import VerticalList from '../../component/VerticalList';
+import CustomHeader from '../../component/CustomHeaderProps';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { color } from '../../constant';
+import { get_mybikes } from '../../redux/Api/apiRequests';
+import { useIsFocused } from '@react-navigation/native';
+import { hp } from '../../component/utils/Constant';
+import ScreenNameEnum from '../../routes/screenName.enum';
+import CustomButton from '../../component/CustomButton';
+import Loading from '../../configs/Loader';
+
+// Define the navigation type
+type RootStackParamList = {
+  AllServices: undefined;
+  // Add other screens if needed
+};
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
+// Define props for the component
+type Props = NativeStackScreenProps<RootStackParamList, 'AllServices'>;
+
+const MyBikes: React.FC<Props> = ({ navigation }) => {
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [Bikes, setBikes] = useState<any>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const isFocus = useIsFocused()
+  useEffect(() => {
+    booking_list()
+  }, [isFocus])
+  const booking_list = async () => {
+    setLoading(true);
+ try{
+    const bikes = await get_mybikes()
+
+
+    console.log('===========bikes=========================');
+    console.log(bikes);
+
+    setBikes(bikes?.data)
+
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  } finally {
+    setLoading(false);
   }
-  
-  // Sample shop list data
-  const shopList: ShopItem[] = [
-    {
-      name: 'GearUp Garage',
-      description: 'Lorem ipsum dolor sit amet',
-      distance: '2.5 km',
-      logo: images.suzuki,
-    },
-    {
-      name: 'MotoFix Center',
-      description: 'Lorem ipsum dolor sit amet',
-      distance: '3.8 km',
-      logo: images.suzuki,
-    },
-  ];
-  
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor:color.baground
-    },
-  });
-  
-  export default MyBikes;
-  
+  }
+
+
+  return (
+    <View style={styles.container}>
+      {loading && <Loading />}
+      <CustomHeader navigation={navigation} title="My Bikes" onSkipPress={() => { }} showSkip={false} />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ marginTop: 20 }}>
+        {Bikes?.length > 0 ? 
+        
+        <FlatList
+        data={Bikes}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContainer}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+          onPress={()=>{
+            navigation.navigate(ScreenNameEnum.BIKE_DETAILS)
+          }}
+          style={styles.card}>
+            <View style={styles.textContainer}>
+              <Text style={styles.title}>{item.plate_number?.toUpperCase()}</Text>
+              <Text style={styles.title}>Name: {item.name}</Text>
+              <Text style={styles.description}>Modal: {item.model}</Text>
+              <Text style={styles.description}>CC: {item.bike_cc}</Text>
+            </View>
+            <Image source={item.logo} style={styles.image} resizeMode="contain" />
+          </TouchableOpacity>
+        )}
+      />:
+          <View style={{
+            justifyContent: 'center',
+            alignItems: 'center'
+
+          }}>
+            <Text style={{ fontWeight: '400', color: '#fff' }}>No Booking Found</Text>
+          </View>}
+
+          <CustomButton  title='Add Bike'  buttonStyle={{marginHorizontal:20}}  onPress={()=>{
+            navigation.navigate(ScreenNameEnum.BIKE_DETAILS)
+          }}/>
+      </ScrollView>
+    </View>
+  );
+};
+
+
+
+// Sample shop list data
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: color.baground
+  },
+  listContainer: {
+    paddingHorizontal: 10,
+    paddingBottom: 20,
+  },
+  card: {
+    flexDirection: 'row',
+    backgroundColor: '#2C2F5B', // Dark blue background
+    borderRadius: 15,
+    padding: 15,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+    width: SCREEN_WIDTH * 0.9, // 90% of screen width
+    alignSelf: 'center',
+  },
+  textContainer: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF', // White text color
+  },
+  description: {
+    fontSize: 14,
+    color: '#fff', // Light gray text
+    marginTop: 5,
+  },
+  image: {
+    width: 80,
+    height: 50,
+    marginLeft: 10,
+  },
+});
+
+export default MyBikes;

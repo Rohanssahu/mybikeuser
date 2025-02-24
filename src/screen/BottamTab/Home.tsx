@@ -1,92 +1,157 @@
-import { View, Text, ScrollView } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { color } from '../../constant'
-import BannerSlider from '../../component/BannerSlider'
-import { useNavigation } from '@react-navigation/native'
-import HomeHeader from '../../component/HomeHeader'
-import HorizontalList from '../../component/HorizontalList'
-import images from '../../component/Image'
-import { hp } from '../../component/utils/Constant'
-import SeeallHeader from '../../component/SeeallHeader'
-import VerticalList from '../../component/VerticalList'
-import GarageList from '../../component/GarageList'
-import ScreenNameEnum from '../../routes/screenName.enum'
-import { get_bannerlist, get_nearyBydeler, get_servicelist } from '../../redux/Api/apiRequests'
-import { useLocation } from '../../component/LocationContext'
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, ActivityIndicator, RefreshControl, StatusBar } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-export default function Home({ }) {
+import { color } from '../../constant';
+import BannerSlider from '../../component/BannerSlider';
+import HomeHeader from '../../component/HomeHeader';
+import HorizontalList from '../../component/HorizontalList';
+import SeeallHeader from '../../component/SeeallHeader';
+import GarageList from '../../component/GarageList';
+import ScreenNameEnum from '../../routes/screenName.enum';
+import { get_bannerlist, get_nearyBydeler, get_servicelist } from '../../redux/Api/apiRequests';
+import { useLocation } from '../../component/LocationContext';
+import Skeleton from "react-native-reanimated-skeleton";
+// Define navigation type
+type RootStackParamList = {
+  SELECT_LOCATION: undefined;
+  ALL_SERVICES: undefined;
+};
 
-  const navigation = useNavigation()
-  const [Servicelist, setServicelist] = useState([])
-  const [bannerlist, setbannerlist] = useState([])
-  const [dealerlist, setdealerlist] = useState([])
-  const [LocationNames, setLocationNames] = useState('');
-  const { locationName, setLocationName } = useLocation();
+type NavigationProps = NativeStackNavigationProp<RootStackParamList>;
+
+// Define data types
+interface Service {
+  id: string;
+  name: string;
+  image: string;
+}
+
+interface Banner {
+  id: string;
+  image: string;
+}
+
+interface Dealer {
+  id: string;
+  name: string;
+  location: string;
+  distance: string;
+  logo: string;
+}
+
+const Home: React.FC = () => {
+  const navigation = useNavigation<NavigationProps>();
+  const [serviceList, setServiceList] = useState<Service[]>([]);
+  const [bannerList, setBannerList] = useState<Banner[]>([]);
+  const [dealerList, setDealerList] = useState<Dealer[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [locationNames, setLocationNames] = useState<string>('');
+  const { locationName } = useLocation();
 
   useEffect(() => {
-    servicelist()
-  }, [])
-  const servicelist = async () => {
-    const res = await get_servicelist()
-    const banner = await get_bannerlist()
-    const dealer = await get_nearyBydeler('40.7128', '74.006')
-    if (dealer.data?.length > 0) {
-      setdealerlist(dealer.data)
+    fetchServiceData();
+  }, []);
+
+  const fetchServiceData = async () => {
+    setLoading(true);
+    try {
+      const [res, banner, dealer] = await Promise.all([
+        get_servicelist(),
+        get_bannerlist(),
+        get_nearyBydeler('40.7128', '74.006'),
+      ]);
+
+      if (dealer.data) setDealerList(dealer.data);
+      if (res.data) setServiceList(res.data);
+      if (banner.data) setBannerList(banner.data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
     }
-    if (res.data?.length > 0) {
-      setServicelist(res.data)
+  };
+
+  // Pull to Refresh Function
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const [res, banner, dealer] = await Promise.all([
+        get_servicelist(),
+        get_bannerlist(),
+        get_nearyBydeler('40.7128', '74.006'),
+      ]);
+
+      if (dealer.data) setDealerList(dealer.data);
+      if (res.data) setServiceList(res.data);
+      if (banner.data) setBannerList(banner.data);
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    } finally {
+      setRefreshing(false);
     }
-    if (banner.data?.length > 0) {
-      setbannerlist(res.data)
-    }
-  }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: color.baground }}>
-      <ScrollView showsVerticalScrollIndicator={false} >
-        <HomeHeader
-          navigation={navigation}
-          location={locationName ? locationName : LocationNames ? LocationNames : 'Fetching'}
-          hasNotifications={true}
-          onLocationPress={() => { navigation.navigate(ScreenNameEnum.SELECT_LOCATION) }}
-          onNotificationPress={() => console.log("Notifications Pressed")}
-        />
+      <StatusBar  backgroundColor={color.baground} />
+      
+      {loading ? (
+        // Show loader while fetching data initially
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#fff" />
+          <Text style={{color:"#fff"  }}>Loading data...</Text>
+        </View>
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          <HomeHeader
+            navigation={navigation}
+            location={locationName || locationNames || 'Fetching'}
+            hasNotifications={true}
+            onLocationPress={() => navigation.navigate(ScreenNameEnum.SELECT_LOCATION)}
+            onNotificationPress={() => console.log("Notifications Pressed")}
+          />
 
-        <BannerSlider navigation={navigation} data={bannerlist} />
-        <View>
-          <SeeallHeader
-            title="Over Services"
-            onSeeAllPress={() => { navigation.navigate(ScreenNameEnum.ALL_SERVICES) }}
-          />
-          <HorizontalList data={Servicelist} />
-        </View>
-        <SeeallHeader
-          title="Near By You"
-          onSeeAllPress={() => console.log("See All Pressed")}
-        />
-        <View style={{ flex: 1, marginTop: 20 }}>
-          <GarageList
-            data={dealerlist}
-          />
-        </View>
-      </ScrollView>
+          {/* Banner Section */}
+          <BannerSlider navigation={navigation} data={bannerList} />
+          {bannerList.length === 0 && (
+            <Text style={{ textAlign: 'center', marginVertical: 10 }}>No Banners Found</Text>
+          )}
+
+          {/* Services Section */}
+          <View>
+            <SeeallHeader
+              title="Our Services"
+              onSeeAllPress={() => navigation.navigate(ScreenNameEnum.ALL_SERVICES)}
+            />
+            {serviceList.length > 0 ? (
+              <HorizontalList data={serviceList} />
+            ) : (
+              <Text style={{ textAlign: 'center', marginVertical: 10 }}>No Services Found</Text>
+            )}
+          </View>
+
+          {/* Nearby Dealers Section */}
+          <SeeallHeader title="Near By You" onSeeAllPress={() => console.log("See All Pressed")} />
+
+          <View style={{ flex: 1, marginTop: 20 }}>
+            {dealerList.length > 0 ? (
+              <GarageList data={dealerList} />
+            ) : (
+              <Text style={{ textAlign: 'center', marginVertical: 10 }}>No Dealers Found</Text>
+            )}
+          </View>
+        </ScrollView>
+      )}
     </View>
-  )
-}
+  );
+};
 
-
-
-const shopList = [
-  {
-    name: 'GearUp Garage',
-    location: 'Grand Park New',
-    distance: '2.5',
-    logo: images.superbike
-  },
-  {
-    name: 'GearUp Garage',
-    location: 'Grand Park New',
-    distance: '2.5',
-    logo: images.superbike
-  },
-]
+export default Home;

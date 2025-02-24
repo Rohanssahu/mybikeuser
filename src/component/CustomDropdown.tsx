@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   },
   selectedText: {
     fontSize: 16,
-    color: '#000000', // ✅ Black text for the selected value inside the dropdown
+    color: '#fff', // ✅ Black text for the selected value inside the dropdown
     fontWeight: 'bold',
   },
   container: {

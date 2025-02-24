@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 
 import { StackNavigationProp } from '@react-navigation/stack';
-import images from './Image';
 import { color } from '../constant';
 import { wp } from './utils/Constant';
 import { image_url } from '../redux/Api';
@@ -20,38 +19,17 @@ const { width } = Dimensions.get('window');
 
 interface Banner {
     id: string;
-    title: string;
+    name: string;
     description: string;
-    imageUrl: string;
+    banner_image: string;
 }
 
 interface BannerSliderProps {
     navigation: StackNavigationProp<any, any>;
+    data: any[];  // Expecting the data passed as a prop
 }
 
-// Demo Data (Replace API Call)
-const demoBanners: Banner[] = [
-    {
-        id: '1',
-        title: 'Car Service',
-        description: 'Reliable care for your vehicle',
-        imageUrl: images.bannerimg,
-    },
-    {
-        id: '2',
-        title: 'Home Cleaning',
-        description: 'Professional cleaning at your doorstep',
-        imageUrl: images.bannerimg,
-    },
-    {
-        id: '3',
-        title: 'Fitness Training',
-        description: 'Stay fit with expert guidance',
-        imageUrl: images.bannerimg,
-    },
-];
-
-const BannerSlider: React.FC<BannerSliderProps> = ({ navigation,data }) => {
+const BannerSlider: React.FC<BannerSliderProps> = ({ navigation, data }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const flatListRef = useRef<FlatList<Banner>>(null);
 
@@ -63,9 +41,11 @@ const BannerSlider: React.FC<BannerSliderProps> = ({ navigation,data }) => {
 
     const renderItem = ({ item }: { item: Banner }) => (
         <View style={styles.bannerContainer}>
-            <Image source={{uri:`${image_url}${item?.banner_image}`}}
+            <Image
+                source={{ uri: `${image_url}${item.banner_image}` }}
                 resizeMode='cover'
-                style={styles.bannerImage} />
+                style={styles.bannerImage}
+            />
             <View style={styles.overlay} />
             <View style={styles.textContainer}>
                 <Text style={styles.title}>{item.name}</Text>
@@ -82,11 +62,19 @@ const BannerSlider: React.FC<BannerSliderProps> = ({ navigation,data }) => {
         </View>
     );
 
+    // Mapping the data to match the expected structure
+    const updatedData = data.map(item => ({
+        id: item._id, // Map _id to id
+        name: item.name,
+        description: item.description || '', // Default to empty string if description is missing
+        banner_image: item.banner_image,
+    }));
+
     return (
         <View style={styles.container}>
             <FlatList
                 ref={flatListRef}
-                data={data}
+                data={updatedData}
                 horizontal
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
@@ -97,8 +85,11 @@ const BannerSlider: React.FC<BannerSliderProps> = ({ navigation,data }) => {
             />
             {/* Pagination Dots */}
             <View style={styles.pagination}>
-                {demoBanners.map((_, index) => (
-                    <View key={index} style={[styles.dot, currentIndex === index && styles.activeDot]} />
+                {updatedData.map((_, index) => (
+                    <View
+                        key={index}
+                        style={[styles.dot, currentIndex === index && styles.activeDot]}
+                    />
                 ))}
             </View>
         </View>
@@ -118,7 +109,6 @@ const styles = StyleSheet.create({
         backgroundColor: color.baground,
         position: 'relative',
         marginHorizontal: 20,
-    
     },
     bannerImage: {
         width: wp(100),
@@ -149,9 +139,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 8,
         borderRadius: 20,
-        width:wp(30),
-        alignItems:'center',
-        justifyContent:'center'
+        width: wp(30),
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     buttonText: {
         color: '#fff',
@@ -161,18 +151,18 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         position: 'absolute',
         bottom: 10,
-        right:40
+        right: 40,
     },
     dot: {
         width: 8,
         height: 8,
         borderRadius: 4,
         backgroundColor: '#888',
-        marginHorizontal:2,
+        marginHorizontal: 2,
     },
     activeDot: {
         backgroundColor: '#fff',
-        width:15,
+        width: 15,
     },
 });
 
