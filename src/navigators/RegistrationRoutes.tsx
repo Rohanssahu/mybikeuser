@@ -12,21 +12,13 @@ const Stack = createNativeStackNavigator();
 const RegistrationRoutes: FunctionComponent = () => {
 
   const { locationName, setLocationName } = useLocation();
-
-  function findCityName(response) {
-    const results = response.results;
-    for (let i = 0; i < results.length; i++) {
-        const addressComponents = results[i].address_components;
-        console.log('====================addressComponents================',addressComponents);
-  
-        for (let j = 0; j < addressComponents.length; j++) {
-            const types = addressComponents[j].types;
-            if (types.includes('locality') || types.includes('administrative_area_level_2')) {
-                return addressComponents[j].long_name; // Return the city name
-            }
-        }
+  function getFormattedAddress(response) {
+    if (response.status === "OK" && response.results.length > 0) {
+      // Get the formatted address from the results
+      return response.results[0].formatted_address;
+    } else {
+      return "Address not found";
     }
-    return null; // Return null if city name not found
   }
   useEffect(() => {
     const fetchLocationData = async () => {
@@ -51,7 +43,11 @@ const RegistrationRoutes: FunctionComponent = () => {
 
         if (json.status === 'OK' && json.results.length) {
 
-          const city = findCityName(json);
+
+          console.log('============json========================');
+          console.log(json);
+          console.log('====================================');
+          const city = getFormattedAddress(json);
 
           console.log('====================================');
           console.log('city',city);

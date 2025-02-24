@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     },
     locationContainer: {
         flexDirection: 'row',
-        alignItems: 'center',
+        
     },
     locationIcon: {
         width: 16,
@@ -62,9 +62,10 @@ const styles = StyleSheet.create({
         marginRight: 5,
     },
     locationText: {
-        fontSize: 14,
+        fontSize: 10,
         color: '#fff',
         fontWeight: '500',
+        width:'70%'
     },
     divider: {
         height: 15,

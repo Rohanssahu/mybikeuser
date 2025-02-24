@@ -297,6 +297,9 @@ const get_servicelist = async () => {
 };
 const get_nearyBydeler = async (lat:string,long:string) => {
 
+    console.log('====================================');
+    console.log(`${endpoint.nearbydeler}?userLat=${lat}&userLon=${long}`);
+    console.log('====================================');
     const token = await AsyncStorage.getItem('token')
     const apiRequests: ApiRequest[] = [
         {
