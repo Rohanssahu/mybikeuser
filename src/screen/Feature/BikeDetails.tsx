@@ -47,10 +47,17 @@ const BikeDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
     };
 
     // Form submission
-    const handleSubmit = () => {
-        const res = add_Bikes(selectedBike, modelName, variant, plateNumber);
+    const handleSubmit =async () => {
+    
+
+        if(validateForm()){
+        const res = await add_Bikes(selectedBike, modelName, variant, plateNumber);
         console.log('=========add_Bikes===========================');
         console.log(res);
+        if(res?.success){
+            navigation.goBack()
+        }
+        }
     };
 
     // Fetch model list based on selected bike company
@@ -131,8 +138,8 @@ const BikeDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
                 <CustomTextInput
                     placeholder="Plate Number"
                     onChangeText={(text) => setPlateNumber(text)}
-                    value={plateNumber}
-                    inputStyle={[styles.input, errors.plateNumber && styles.inputError]}
+                    value={plateNumber?.toLocaleUpperCase()}
+                    inputStyle={[styles.input, errors.plateNumber && styles.inputError,]}
                 />
                 {errors.plateNumber && <Text style={styles.errorText}>{errors.plateNumber}</Text>}
             </View>
@@ -162,7 +169,7 @@ const styles = StyleSheet.create({
         borderColor: '#fff',
         borderRadius: 15,
         padding: 10,
-        color: '#000',
+        color: '#fff',
     },
     inputError: {
         borderColor: 'red',
