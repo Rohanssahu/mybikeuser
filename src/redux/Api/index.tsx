@@ -4,7 +4,7 @@ import ImagePicker from 'react-native-image-crop-picker';
 
 export interface ApiRequest {
   endpoint: string;
-  method?: 'GET' | 'POST';
+  method?: 'GET' | 'POST'|' PUT' ;
   data?: any;
   headers?: Record<string, string>;
   token?: string;
@@ -25,7 +25,7 @@ export const callMultipleApis = async (requests: ApiRequest[]) => {
         const config: AxiosRequestConfig = {
           method: req.method || 'GET',
           url: `${base_url}${req.endpoint}`,
-          data: req.method === 'POST' ? req.data : undefined,
+          data: ['POST', 'PUT'].includes(req.method) ? req.data : undefined,
           headers: {
             'Content-Type': req.data instanceof FormData ? 'multipart/form-data' : 'application/json',
             ...(req.token ? { Authorization: `Bearer ${req.token}` } : {}),

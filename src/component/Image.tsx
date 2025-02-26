@@ -47,6 +47,7 @@ const icon = {
   profileIcon: require('../assets/icons/Icon2.png'),
   rightarrow: require('../assets/icons/arrowr2x.png'),
   bikep: require('../assets/icons/bikep.png'),
+  delete: require('../assets/icons/delete.png'),
 
   bellp: require('../assets/icons/ntof.png'),
   aboutIcon: require('../assets/icons/iip.png'),

@@ -1,12 +1,12 @@
 
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, Text, FlatList, TouchableOpacity, Image, Dimensions } from 'react-native';
-import images from '../../component/Image';
+import { View, StyleSheet, ScrollView, Text, FlatList, TouchableOpacity, Image, Dimensions, Alert } from 'react-native';
+import images, { icon } from '../../component/Image';
 import VerticalList from '../../component/VerticalList';
 import CustomHeader from '../../component/CustomHeaderProps';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { color } from '../../constant';
-import { get_mybikes } from '../../redux/Api/apiRequests';
+import { get_mybikes, remove_bike } from '../../redux/Api/apiRequests';
 import { useIsFocused } from '@react-navigation/native';
 import { hp } from '../../component/utils/Constant';
 import ScreenNameEnum from '../../routes/screenName.enum';
@@ -33,50 +33,82 @@ const MyBikes: React.FC<Props> = ({ navigation }) => {
   }, [isFocus])
   const booking_list = async () => {
     setLoading(true);
- try{
-    const bikes = await get_mybikes()
+    try {
+      const bikes = await get_mybikes()
+      setBikes(bikes?.data)
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
+  const removeBike = async (id) => {
+    setLoading(true);
+    const res = await remove_bike(id)
+    console.log('===========remove_bike=========================', id);
+    if (res?.success) {
+      booking_list()
+    }
 
-    console.log('===========bikes=========================');
-    console.log(bikes);
-
-    setBikes(bikes?.data)
-
-  } catch (error) {
-    console.error("Error fetching data:", error);
-  } finally {
     setLoading(false);
   }
-  }
-
 
   return (
     <View style={styles.container}>
       {loading && <Loading />}
       <CustomHeader navigation={navigation} title="My Bikes" onSkipPress={() => { }} showSkip={false} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ marginTop: 20 }}>
-        {Bikes?.length > 0 ? 
-        
-        <FlatList
-        data={Bikes}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-          onPress={()=>{
-            navigation.navigate(ScreenNameEnum.BIKE_DETAILS)
-          }}
-          style={styles.card}>
-            <View style={styles.textContainer}>
-              <Text style={styles.title}>{item.plate_number?.toUpperCase()}</Text>
-              <Text style={styles.title}>Name: {item.name}</Text>
-              <Text style={styles.description}>Modal: {item.model}</Text>
-              <Text style={styles.description}>CC: {item.bike_cc}</Text>
-            </View>
-            <Image source={item.logo} style={styles.image} resizeMode="contain" />
-          </TouchableOpacity>
-        )}
-      />:
+        {Bikes?.length > 0 ?
+
+          <FlatList
+            data={Bikes}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContainer}
+            renderItem={({ item }) => (
+              <View
+
+                style={styles.card}>
+                <View style={styles.textContainer}>
+                  <Text style={styles.title}>{item.plate_number?.toUpperCase()}</Text>
+                  <Text style={styles.title}>Name: {item.name}</Text>
+                  <Text style={styles.description}>Modal: {item.model}</Text>
+                  <Text style={styles.description}>CC: {item.bike_cc}</Text>
+
+                  <TouchableOpacity 
+                  onPress={()=>{
+                    navigation.navigate(ScreenNameEnum.NEARBY_SHOPS,{item:item})
+                  }}
+                  style={{
+                    marginTop: 10,
+                    backgroundColor: color.buttonColor,
+                    height: 35, borderRadius: 30,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '40%',
+
+                  }}>
+                    <Text style={{ fontWeight: '600', fontSize: 16, color: '#fff' }}>Continue</Text>
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    Alert.alert(
+                      'Confirm Removal',
+                      'Are you sure you want to remove this bike from the list?',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Remove', style: 'destructive', onPress: () => removeBike(item._id) }
+                      ]
+                    );
+                  }}
+                >
+                  <Image source={icon.delete} style={styles.image} resizeMode="contain" />
+                </TouchableOpacity>
+
+              </View>
+            )}
+          /> :
           <View style={{
             justifyContent: 'center',
             alignItems: 'center'
@@ -85,9 +117,9 @@ const MyBikes: React.FC<Props> = ({ navigation }) => {
             <Text style={{ fontWeight: '400', color: '#fff' }}>No Booking Found</Text>
           </View>}
 
-          <CustomButton  title='Add Bike'  buttonStyle={{marginHorizontal:20}}  onPress={()=>{
-            navigation.navigate(ScreenNameEnum.BIKE_DETAILS)
-          }}/>
+        <CustomButton title='Add Bike' buttonStyle={{ marginHorizontal: 20 }} onPress={() => {
+          navigation.navigate(ScreenNameEnum.BIKE_DETAILS)
+        }} />
       </ScrollView>
     </View>
   );
@@ -131,8 +163,8 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   image: {
-    width: 80,
-    height: 50,
+    width: 30,
+    height: 30,
     marginLeft: 10,
   },
 });

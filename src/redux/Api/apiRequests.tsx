@@ -450,7 +450,7 @@ const get_BikeModel = async (id: string) => {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                "token":token
+                "token": token
             },
         },
     ];
@@ -465,7 +465,7 @@ const get_BikeModel = async (id: string) => {
 
 
         if (response?.data.length > 0) {
-            return { success: true, message: "Success", data: response?.data , };
+            return { success: true, message: "Success", data: response?.data, };
         }
         else {
 
@@ -491,7 +491,7 @@ const get_BikeVariant = async (id: string) => {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'token':token
+                'token': token
             },
         },
     ];
@@ -506,7 +506,7 @@ const get_BikeVariant = async (id: string) => {
 
 
         if (response?.data.length > 0) {
-            return { success: true, message: "Success", data: response.data , };
+            return { success: true, message: "Success", data: response.data, };
         }
         else {
 
@@ -518,59 +518,50 @@ const get_BikeVariant = async (id: string) => {
         return { success: false, message: error.message, state: [] };
     }
 };
-const add_Bikes = async (name: string, model: string, bike_cc: string, plate_number: string,) => {
-    
-    console.log('=============name, model, bike_cc, plate_number=======================');
-    console.log(name, model, bike_cc, plate_number);
-    console.log('====================================');
-        
-        // Prepare the request body for login API
-        const requestBody = { name, model, bike_cc, plate_number };
-    
-        console.log('==================requestBody==================');
-        console.log(requestBody);
-        console.log('====================================');
-        const token = await AsyncStorage.getItem('token')
-        const apiRequests: ApiRequest[] = [
-            {
-                endpoint: endpoint.addUserBike,
-                method: 'POST',
-                data: requestBody,
-    
-                headers: {
-                    'Content-Type': 'application/json',
-                    token: token,
-                },
+const add_Bikes = async (name: string, model: string, bike_cc: string, plate_number: string,variant_id:string) => {
+    // Prepare the request body for login API
+    const requestBody = { name, model, bike_cc, plate_number,variant_id };
+    const token = await AsyncStorage.getItem('token')
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.addUserBike,
+            method: 'POST',
+            data: requestBody,
+
+            headers: {
+                'Content-Type': 'application/json',
+                token: token,
             },
-        ];
-    
-        try {
-            // Call the multiple APIs and await the result
-            const results = await callMultipleApis(apiRequests);
-            console.log('API Response:', results);
-    
-    
-            const response = results[0];
-    
-    
-            if (response.status == 200) {
-                if (response.message === "Bike added successfully") {
-    
-                    successToast(response.message)
-                    return { success: true, message:response.message, data: response.data };
-                } else {
-    
-                    successToast(response.message)
-                    return { success: false, message: response.message, data: [] };
-                }
+        },
+    ];
+
+    try {
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+        console.log('API Response:', results);
+
+
+        const response = results[0];
+
+
+        if (response.status == 200) {
+            if (response.message === "Bike added successfully") {
+
+                successToast(response.message)
+                return { success: true, message: response.message, data: response.data };
+            } else {
+
+                successToast(response.message)
+                return { success: false, message: response.message, data: [] };
             }
-            
-    
-        } catch (error) {
-            console.error('Error fetching data:', error);
-            return { success: false, message: error.message, data: null };
         }
-    };
+
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, data: null };
+    }
+};
 
 const get_BikeCompany = async () => {
     console.log('===============getbikecompanies=====================', endpoint.getbikecompanies);
@@ -608,4 +599,110 @@ const get_BikeCompany = async () => {
         return { success: false, message: error.message, data: [] };
     }
 };
-export {get_BikeVariant,get_BikeModel, get_BikeCompany,add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  
+
+const remove_bike = async (id: string) => {
+    console.log('==============remove_bike======================', id);
+
+    const token = await AsyncStorage.getItem('token')
+    const apiRequests: ApiRequest[] = [
+        {
+
+            endpoint: endpoint.deleteMyBike?.replace(':bike_id', id),
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'token': token
+            },
+        },
+    ];
+
+    try {
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+        console.log('API Response=>>>>>>>>>>:', results);
+        const response = results[0];
+
+        if (response?.status == '200') {
+            successToast('Bike Remove Successfully')
+            return { success: true, message: "Success", data: response.data, };
+        }
+        else {
+
+            return { success: false, message: "Unexpected response", data: [] };
+        }
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, state: [] };
+    }
+};
+const garage_details = async (id: string) => {
+    console.log('==============garagedetails======================', id);
+
+    const token = await AsyncStorage.getItem('token')
+    const apiRequests: ApiRequest[] = [
+        {
+
+            endpoint: endpoint.garagedetails?.replace(':id', id),
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'token': token
+            },
+        },
+    ];
+
+    try {
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+        console.log('API Response=>>>>>>>>>>:', results);
+        const response = results[0];
+
+        if (response?.status == '200') {
+            successToast('Bike Remove Successfully')
+            return { success: true, message: "Success", data: response.data, };
+        }
+        else {
+
+            return { success: false, message: "Unexpected response", data: [] };
+        }
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, state: [] };
+    }
+};
+
+const get_FilterBydeler = async (lat: string, long: string,variant_id:string,) => {
+
+    const token = await AsyncStorage.getItem('token')
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: `${endpoint.nearbydeler}?userLat=${lat}&userLon=${long}&variant_id=${variant_id}`,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                "token": token
+            },
+        },
+    ];
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+
+        if (response?.data.length > 0) {
+            return { success: true, data: response?.data };
+        }
+        else {
+
+            return { success: false, message: "Unexpected response", data: [] };
+        }
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, data: [] };
+    }
+};
+
+
+export {garage_details,get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  

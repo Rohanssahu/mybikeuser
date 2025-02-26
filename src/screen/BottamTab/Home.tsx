@@ -53,6 +53,7 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     fetchServiceData();
+
   }, []);
 
   const fetchServiceData = async () => {
@@ -64,6 +65,9 @@ const Home: React.FC = () => {
         get_nearyBydeler('40.7128', '74.006'),
       ]);
 
+      console.log('=========dealer.data===========================');
+      console.log(dealer.data);
+      console.log('====================================');
       if (dealer.data) setDealerList(dealer.data);
       if (res.data) setServiceList(res.data);
       if (banner.data) setBannerList(banner.data);
@@ -94,6 +98,8 @@ const Home: React.FC = () => {
     }
   };
 
+
+
   return (
     <View style={{ flex: 1, backgroundColor: color.baground }}>
       <StatusBar  backgroundColor={color.baground} />
@@ -122,7 +128,7 @@ const Home: React.FC = () => {
           {/* Banner Section */}
           <BannerSlider navigation={navigation} data={bannerList} />
           {bannerList.length === 0 && (
-            <Text style={{ textAlign: 'center', marginVertical: 10 }}>No Banners Found</Text>
+            <Text style={{ textAlign: 'center', marginVertical: 10,color:'#fff' }}>No Banners Found</Text>
           )}
 
           {/* Services Section */}
@@ -134,7 +140,7 @@ const Home: React.FC = () => {
             {serviceList.length > 0 ? (
               <HorizontalList data={serviceList} />
             ) : (
-              <Text style={{ textAlign: 'center', marginVertical: 10 }}>No Services Found</Text>
+              <Text style={{ textAlign: 'center', marginVertical: 10,color:'#fff' }}>No Services Found</Text>
             )}
           </View>
 
@@ -145,7 +151,7 @@ const Home: React.FC = () => {
             {dealerList.length > 0 ? (
               <GarageList data={dealerList} />
             ) : (
-              <Text style={{ textAlign: 'center', marginVertical: 10 }}>No Dealers Found</Text>
+              <Text style={{ textAlign: 'center', marginVertical: 10 ,color:'#fff'}}>No Dealers Found</Text>
             )}
           </View>
         </ScrollView>

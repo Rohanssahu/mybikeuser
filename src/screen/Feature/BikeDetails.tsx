@@ -14,7 +14,7 @@ const BikeDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
     const [selectedBike, setSelectedBike] = useState<string | null>(null);
     const [modelName, setModelName] = useState<string | null>(null);
     const [variant, setVariant] = useState<string | null>(null);
-    const [VariantCC, setVariantCC] = useState<string | null>('');
+    const [VariantId, setVariantId] = useState<string | null>('');
     const [plateNumber, setPlateNumber] = useState<string>('');
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [bikeCompanies, setBikeCompanies] = useState<string[]>([]);
@@ -51,7 +51,7 @@ const BikeDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
     
 
         if(validateForm()){
-        const res = await add_Bikes(selectedBike, modelName, variant, plateNumber);
+        const res = await add_Bikes(selectedBike, modelName, variant, plateNumber,VariantId);
         console.log('=========add_Bikes===========================');
         console.log(res);
         if(res?.success){
@@ -123,7 +123,7 @@ const BikeDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
                     data={bikeVariants}
                     onSelect={(value) => {
                         setVariant(value?.variant_name);
-                        setVariantCC(value?.engine_cc);
+                        setVariantId(value?._id);
                     }}
                     placeholder="Variant"
                     label="variant_name"

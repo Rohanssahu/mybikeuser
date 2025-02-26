@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, StatusBar, TouchableOpacity } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import CustomHeader from '../../component/CustomHeaderProps';
@@ -8,20 +8,41 @@ import { hp } from '../../component/utils/Constant';
 import Icon from '../../component/Icon';
 import CustomButton from '../../component/CustomButton';
 import ScreenNameEnum from '../../routes/screenName.enum';
+import { useRoute } from '@react-navigation/native';
+import { useDispatch } from 'react-redux';
+import { garage_details } from '../../redux/Api/apiRequests';
 
 interface ServiceItem {
   title: string;
   description: string;
 }
+const services: ServiceItem[] = [
+  { title: 'Oil Change & Oil Filter Cleaning', description: 'Proprietary quality engine oil. Manufacturer recommended oil grade.' },
+  { title: 'Brake Check Up', description: 'Proprietary quality engine oil. Manufacturer recommended oil grade.' },
+  { title: 'Electrical Maintenance', description: 'Proprietary quality engine oil. Manufacturer recommended oil grade.' },
+  { title: 'Engine Maintenance', description: 'Proprietary quality engine oil. Manufacturer recommended oil grade.' },
+];
+
 
 const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
-  // Sample service data
-  const services: ServiceItem[] = [
-    { title: 'Oil Change & Oil Filter Cleaning', description: 'Proprietary quality engine oil. Manufacturer recommended oil grade.' },
-    { title: 'Brake Check Up', description: 'Proprietary quality engine oil. Manufacturer recommended oil grade.' },
-    { title: 'Electrical Maintenance', description: 'Proprietary quality engine oil. Manufacturer recommended oil grade.' },
-    { title: 'Engine Maintenance', description: 'Proprietary quality engine oil. Manufacturer recommended oil grade.' },
-  ];
+  const route = useRoute()
+
+  const { bike, id } = route.params
+
+  useEffect(() => {
+    get_dealer_details()
+  }, [id])
+
+  const get_dealer_details = async () => {
+
+    const res = await garage_details(id)
+
+    console.log('===========garage_details=========================');
+    console.log(res);
+
+
+  }
+
 
   return (
     <View style={styles.container}>
@@ -31,27 +52,27 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
         {/* Garage Image */}
         <Image source={images.grage} style={styles.garageImage} resizeMode="cover" />
 
-<TouchableOpacity 
-onPress={()=>{
-  navigation.goBack()
-}}
-style={{position:'absolute',top:40,left:10}}>
-    <Icon source={icon.back}  size={30} />
-</TouchableOpacity>
-<View style={{position:'absolute',top:hp(18),left:10}}>
-<Text style={styles.title}>MotoMend Station</Text>
+        <TouchableOpacity
+          onPress={() => {
+            navigation.goBack()
+          }}
+          style={{ position: 'absolute', top: 40, left: 10 }}>
+          <Icon source={icon.back} size={30} />
+        </TouchableOpacity>
+        <View style={{ position: 'absolute', top: hp(18), left: 10 }}>
+          <Text style={styles.title}>MotoMend Station</Text>
           <Text style={styles.subtitle}>0993 Novick Parkway</Text>
 
           {/* Distance & Rating */}
           <View style={styles.infoRow}>
-            <Icon  source={icon.pin} size={16} />
+            <Icon source={icon.pin} size={16} />
             <Text style={styles.infoText}>1.2 KM</Text>
-            <Icon  source={icon.star} size={16} />
+            <Icon source={icon.star} size={16} />
             <Text style={styles.infoText}>4.3</Text>
           </View>
-</View>
+        </View>
         <View style={styles.contentContainer}>
-         
+
 
           {/* Description */}
           <Text style={styles.sectionTitle}>Description</Text>
@@ -61,58 +82,60 @@ style={{position:'absolute',top:40,left:10}}>
 
           {/* Features */}
           <View style={styles.featureRow}>
-            <Icon source={icon.Mobile} size={30}  />
+            <Icon source={icon.Mobile} size={30} />
             <View>
-            <Text style={styles.featureText}>Go Digital</Text>
-            <Text style={styles.featureText2}>Convenient Online Payment Options.</Text>
+              <Text style={styles.featureText}>Go Digital</Text>
+              <Text style={styles.featureText2}>Convenient Online Payment Options.</Text>
             </View>
           </View>
           <View style={styles.featureRow}>
-          <Icon source={icon.pickups} size={30}  />
-          <View>
-            <Text style={styles.featureText}>Pick-Up & Drop</Text>
-            <Text style={styles.featureText2}>Service from the comfort of your home/office.</Text>
+            <Icon source={icon.pickups} size={30} />
+            <View>
+              <Text style={styles.featureText}>Pick-Up & Drop</Text>
+              <Text style={styles.featureText2}>Service from the comfort of your home/office.</Text>
             </View>
           </View>
           <View style={styles.featureRow}>
-          <Icon source={icon.Mobile} size={30}  />
-          <View>
-            <Text style={styles.featureText}>Our Promise</Text>
-            <Text style={styles.featureText2}>100% satisfaction guaranteed.</Text>
-           
-           </View>
+            <Icon source={icon.Mobile} size={30} />
+            <View>
+              <Text style={styles.featureText}>Our Promise</Text>
+              <Text style={styles.featureText2}>100% satisfaction guaranteed.</Text>
+
+            </View>
           </View>
           <View style={styles.featureRow}>
-          <Icon source={icon.Expert} size={30}  />
-<View>
-            <Text style={styles.featureText}>Expert Advice</Text>
-            <Text style={styles.featureText2}>Skilled mechanics for your every need.</Text>
-           
-          </View>
+            <Icon source={icon.Expert} size={30} />
+            <View>
+              <Text style={styles.featureText}>Expert Advice</Text>
+              <Text style={styles.featureText2}>Skilled mechanics for your every need.</Text>
+
+            </View>
           </View>
 
           {/* Services */}
           {services.map((service, index) => (
             <View key={index} style={styles.serviceContainer}>
-                <View style={{backgroundColor:color.borderColor,
-                padding:10,marginLeft:-50,
-                    paddingLeft:50,
-                    borderRadius:30}}>
+              <View style={{
+                backgroundColor: color.borderColor,
+                padding: 10, marginLeft: -50,
+                paddingLeft: 50,
+                borderRadius: 30
+              }}>
 
-              <Text style={[styles.serviceTitle,{color:'#000'}]}>{service.title}</Text>
+                <Text style={[styles.serviceTitle, { color: '#000' }]}>{service.title}</Text>
               </View>
               <Text style={styles.serviceText}>{service.description}</Text>
             </View>
           ))}
         </View>
-<View style={{marginVertical:15,paddingHorizontal:20,marginBottom:60}}>
-        <CustomButton
-title='Continue'
+        <View style={{ marginVertical: 15, paddingHorizontal: 20, marginBottom: 60 }}>
+          <CustomButton
+            title='Continue'
 
-onPress={()=>{
-    navigation.navigate(ScreenNameEnum.BOOKING_COMPLETE)
-}}
-        />
+            onPress={() => {
+              navigation.navigate(ScreenNameEnum.BOOKING_COMPLETE)
+            }}
+          />
         </View>
       </ScrollView>
     </View>
@@ -131,7 +154,7 @@ const styles = StyleSheet.create({
     height: hp(30),
   },
   contentContainer: {
-    padding:15,
+    padding: 15,
   },
   title: {
     fontSize: 22,
@@ -175,7 +198,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#fff',
     marginLeft: 10,
-    fontWeight:'600'
+    fontWeight: '600'
   },
   featureText2: {
     fontSize: 12,
@@ -185,7 +208,7 @@ const styles = StyleSheet.create({
   serviceContainer: {
     marginTop: 20,
 
- 
+
     borderRadius: 10,
   },
   serviceTitle: {
