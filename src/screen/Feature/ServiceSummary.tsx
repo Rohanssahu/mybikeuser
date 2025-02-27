@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { color } from '../../constant';
 import CustomHeader from '../../component/CustomHeaderProps';
 import { hp } from '../../component/utils/Constant';
@@ -26,10 +26,15 @@ const ServiceSummary: React.FC<ServiceSummaryProps> = ({
 }) => {
     return (
         <View style={styles.container}>
-            <CustomHeader  title='View Biils' navigation={navigation}  />
+            <CustomHeader  title='Booking Details' navigation={navigation}  />
+            <ScrollView>
             <View style={styles.card}>
                 {/* Bike Details */}
                 <Text style={styles.sectionTitle}>Bike Details</Text>
+                <View style={styles.row}>
+                    <Text style={styles.label}>Booking Date</Text>
+                    <Text style={styles.value}>{serviceData?.serviceDate}</Text>
+                </View>
                 <View style={styles.row}>
                     <Text style={styles.label}>Bike Model & Variant</Text>
                     <Text style={styles.value}>{serviceData?.bikeModel}</Text>
@@ -39,15 +44,24 @@ const ServiceSummary: React.FC<ServiceSummaryProps> = ({
                     <Text style={styles.value}>{serviceData?.registrationNumber}</Text>
                 </View>
                 <View style={styles.row}>
+                    <Text style={styles.label}>Last Service Km</Text>
+                    <Text style={styles.value}>{serviceData?.lastservicekm} km</Text>
+                </View>
+                <View style={styles.row}>
                     <Text style={styles.label}>Service Date</Text>
                     <Text style={styles.value}>{serviceData?.serviceDate}</Text>
                 </View>
+                <View style={styles.row}>
+                    <Text style={styles.label}>Pickup Status</Text>
+                    <Text style={[styles.totalPrice,{color:'#d1a908'}]}>Pending</Text>
+                </View>
+          
 
                 {/* Service Summary */}
                 <View style={styles.summaryContainer}>
                     <Text style={styles.summaryTitle}>Service Summary</Text>
 
-                    {serviceData?.services?.map((service, index) => (
+                   {serviceData?.services?.map((service, index) => (
                         <View key={index} style={styles.serviceRow}>
                             <Text style={styles.serviceName}>{service.name}</Text>
                             <Text style={styles.servicePrice}>{service.price}</Text>
@@ -55,21 +69,36 @@ const ServiceSummary: React.FC<ServiceSummaryProps> = ({
                     ))}
 
                     {/* Total */}
-                    <View style={styles.divider} />
+                    {/* <View style={styles.divider} />
                     <View style={styles.serviceRow}>
                         <Text style={styles.totalText}>Total</Text>
                         <Text style={styles.totalPrice}>{serviceData?.totalAmount}</Text>
+                    </View> */}
+         
+                <View style={styles.divider} />
+                    <View style={styles.serviceRow}>
+                        <Text style={styles.totalText}>Bill</Text>
+                        <Text style={[styles.totalPrice,{color:'#d1a908'}]}>Pending</Text>
+                    </View> 
                     </View>
+                <View style={styles.summaryContainer}>
+                    <Text style={styles.summaryTitle}>Additional Notes</Text>
+                    {serviceData?.Additional?.map((service, index) => (
+                        <View key={index} style={styles.serviceRow}>
+                          
+                            <Text style={styles.servicePrice}>1. {service.note}</Text>
+                        </View>
+                    ))}
                 </View>
-
+                
                 {/* Footer */}
                 <Text style={styles.footerText}>
                     Thank you for servicing with <Text style={styles.highlight}>DR BIKE!</Text>{'\n'}Ride Safe!
                 </Text>
             </View>
             <View style={{
-                    position: 'absolute',
-                    bottom: 30, width: '100%', paddingHorizontal: 30
+                   marginTop:30, 
+                    width: '100%', paddingHorizontal: 30
                 }}>
                     <CustomButton
                         title='Download Invoice'
@@ -79,6 +108,7 @@ const ServiceSummary: React.FC<ServiceSummaryProps> = ({
                         }}
                     />
                 </View>
+                </ScrollView>
         </View>
     );
 };
@@ -142,6 +172,7 @@ const styles = StyleSheet.create({
     serviceName: {
         fontSize: 14,
         color: '#000',
+        fontWeight:'500'
     },
     servicePrice: {
         fontSize: 14,
@@ -178,14 +209,18 @@ const styles = StyleSheet.create({
 
 const serviceData = {
     bikeModel: 'Yamaha R15 V3',
-    registrationNumber: 'ABC-1234',
+    registrationNumber: 'MP09CF1234',
+    lastservicekm: '10000',
     serviceDate: 'January 31, 2025',
     services: [
-        { name: 'Engine Oil', price: 'Rs. 1,000' },
-        { name: 'Air Filter', price: 'Rs. 500' },
-        { name: 'General Service', price: 'Rs. 2,000' },
-        { name: 'Cleaning', price: 'Rs. 300' },
+        { name: 'General Service', price: 'Rs. 2,00' },
         { name: 'Tax', price: 'Rs. 250' },
+    ],
+    Additional:[
+{
+    note:'Remaing Your cluct plat change after 500 km '
+}
+
     ],
     totalAmount: 'Rs. 4,050',
 };

@@ -7,7 +7,7 @@ import CustomHeader from '../../component/CustomHeaderProps';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { color } from '../../constant';
 import { get_mybikes, remove_bike } from '../../redux/Api/apiRequests';
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused, useRoute } from '@react-navigation/native';
 import { hp } from '../../component/utils/Constant';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import CustomButton from '../../component/CustomButton';
@@ -24,6 +24,9 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 type Props = NativeStackScreenProps<RootStackParamList, 'AllServices'>;
 
 const MyBikes: React.FC<Props> = ({ navigation }) => {
+  const route = useRoute()
+
+  const {profile } =route.params
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [Bikes, setBikes] = useState<any>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -74,7 +77,7 @@ const MyBikes: React.FC<Props> = ({ navigation }) => {
                   <Text style={styles.title}>Name: {item.name}</Text>
                   <Text style={styles.description}>Modal: {item.model}</Text>
                   <Text style={styles.description}>CC: {item.bike_cc}</Text>
-
+{!profile &&
                   <TouchableOpacity 
                   onPress={()=>{
                     navigation.navigate(ScreenNameEnum.NEARBY_SHOPS,{item:item})
@@ -89,7 +92,7 @@ const MyBikes: React.FC<Props> = ({ navigation }) => {
 
                   }}>
                     <Text style={{ fontWeight: '600', fontSize: 16, color: '#fff' }}>Continue</Text>
-                  </TouchableOpacity>
+                  </TouchableOpacity>}
                 </View>
                 <TouchableOpacity
                   onPress={() => {

@@ -39,6 +39,9 @@ const ProfileMenuList: React.FC<ProfileMenuListProps> = ({ data }) => {
               if (item.title !== 'Logout') {
                 navigation.navigate(item.screen as never)
               }
+               else if (item.title !== 'Vehicles') {
+                navigation.navigate(item.screen ,{profile:true})
+              }
               else{
                 setIsModalVisible(true)
               }

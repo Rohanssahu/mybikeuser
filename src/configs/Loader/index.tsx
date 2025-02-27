@@ -15,7 +15,7 @@ export default class Loading extends React.Component {
     return (
       <View style={styles.container}>
         <ActivityIndicator size={Platform.OS == 'ios' ? 1 : 40} color={'#fff'} />
-        <Text style={{fontStyle:'italic',color:'#fff'}}>please Wait......</Text>
+        <Text style={{ fontStyle: 'italic', color: '#fff' }}>please Wait......</Text>
       </View>
     );
   }
@@ -24,7 +24,7 @@ export default class Loading extends React.Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-     backgroundColor:'rgba(248,249,249,0.2)',
+    backgroundColor: 'rgba(248,249,249,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'absolute',

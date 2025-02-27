@@ -65,9 +65,6 @@ const Home: React.FC = () => {
         get_nearyBydeler('40.7128', '74.006'),
       ]);
 
-      console.log('=========dealer.data===========================');
-      console.log(dealer.data);
-      console.log('====================================');
       if (dealer.data) setDealerList(dealer.data);
       if (res.data) setServiceList(res.data);
       if (banner.data) setBannerList(banner.data);

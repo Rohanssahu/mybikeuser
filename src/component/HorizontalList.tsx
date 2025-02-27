@@ -33,7 +33,7 @@ const HorizontalList: React.FC<HorizontalListProps> = ({ data }) => {
       renderItem={({ item }) => (
         <TouchableOpacity 
         onPress={()=>{
-          navigation.navigate(ScreenNameEnum.MY_BIKES)
+          navigation.navigate(ScreenNameEnum.MY_BIKES,{profile:false})
         }}
         style={styles.card}>
           <Image source={{ uri: `${image_url}${item.image}` }} style={styles.image} resizeMode="contain" />

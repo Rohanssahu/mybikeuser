@@ -2,6 +2,7 @@ import { pathImage } from "../constant";
 
 const images = {
   logo: require('../assets/images/LOGO2x.png'),
+  map: require('../assets/images/maps.png'),
   profileUpdate: require('../assets/images/user.png'),
   bannerimg: require('../assets/images/image.png'),
   bikes: require('../assets/images/bikes.png'),
@@ -20,6 +21,7 @@ const images = {
 const icon = {
   downwhite: require('../assets/icons/Drop_Arrow.png'),
   close: require('../assets/icons/Close2x.png'),
+  check: require('../assets/icons/check.png'),
   coins: require('../assets/icons/coins.png'),
   facebook: require('../assets/icons/Facebook2x.png'),
   apple: require('../assets/icons/AppleButton2x.png'),
@@ -30,6 +32,7 @@ const icon = {
   home1: require('../assets/icons/home2.png'),
   booking: require('../assets/icons/Booking2x.png'),
   pin: require('../assets/icons/Pin2x.png'),
+  mpin: require('../assets/icons/mp.png'),
   notification: require('../assets/icons/Notification2x.png'),
   pickups: require('../assets/icons/Pickup2x.png'),
   star: require('../assets/icons/Star2x.png'),

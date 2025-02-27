@@ -17,5 +17,7 @@ export const endpoint = {
   getbikevariants: '/bikedoctor/bike//get-bike-variants/:model_id',
   deleteMyBike: '/bikedoctor/customers/deleteMyBike/:bike_id',
   dealerWithInRange: '/bikedoctor/dealer/dealerWithInRange2',
-  garagedetails: '/bikedoctor/dealer/dealer/:id',
+  garagedetails: '/bikedoctor/dealer/getShopDetails',
+  createBooking: '/bikedoctor/bookings/createBooking',
+  addpickndrop: '/bikedoctor/pickndrop/addpickndrop',
 };

@@ -71,7 +71,7 @@ const BookingList: React.FC<BookingListProps> = ({ data ,navigation}) => {
               navigation.navigate(ScreenNameEnum.SERVICE_SUMMERY)
             }}
             style={styles.billButton} >
-              <Text style={styles.billText}>View Bill</Text>
+              <Text style={styles.billText}>Bike Details</Text>
             </TouchableOpacity>
           </View>
         </View>
