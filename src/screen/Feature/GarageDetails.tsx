@@ -38,6 +38,8 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [choosePickup, setchoosePickup] = useState(false)
   const [choosePickupOption, setchoosePickupOption] = useState('')
   const [PickupDistance, setPickupDistance] = useState(null)
+  const [BookingDate, setBookingDate] = useState(new Date())
+  const [BookingDateModal, setBookingDateModal] = useState(false)
 
   useEffect(() => {
     requestLocationPermission();
@@ -76,9 +78,7 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
   };
 
 
-  console.log('===============bike=====================');
-  console.log(bike?.variant_id);
-  console.log('====================================');
+
   // Haversine formula for distance calculation
   const haversineFormula = (start, end) => {
 
@@ -139,7 +139,7 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
 
     if (!choosePickupOption) return errorToast('Please Choose Picup_up & Drop Option')
     setLoading(true)
-    const res = await create_booking(GarageDetails?._id, selectedService, choosePickupOption === 'Self' ? '' : PickupLocationId,bike?.variant_id)
+    const res = await create_booking(GarageDetails?._id, selectedService, choosePickupOption === 'Self' ? '' : PickupLocationId,bike?._id,BookingDate?.toString())
 
 
     if (res?.success) {
@@ -148,13 +148,38 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
     }
     setLoading(false)
   }
-
-
+  const formatDateTime = (isoDate) => {
+    const date = new Date(isoDate);
+  
+    // Define month names
+    const monthNames = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+  
+    // Extract date components
+    const day = date.getDate();
+    const month = monthNames[date.getMonth()]; // Get month name
+    const year = date.getFullYear();
+  
+    // Extract time components
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const amPm = hours >= 12 ? 'PM' : 'AM';
+  
+    // Convert to 12-hour format
+    hours = hours % 12 || 12;
+  
+    // Format final string
+    return `${day} ${month} ${year} ${hours}:${minutes} ${amPm}`;
+  };
   return (
     <View style={styles.container}>
       {/* Header */}
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       {loading && <Loading />}
+
+
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Garage Image */}
         <Image source={images.grage} style={styles.garageImage} resizeMode="cover" />
@@ -255,6 +280,29 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
             </TouchableOpacity>
 
           </View>
+          <View style={[styles.featureRow, { justifyContent: 'space-between' }]}>
+            <Icon source={icon.calendar} size={25} style={{tintColor:color.buttonColor,marginLeft:4}} />
+            <View style={{ width: '88%' }}>
+              <Text style={styles.featureText}>Pick-Up Booking Date</Text>
+              <Text style={[styles.featureText,{color:color.buttonColor}]}>{formatDateTime(BookingDate)}</Text>
+       
+              <Text style={styles.featureText2}>Choose Booking Date</Text>
+
+              
+
+            </View>
+            <TouchableOpacity
+              onPress={() => {
+                setBookingDateModal(true)
+              }}
+              style={{}}>
+              {BookingDate ? <Image source={icon.check}
+                style={{ height: 22, width: 22 }} />
+                : <View style={{ borderWidth: 2, borderColor: 'green', height: 20, width: 20, borderRadius: 10 }} />
+              }
+            </TouchableOpacity>
+
+          </View>
           <View style={styles.featureRow}>
             <Icon source={icon.Mobile} size={30} />
             <View>
@@ -288,7 +336,7 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
                 alignItems: 'center'
               }}>
 
-                <Text style={[styles.serviceTitle, { color: '#000', width: '92%' }]}>{service.name?.toUpperCase()}</Text>
+                <Text style={[styles.serviceTitle, { color: '#000', width: '92%' }]}>{service.name?.toUpperCase()}  ₹{service?.estimated_cost}</Text>
 
                 <View style={{}}>
                   {selectedService == service?._id ? <Image source={icon.check}

@@ -1,5 +1,7 @@
 import {PermissionsAndroid, Platform} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
+
+
 export const getCurrentLocation = () =>
   new Promise((resolve, reject) => {
     Geolocation.getCurrentPosition(
@@ -48,3 +50,29 @@ export const locationPermission = () =>
         return reject(error);
       });
   });
+
+
+
+const getAddressFromLatLng = async (latitude, longitude) => {
+  const API_KEY = 'AIzaSyADzwSBu_YTmqWZj7ys5kp5UcFDG9FQPVY';
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${API_KEY}`;
+
+  try {
+    let response = await fetch(url);
+    let data = await response.json();
+
+    if (data.status === 'OK') {
+      return data.results[0].formatted_address;
+    } else {
+      throw new Error('Unable to get address');
+    }
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
+
+
+
+export { getAddressFromLatLng };

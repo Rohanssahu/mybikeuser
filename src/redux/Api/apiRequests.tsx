@@ -735,9 +735,9 @@ const addPickupAddress = async (user_lat: string, user_lng: string, dealer_id: s
     }
 };
 
-const create_booking = async (dealer_id: string, services: string, pickupAndDropId: string, variant_id: string) => {
+const create_booking = async (dealer_id: string, services: string, pickupAndDropId: string, userBike_id: string,pickupDate:string) => {
     // Prepare the request body for login API
-    const requestBody = { dealer_id, services, pickupAndDropId, variant_id };
+    const requestBody = { dealer_id, services, pickupAndDropId, userBike_id ,pickupDate};
     const token = await AsyncStorage.getItem('token')
     const apiRequests: ApiRequest[] = [
         {
@@ -911,5 +911,81 @@ const updateProfileImage = async (image: any) => {
     }
 };
 
+const bookingdetails = async (id: string) => {
+    console.log('==============bookingdetails======================', id);
 
-export {updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  
+    const token = await AsyncStorage.getItem('token')
+    const apiRequests: ApiRequest[] = [
+        {
+
+            endpoint: endpoint.bookingdetails?.replace(':id',id),
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'token': token
+            },
+        },
+    ];
+
+    try {
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+        console.log('API Response=>>>>>>>>>>:', results);
+        const response = results[0];
+
+        if (response?.success) {
+            // successToast('Bike Remove Successfully')
+            return { success: true, message: "Success", data: response.data, };
+        }
+        else {
+
+            return { success: false, message: "Unexpected response", data: [] };
+        }
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, state: [] };
+    }
+};
+const cancel_booking = async (bookingId:string,status: string) => {
+    const requestBody ={bookingId,status }
+    console.log('==============cancelbooking======================', requestBody);
+    const token = await AsyncStorage.getItem('token')
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.cancelbooking,
+            method: 'POST',
+            data: requestBody,
+
+            headers: {
+                'Content-Type': 'application/json',
+                token: token
+            },
+          
+        },
+    ];
+
+
+    try {
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+        console.log('API Response=>>>>>>>>>>:', results);
+        const response = results[0];
+
+        if (response?.success) {
+            // successToast('Bike Remove Successfully')
+            return { success: true, message: "Success", data: response.data, };
+        }
+        else {
+
+            return { success: false, message: "Unexpected response", data: [] };
+        }
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, state: [] };
+    }
+};
+
+
+export {cancel_booking,bookingdetails,updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  
