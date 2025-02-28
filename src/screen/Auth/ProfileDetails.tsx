@@ -179,7 +179,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                         data={cityData}
                         onSelect={(value) => {
 
-                            get_citys_list(value.id)
+                           
                             setCity(value.name)
                         }}
 

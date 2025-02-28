@@ -26,6 +26,7 @@ import {
     setrandomNumber(Math.floor(Math.random() * 10) + 1)
   },[isFocus])
   const onScratch = useCallback((percentage) => {
+
     if (percentage >=25) {
       setRevealed(true);
       if (percentage >=25) {
@@ -53,13 +54,15 @@ import {
               }}
               style={{position: 'absolute', top: 30, right: 20}}>
               <Image
-                source={require('../assets/images/Close3x.png')}
+                source={require('../screen/ScratchCard/Close3x.png')}
                 style={{height: 35, width: 35}}
               />
             </TouchableOpacity>
   
             <View style={styles.contentContainer}>
-              <View
+              <ImageBackground
+
+              source={require('../screen/ScratchCard/winningcard.jpg')}
                 style={{
                   borderRadius: 25,
                   padding: 0,
@@ -69,14 +72,7 @@ import {
                   justifyContent: 'flex-end',
                   backgroundColor: '#FFD700',
                 }}>
-                {revealed && (
-                  <View style={{position: 'absolute', top: hp(5)}}>
-                    <Text
-                      style={{fontSize: 25, color: '#FFF', fontWeight: '800'}}>
-                      Congratulations!
-                    </Text>
-                  </View>
-                )}
+                
                 <View
                   style={{
                     alignItems: 'center',
@@ -89,11 +85,8 @@ import {
                     paddingHorizontal: 25,
                     borderRadius: 30,
                   }}>
-                  <Text style={{fontSize: 36, fontWeight: '800', color: '#FFF'}}>
-                    You Win
-                  </Text>
-  
-                  <View
+               
+                  {/* <View
                     style={{
                       flexDirection: 'row',
                       width: '52%',
@@ -105,10 +98,10 @@ import {
                     {randomNumber}
                     </Text>
                     <Image
-                      source={require('../assets/images/Coins.png')}
+                      source={require('../screen/ScratchCard/Coins.png')}
                       style={{height: 35, width: 35}}
                     />
-                  </View>
+                  </View> */}
   
                   
                 </View>
@@ -124,7 +117,7 @@ import {
                     width: wp(80),
                   }}
                 />
-              </View>
+              </ImageBackground>
             </View>
           </View>
         </Modal>
