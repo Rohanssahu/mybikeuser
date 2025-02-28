@@ -85,24 +85,6 @@ import {
                     paddingHorizontal: 25,
                     borderRadius: 30,
                   }}>
-               
-                  {/* <View
-                    style={{
-                      flexDirection: 'row',
-                      width: '52%',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}>
-                    <Text
-                      style={{fontSize: 30, fontWeight: '800', color: '#FFF'}}>
-                    {randomNumber}
-                    </Text>
-                    <Image
-                      source={require('../screen/ScratchCard/Coins.png')}
-                      style={{height: 35, width: 35}}
-                    />
-                  </View> */}
-  
                   
                 </View>
                

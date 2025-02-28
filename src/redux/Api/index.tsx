@@ -4,7 +4,7 @@ import ImagePicker from 'react-native-image-crop-picker';
 
 export interface ApiRequest {
   endpoint: string;
-  method?: 'GET' | 'POST'|' PUT' ;
+  method?: 'GET'|'POST'|'PUT' ;
   data?: any;
   headers?: Record<string, string>;
   token?: string;
@@ -25,7 +25,7 @@ export const callMultipleApis = async (requests: ApiRequest[]) => {
         const config: AxiosRequestConfig = {
           method: req.method || 'GET',
           url: `${base_url}${req.endpoint}`,
-          data: ['POST', 'PUT'].includes(req.method) ? req.data : undefined,
+          data: ['POST','PUT'].includes(req.method) ? req.data : undefined,
           headers: {
             'Content-Type': req.data instanceof FormData ? 'multipart/form-data' : 'application/json',
             ...(req.token ? { Authorization: `Bearer ${req.token}` } : {}),
@@ -123,6 +123,25 @@ export const captureImage = async () => {
     return image; // Return the image object
   } catch (error) {
     console.log('Camera error:', error);
+    return null;
+  }
+};
+
+
+export const selectImageFromGallery = async () => {
+  const hasPermissions = await requestCameraPermissions();
+  
+
+  try {
+    const image = await ImagePicker.openPicker({
+      cropping: false, // Enable cropping if needed
+      compressImageQuality: 0.8, // Adjust image quality
+      mediaType: 'photo', // Only allow photos (you can also allow videos)
+    });
+    
+    return image; // Return the selected image object
+  } catch (error) {
+    console.log('Gallery error:', error);
     return null;
   }
 };

@@ -10,9 +10,10 @@ import CustomButton from '../../component/CustomButton';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import { StackNavigationProp } from '@react-navigation/stack';
 import CustomDropdown from '../../component/CustomDropdown';
-import { get_states, get_citys, add_Profile } from '../../redux/Api/apiRequests';
-import { captureImage } from '../../redux/Api';
+import { get_states, get_citys, add_Profile, updateProfileImage } from '../../redux/Api/apiRequests';
+import { captureImage, selectImageFromGallery } from '../../redux/Api';
 import Loading from '../../configs/Loader';
+import UploadImageModal from '../../component/UploadImageModal';
 
 interface ProfileDetailsProps {
     navigation: StackNavigationProp<any, any>;
@@ -29,7 +30,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
     const [cityData, setcityData] = useState([]);
     const [image, setImage] = useState('');
     const [isLoading, setisLoading] = useState(false);
-
+    const [isModalVisible, setIsModalVisible] = useState(false);
 
     // Error states
     const [errors, setErrors] = useState({
@@ -110,7 +111,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
 
         }
 
-       
+
         setisLoading(false)
     };
     const handleCapture = async () => {
@@ -118,10 +119,40 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
         if (image) {
             console.log('Captured Image:', image);
             // Handle the captured image (e.g., upload, display, save, etc.)
+            setImage(image)
+            setIsModalVisible(false)
+            await update_image(image?.path)
         } else {
             console.log('Image capture canceled or failed.');
         }
     };
+
+    const selectFromGallery = async () => {
+        const image = await selectImageFromGallery();
+        if (image) {
+            console.log('Captured Image:', image);
+            setImage(image)
+            setIsModalVisible(false)
+            await update_image(image?.path)
+        } else {
+            console.log('Image capture canceled or failed.');
+        }
+    };
+    const handleCloseModal = () => {
+        setIsModalVisible(false);
+    };
+
+
+
+    const update_image = async (uri) => {
+   
+        const res = await updateProfileImage({uri:uri})
+        if (res?.success) {
+            setImage(res?.image_base_url)
+      
+        }
+
+    }
     return (
         <View style={{ flex: 1, backgroundColor: color.baground }}>
             <ScrollView>
@@ -133,16 +164,18 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                 />
 
                 {/* Profile Image Section */}
-                <View style={styles.profileImageContainer}>
-                    <Image source={image ? { uri: image } : images.profileUpdate} style={styles.profileImage} />
-                    <TouchableOpacity
-                        onPress={() => {
-                            handleCapture()
-                        }}
-                        style={styles.addIcon}>
+                <TouchableOpacity
+
+                    onPress={() => {
+                        setIsModalVisible(true)
+                    }}
+                    style={styles.profileImageContainer}>
+                    <Image source={image?.path ? { uri: image?.path } : images.profileUpdate} style={styles.profileImage} />
+                    <View style={styles.addIcon}>
                         <Icon source={icon.add} size={20} />
-                    </TouchableOpacity>
-                </View>
+                    </View>
+                </TouchableOpacity>
+
 
                 {/* Form Fields */}
                 <View style={styles.formContainer}>
@@ -179,7 +212,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                         data={cityData}
                         onSelect={(value) => {
 
-                           
+
                             setCity(value.name)
                         }}
 
@@ -215,6 +248,12 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                     />
                 </View>
             </ScrollView>
+            <UploadImageModal
+                shown={isModalVisible}
+                onBackdropPress={handleCloseModal}
+                onPressCamera={handleCapture}
+                onPressGallery={selectFromGallery}
+            />
         </View>
     );
 };

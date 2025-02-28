@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, FlatList, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, FlatList, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Icon from './Icon';
 import { icon } from './Image';
 import { wp } from './utils/Constant';
 import ScreenNameEnum from '../routes/screenName.enum';
+import { image_url } from '../redux/Api';
 
 // Define the data type for each booking item
 interface BookingItem {
@@ -12,16 +13,17 @@ interface BookingItem {
   bookingId: string;
   status: string;
   create_date: string;
-  onCallPress: () => void;
-  onViewBillPress: () => void;
+
 }
 
 // Define props for the component
 interface BookingListProps {
   data: BookingItem[];
+  onCallPress: any;
+  onViewBillPress: () => void;
 }
 
-const BookingList: React.FC<BookingListProps> = ({ data ,navigation}) => {
+const BookingList: React.FC<BookingListProps> = ({ data ,navigation,onCallPress}) => {
   const formatDateTime = (isoDate) => {
     const date = new Date(isoDate);
 
@@ -48,6 +50,18 @@ const BookingList: React.FC<BookingListProps> = ({ data ,navigation}) => {
       contentContainerStyle={styles.listContainer}
       renderItem={({ item }) => (
         <View style={styles.card}>
+          <View style={{flexDirection:'row',alignItems:'center'}}>
+            <Image
+source={{uri:image_url+item?.dealer_id?.shopImages[0]}}
+
+style={{height:40,width:40,borderRadius:20,borderWidth:1,backgroundColor:'#ccc',marginVertical:10}}
+            />
+            <View style={{marginLeft:10}}>
+
+            <Text style={styles.label}>{item?.dealer_id?.shopName}</Text>
+            <Text style={[styles.label,{fontSize:12,fontWeight:'400'}]}>{item?.dealer_id?.address}</Text>
+          </View>
+            </View>
           <View style={styles.row}>
             <Text style={styles.label}>Booking ID</Text>
             <Text style={styles.label}>Status:</Text>
@@ -63,7 +77,7 @@ const BookingList: React.FC<BookingListProps> = ({ data ,navigation}) => {
           <Text style={styles.value}>{formatDateTime(item.create_date)}</Text>
 
           <View style={styles.footer}>
-            <TouchableOpacity style={styles.callButton} onPress={item.onCallPress}>
+            <TouchableOpacity style={styles.callButton} onPress={()=>{onCallPress(item?.dealer_id?.phone)}}>
               <Icon source={icon.phone} size={40}  />
             </TouchableOpacity>
             <TouchableOpacity

@@ -9,7 +9,7 @@ import { callMultipleApis } from './index';
 // Interface for API request
 interface ApiRequest {
     endpoint: string;
-    method?: 'GET' | 'POST';
+    method?: 'GET' | 'POST' | 'PUT';
     data?: any; // Supports JSON & FormData
     headers?: Record<string, string>;
     token?: string; // Optional Auth Token (per request)
@@ -246,7 +246,7 @@ const get_citys = async (City: string) => {
     try {
         // Call the multiple APIs and await the result
         const results = await callMultipleApis(apiRequests);
-        console.log('API Response=>>>>>>>>>>:', results);
+
 
 
         const response = results[0];
@@ -735,9 +735,9 @@ const addPickupAddress = async (user_lat: string, user_lng: string, dealer_id: s
     }
 };
 
-const create_booking = async (dealer_id: string, services: string, pickupAndDropId: string,variant_id:string) => {
+const create_booking = async (dealer_id: string, services: string, pickupAndDropId: string, variant_id: string) => {
     // Prepare the request body for login API
-    const requestBody = { dealer_id, services, pickupAndDropId,variant_id };
+    const requestBody = { dealer_id, services, pickupAndDropId, variant_id };
     const token = await AsyncStorage.getItem('token')
     const apiRequests: ApiRequest[] = [
         {
@@ -771,12 +771,145 @@ const create_booking = async (dealer_id: string, services: string, pickupAndDrop
             return { success: false, message: response.message, data: [] };
         }
     }
-catch (error) {
-    console.error('Error fetching data:', error);
-    return { success: false, message: error.message, data: null };
-}
+    catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, data: null };
+    }
+};
+
+const get_profile = async () => {
+    console.log('===============get_profile=====================', endpoint.getprofile);
+    const token = await AsyncStorage.getItem('token')
+
+    console.log(token);
+
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.getprofile,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'token': token
+            },
+        },
+    ];
+
+
+    try {
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+
+        const response = results[0];
+
+        if (response?.success) {
+            return { success: true, message: "success", data: response?.data };
+        }
+        else {
+            return { success: false, message: "Data Not Found", data: [] };
+        }
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, data: [] };
+    }
+};
+const updateProfile = async (user_id: string, phone: string, first_name: string, last_name: string, state: string, city: string, address: string, pincode: string, image: string, email: string) => {
+    // Prepare the request body for login API
+    const requestBody = { first_name, last_name, email, phone, state, city, address, pincode ,image};
+
+    const token = await AsyncStorage.getItem('token');
+    if (!token) {
+        console.error("Token is missing or invalid");
+        return { success: false, message: "Token not found, please log in again", user: null };
+    }
+
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.updateprofile?.replace(':id', user_id),
+            method: 'PUT',
+            data: requestBody,
+
+            headers: {
+                'Content-Type': 'application/json',
+                token: token
+            },
+            token: token,
+        },
+    ];
+
+
+
+    try {
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+        console.log('API update prpifel Response:=>>>>>>', results);
+
+
+        const response = results[0];
+
+
+        if (response.status == '200') {
+
+
+            successToast(response.message)
+            return { success: true, message: "customer updated successfully", user: response.data || null };
+        } else {
+
+            return { success: true, message: "customer updated Failed", user: response.data || null };
+        }
+
+
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, user: null };
+    }
+};
+const updateProfileImage = async (image: any) => {
+    const token = await AsyncStorage.getItem('token');
+
+    if (!token) {
+        console.error("Token is missing or invalid");
+        return { success: false, message: "Token not found, please log in again", user: null };
+    }
+
+    const formData = new FormData();
+    formData.append('images', {
+        uri: image.uri,  // Adjust the image URI based on the source you're using (this works for images picked via ImagePicker)
+        type: 'jpeg/png', // e.g. 'image/jpeg', or 'image/png' depending on the file type
+        name: 'profile.jpg',  // A fallback file name if none is provided
+    });
+
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.profileimage,
+            method: 'PUT',
+            data: formData, // Sending FormData here
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'token':token, // Ensure the token is passed in the Authorization header
+            },
+       
+        },
+    ];
+
+    try {
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+        console.log('API update profile Response:=>>>>>>', results);
+
+        const response = results[0];
+        if (response.status == '200') {
+            successToast(response.message);
+            return { success: true, message: "Profile image updated successfully", user: response.data || null };
+        } else {
+            return { success: false, message: "Profile image update failed", user: response.data || null };
+        }
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, user: null };
+    }
 };
 
 
-
-export { addPickupAddress, create_booking, garage_details, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  
+export {updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  

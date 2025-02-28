@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, Text, StatusBar } from 'react-native';
+import { View, StyleSheet, ScrollView, Text, StatusBar, Linking } from 'react-native';
 import CustomHeader from '../../component/CustomHeaderProps';
 import { color } from '../../constant';
 import VerticalshopList from '../../component/VerticalshopList';
@@ -47,6 +47,10 @@ const Booking: React.FC<Props> = ({ navigation }) => {
         }
     };
 
+    const makeCall = (no) => {
+        Linking.openURL(`tel:${no}`); // Replace with the actual phone number
+      };
+
     return (
         <View style={styles.container}>
                <StatusBar  backgroundColor={color.baground} />
@@ -57,7 +61,7 @@ const Booking: React.FC<Props> = ({ navigation }) => {
                 </View>
                 <Text style={styles.subHeaderText}>Today</Text>
                 {booking.length > 0 ? (
-                    <BookingList data={booking} navigation={navigation} />
+                    <BookingList data={booking} navigation={navigation}  onCallPress={(no)=>{makeCall(no)}}/>
                 ) : (
                     <View style={styles.noBookingContainer}>
                         <Text style={styles.noBookingText}>No Booking Found</Text>
