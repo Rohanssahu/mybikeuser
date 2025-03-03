@@ -57,7 +57,14 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ navigation }) => {
         // Handle the response
         if (response.success) {
             console.log('Login successful: ', response);
-            navigation.navigate(ScreenNameEnum.PROFILE_DETAILS)
+            if(response?.user?.isProfile){
+
+     
+                navigation.navigate(ScreenNameEnum.BOTTAM_TAB)
+            }
+            else{
+                navigation.navigate(ScreenNameEnum.PROFILE_DETAILS)
+            }
             response.user && console.log('User Info:', response.user);
             setisLoading(false)
         } else {

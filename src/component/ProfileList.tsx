@@ -6,6 +6,7 @@ import Icon from './Icon';
 import { icon } from './Image';
 import LogoutModal from '../screen/modal/LogoutModal';
 import ScreenNameEnum from '../routes/screenName.enum';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Define the data type for menu items
 interface MenuItem {
@@ -34,15 +35,20 @@ const ProfileMenuList: React.FC<ProfileMenuListProps> = ({ data }) => {
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.card}
 
-            onPress={() => {
+            onPress={async () => {
 
+              if (item.title === 'Logout') {
+                await AsyncStorage.clear()
+                navigation.navigate(item.screen)
+              }
               if (item.title !== 'Logout') {
-                navigation.navigate(item.screen as never)
+
+                navigation.navigate(item.screen)
               }
-               else if (item.title !== 'Vehicles') {
-                navigation.navigate(item.screen ,{profile:true})
+              else if (item.title !== 'Vehicles') {
+                navigation.navigate(item.screen, { profile: true })
               }
-              else{
+              else {
                 setIsModalVisible(true)
               }
             }}
@@ -60,7 +66,7 @@ const ProfileMenuList: React.FC<ProfileMenuListProps> = ({ data }) => {
         onClose={() => setIsModalVisible(false)}
         onConfirm={() => {
           setIsModalVisible(false);
-         navigation.navigate(ScreenNameEnum.LOGIN_SCREEN)
+          navigation.navigate(ScreenNameEnum.LOGIN_SCREEN)
         }}
       />
     </>

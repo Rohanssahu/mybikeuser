@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { color } from '../../constant';
@@ -10,18 +11,21 @@ import CustomButton from '../../component/CustomButton';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import { StackNavigationProp } from '@react-navigation/stack';
 import CustomDropdown from '../../component/CustomDropdown';
-import { get_states, get_citys, add_Profile, updateProfileImage } from '../../redux/Api/apiRequests';
-import { captureImage, selectImageFromGallery } from '../../redux/Api';
-import Loading from '../../configs/Loader';
+import { get_citys, get_profile, get_states, updateProfile, updateProfileImage } from '../../redux/Api/apiRequests';
+import { captureImage, image_url, selectImageFromGallery } from '../../redux/Api';
 import UploadImageModal from '../../component/UploadImageModal';
+import Loading from '../../configs/Loader';
 
 interface ProfileDetailsProps {
     navigation: StackNavigationProp<any, any>;
 }
 
 const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
+    const [User, setUser] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [email, setEmail] = useState('');
     const [state, setState] = useState('');
     const [city, setCity] = useState('');
     const [address, setAddress] = useState('');
@@ -29,23 +33,46 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
     const [StateData, setStateData] = useState([]);
     const [cityData, setcityData] = useState([]);
     const [image, setImage] = useState('');
-    const [isLoading, setisLoading] = useState(false);
-    const [isModalVisible, setIsModalVisible] = useState(false);
 
-    // Error states
-    const [errors, setErrors] = useState({
-        firstName: '',
-        lastName: '',
-        state: '',
-        city: '',
-        address: '',
-        pinCode: ''
-    });
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [loading, setLoading] = useState(false);
+    useEffect(() => {
+        get_states_list()
+        getUser()
+    }, [])
 
 
     useEffect(() => {
-        get_states_list()
-    }, [])
+        if (User) {
+            setFirstName(User?.first_name || '');
+            setLastName(User?.last_name || '');
+              
+
+
+
+
+                  
+            setCity(User?.city || '');
+            setAddress(User?.address || '');
+            setPinCode(User?.pincode ? User.pincode.toString() : '');
+            setEmail(User?.email || '');
+            setImage({ path: image_url + User?.image } || '');
+            setPhone(User?.phone ? User.phone.toString() : '');
+        }
+    }, [User]);  // Make sure to include User as a dependency
+
+
+    const getUser = async () => {
+        setLoading(true)
+        const res = await get_profile();
+        if (res.success) {
+            setUser(res.data);
+            console.log(res.data); // Log the response to verify
+        } else {
+            setUser('');
+        }
+        setLoading(false)
+    };
 
 
     const get_states_list = async () => {
@@ -76,52 +103,27 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
 
 
     }
-    const validateFields = () => {
-        let isValid = true;
-        let newErrors = {
-            firstName: firstName ? '' : 'First Name is required',
-            lastName: lastName ? '' : 'Last Name is required',
-            state: state ? '' : 'State is required',
-            city: city ? '' : 'City is required',
-            address: address ? '' : 'Address is required',
-            pinCode: pinCode ? '' : 'Pin Code is required'
-        };
-
-        setErrors(newErrors);
-
-        // If any field has an error, form is invalid
-        isValid = Object.values(newErrors).every(error => error === '');
-        return isValid;
-    };
-
-    const handleSubmit = async () => {
-        setisLoading(true)
-        if (validateFields()) {
-
-            const states = await add_Profile('',
-                first_name,
-                last_name,
-                state,
-                city,
-                address,
-                pincode,
-                'image')
-
-            setisLoading(false)
-
-        }
+    // Error states
+    const [errors, setErrors] = useState({
+        firstName: '',
+        lastName: '',
+        state: '',
+        city: '',
+        address: '',
+        pinCode: '',
+        email: '',
+        phone: ''
+    });
 
 
-        setisLoading(false)
-    };
     const handleCapture = async () => {
         const image = await captureImage();
         if (image) {
             console.log('Captured Image:', image);
             // Handle the captured image (e.g., upload, display, save, etc.)
             setImage(image)
+            await   update_image(image?.path)
             setIsModalVisible(false)
-            await update_image(image?.path)
         } else {
             console.log('Image capture canceled or failed.');
         }
@@ -132,37 +134,41 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
         if (image) {
             console.log('Captured Image:', image);
             setImage(image)
+            await   update_image(image?.path)
             setIsModalVisible(false)
-            await update_image(image?.path)
         } else {
             console.log('Image capture canceled or failed.');
         }
     };
+
     const handleCloseModal = () => {
         setIsModalVisible(false);
     };
 
 
-
-    const update_image = async (uri) => {
-   
+    const update_profile = async () => {
+        setLoading(true)
+        const res = await updateProfile(User?._id, phone, firstName, lastName, state, city, address, pinCode, image, email)
+        if (res?.success) {
+            get_profile()
+        }
+        setLoading(false)
+    }
+    const update_image = async (uri:string) => {
+        setLoading(true)
         const res = await updateProfileImage({uri:uri})
         if (res?.success) {
             setImage(res?.image_base_url)
       
         }
-
+        setLoading(false)
     }
     return (
         <View style={{ flex: 1, backgroundColor: color.baground }}>
-            <ScrollView>
-                {isLoading && <Loading />}
-                <CustomHeader navigation={navigation} title='Add Profile Details'
-                    onSkipPress={() => { navigation.navigate(ScreenNameEnum.BOTTAM_TAB); }} showSkip={true}
-
-
-                />
-
+            {/* Header */}
+            <CustomHeader navigation={navigation} title='Profile' onSkipPress={() => { navigation.navigate(ScreenNameEnum.BOTTAM_TAB); }} showSkip={true} />
+            {loading && <Loading />}
+            <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Profile Image Section */}
                 <TouchableOpacity
 
@@ -175,7 +181,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                         <Icon source={icon.add} size={20} />
                     </View>
                 </TouchableOpacity>
-
 
                 {/* Form Fields */}
                 <View style={styles.formContainer}>
@@ -194,6 +199,20 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                         inputStyle={[styles.input, errors.lastName && styles.errorInput, { marginTop: 15 }]}
                     />
                     {errors.lastName ? <Text style={styles.errorText}>{errors.lastName}</Text> : null}
+                    <CustomTextInput
+                        placeholder='Email '
+                        onChangeText={setEmail}
+                        value={email}
+                        inputStyle={[styles.input, errors.lastName && styles.errorInput, { marginTop: 15 }]}
+                    />
+                    {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
+                    <CustomTextInput
+                        placeholder='Phone number'
+                        onChangeText={setPhone}
+                        value={phone}
+                        inputStyle={[styles.input, errors.lastName && styles.errorInput, { marginTop: 15 }]}
+                    />
+                    {errors.phone ? <Text style={styles.errorText}>{errors.phone}</Text> : null}
 
                     <CustomDropdown
                         data={StateData}
@@ -201,6 +220,9 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
 
                             get_citys_list(value.id)
                             setState(value.name)
+                            console.log('=================value.name===================');
+                            console.log(value.name);
+                            console.log('====================================');
                         }}
                         placeholder="State"
                         label={'name'}
@@ -215,10 +237,10 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
 
                             setCity(value.name)
                         }}
-
                         placeholder="City"
                         label={'name'}
                         value={'id'}
+
                     />
                     {errors.city ? <Text style={styles.errorText}>{errors.city}</Text> : null}
 
@@ -242,11 +264,12 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                 {/* Submit Button */}
                 <View style={styles.buttonContainer}>
                     <CustomButton
-                        title="Submit"
-                        onPress={() => { handleSubmit() }}
+                        title="Update"
+                        onPress={() => { update_profile() }}
                         buttonStyle={styles.button}
                     />
                 </View>
+
             </ScrollView>
             <UploadImageModal
                 shown={isModalVisible}
@@ -258,6 +281,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
     );
 };
 
+
 const styles = StyleSheet.create({
     profileImageContainer: {
         marginTop: 20,
@@ -267,6 +291,9 @@ const styles = StyleSheet.create({
     profileImage: {
         height: 100,
         width: 100,
+        borderRadius: 50,
+        borderWidth: 1,
+        borderColor: '#fff'
     },
     addIcon: {
         marginTop: -25,
@@ -297,14 +324,13 @@ const styles = StyleSheet.create({
         marginLeft: 5,
     },
     buttonContainer: {
-        marginTop: 60,
-        bottom: 40,
+
+        marginTop: 20,
         width: '100%',
         paddingHorizontal: 20,
     },
-    button: {
-
-    },
+    button: {},
 });
 
 export default ProfileDetails;
+
