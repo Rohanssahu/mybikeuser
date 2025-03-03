@@ -195,7 +195,6 @@ const ServiceSummary: React.FC<ServiceSummaryProps> = ({
                             <Text style={styles.summaryTitle}>Additional Notes</Text>
                             {booking?.additionalNotes?.map((note, index) => (
                                 <View key={index} style={styles.serviceRow}>
-
                                     <Text style={styles.servicePrice}>{index + 1}. {note}</Text>
                                 </View>
                             ))}

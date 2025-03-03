@@ -62,18 +62,23 @@ const Booking: React.FC<Props> = ({ navigation }) => {
 
 
     }
-    
+    const filteredBookings = booking.filter(item =>
+        item?.dealer_id?.shopName?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
     return (
         <View style={styles.container}>
             <StatusBar backgroundColor={color.baground} />
             <Text style={styles.headerText}>Booking</Text>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 <View style={styles.searchContainer}>
-                    <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
+                    <SearchBar
+                        value={searchQuery}
+                        onChangeText={(text) => setSearchQuery(text)}
+                    />
                 </View>
                 <Text style={styles.subHeaderText}>Today</Text>
                 {booking.length > 0 ? (
-                    <BookingList data={booking} loading={loading}
+                    <BookingList data={filteredBookings} loading={loading}
                         navigation={navigation}
                         onCallPress={(no) => { makeCall(no) }}
                         onCancelPress={(id) => { cancelbooking(id) }} />

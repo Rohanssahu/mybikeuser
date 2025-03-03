@@ -5,6 +5,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Icon from './Icon';
 import { icon } from './Image';
 import { image_url } from '../redux/Api';
+import ScreenNameEnum from '../routes/screenName.enum';
 
 // Define the data type for each garage item
 interface GarageItem {
@@ -46,7 +47,7 @@ const GarageList: React.FC<GarageListProps> = ({ data }) => {
             </View>
             <TouchableOpacity 
               style={styles.button} 
-              onPress={() => navigation.navigate('BookingScreen', { garageId: item.id })}
+              onPress={() =>   navigation.navigate(ScreenNameEnum.MY_BIKES,{profile:false})}
             >
               <Text style={styles.buttonText}>BOOK NOW</Text>
             </TouchableOpacity>
