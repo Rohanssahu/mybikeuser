@@ -735,9 +735,9 @@ const addPickupAddress = async (user_lat: string, user_lng: string, dealer_id: s
     }
 };
 
-const create_booking = async (dealer_id: string, services: string, pickupAndDropId: string, userBike_id: string,pickupDate:string) => {
+const create_booking = async (dealer_id: string, services: string, pickupAndDropId: string, userBike_id: string, pickupDate: string) => {
     // Prepare the request body for login API
-    const requestBody = { dealer_id, services, pickupAndDropId, userBike_id ,pickupDate};
+    const requestBody = { dealer_id, services, pickupAndDropId, userBike_id, pickupDate };
     const token = await AsyncStorage.getItem('token')
     const apiRequests: ApiRequest[] = [
         {
@@ -815,7 +815,7 @@ const get_profile = async () => {
 };
 const updateProfile = async (user_id: string, phone: string, first_name: string, last_name: string, state: string, city: string, address: string, pincode: string, image: string, email: string) => {
     // Prepare the request body for login API
-    const requestBody = { first_name, last_name, email, phone, state, city, address, pincode ,image};
+    const requestBody = { first_name, last_name, email, phone, state, city, address, pincode, image };
 
     const token = await AsyncStorage.getItem('token');
     if (!token) {
@@ -887,9 +887,9 @@ const updateProfileImage = async (image: any) => {
             data: formData, // Sending FormData here
             headers: {
                 'Content-Type': 'multipart/form-data',
-                'token':token, // Ensure the token is passed in the Authorization header
+                'token': token, // Ensure the token is passed in the Authorization header
             },
-       
+
         },
     ];
 
@@ -918,7 +918,7 @@ const bookingdetails = async (id: string) => {
     const apiRequests: ApiRequest[] = [
         {
 
-            endpoint: endpoint.bookingdetails?.replace(':id',id),
+            endpoint: endpoint.bookingdetails?.replace(':id', id),
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -947,9 +947,8 @@ const bookingdetails = async (id: string) => {
         return { success: false, message: error.message, state: [] };
     }
 };
-const cancel_booking = async (bookingId:string,status: string) => {
-    const requestBody ={bookingId,status }
-    console.log('==============cancelbooking======================', requestBody);
+const cancel_booking = async (bookingId: string, status: string) => {
+    const requestBody = { bookingId, status }
     const token = await AsyncStorage.getItem('token')
     const apiRequests: ApiRequest[] = [
         {
@@ -961,7 +960,6 @@ const cancel_booking = async (bookingId:string,status: string) => {
                 'Content-Type': 'application/json',
                 token: token
             },
-          
         },
     ];
 
@@ -969,7 +967,6 @@ const cancel_booking = async (bookingId:string,status: string) => {
     try {
         // Call the multiple APIs and await the result
         const results = await callMultipleApis(apiRequests);
-        console.log('API Response=>>>>>>>>>>:', results);
         const response = results[0];
 
         if (response?.success) {
@@ -988,4 +985,4 @@ const cancel_booking = async (bookingId:string,status: string) => {
 };
 
 
-export {cancel_booking,bookingdetails,updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  
+export { cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  

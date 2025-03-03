@@ -22,12 +22,14 @@ interface BookingItem {
 // Define props for the component
 interface BookingListProps {
   data: BookingItem[];
+  loading:boolean,
   onCallPress: any;
+  cancelbooking: any;
   onViewBillPress: () => void;
 }
 
-const BookingList: React.FC<BookingListProps> = ({ data, navigation, onCallPress }) => {
-  const [loading, setLoading] = useState(false)
+const BookingList: React.FC<BookingListProps> = ({ data, navigation, onCancelPress,onCallPress ,loading}) => {
+
   const formatDateTime = (isoDate) => {
     const date = new Date(isoDate);
 
@@ -47,21 +49,7 @@ const BookingList: React.FC<BookingListProps> = ({ data, navigation, onCallPress
     // Format final string
     return `${day}-${month}-${year} ${hours}:${minutes} ${amPm}`;
   };
-  const cancelbooking = async (id) => {
-    setLoading(true)
-    const res = await cancel_booking(id, 'user_cancelled')
 
-console.log('===============cancel_booking=====================');
-
-    console.log(res);
-
-    if(res.success){
-      successToast('Booking Cancel Successfully')
-    }
-    setLoading(false)
-
-
-  }
   return (
     <FlatList
       data={data}
@@ -107,7 +95,7 @@ console.log('===============cancel_booking=====================');
             {item.status === 'pending' &&
               <TouchableOpacity
                 onPress={() => {
-                  cancelbooking(item?._id)
+                  onCancelPress(item?._id)
                 }}
                 style={[styles.billButton, { marginTop: 5, backgroundColor: 'red' }]} >
                 {loading ?<ActivityIndicator  size={20} color={'#fff'} />: <Text style={[styles.billText, { color: '#fff' }]}>Cancel Booking</Text>}

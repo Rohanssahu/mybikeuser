@@ -7,8 +7,9 @@ import images from '../../component/Image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import BookingList from '../../component/BookingList';
 import SearchBar from '../../component/SearchBar';
-import { get_userbooking } from '../../redux/Api/apiRequests';
+import { cancel_booking, get_userbooking } from '../../redux/Api/apiRequests';
 import { useIsFocused } from '@react-navigation/native';
+import { successToast } from '../../configs/customToast';
 
 // Define navigation type
 type RootStackParamList = {
@@ -28,11 +29,10 @@ const Booking: React.FC<Props> = ({ navigation }) => {
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [booking, setBooking] = useState<ShopItem[]>([]);
     const isFocus = useIsFocused();
-
+    const [loading, setLoading] = useState(false)
     useEffect(() => {
         booking_list();
     }, [isFocus]);
-
     const booking_list = async () => {
         try {
             const response = await get_userbooking();
@@ -46,14 +46,26 @@ const Booking: React.FC<Props> = ({ navigation }) => {
             setBooking([]);
         }
     };
-
     const makeCall = (no) => {
         Linking.openURL(`tel:${no}`); // Replace with the actual phone number
-      };
+    };
 
+    const cancelbooking = async (id) => {
+        setLoading(true)
+        const res = await cancel_booking(id, 'user_cancelled')
+
+        if (res.success) {
+            booking_list();
+            successToast('Booking Cancel Successfully')
+        }
+        setLoading(false)
+
+
+    }
+    
     return (
         <View style={styles.container}>
-               <StatusBar  backgroundColor={color.baground} />
+            <StatusBar backgroundColor={color.baground} />
             <Text style={styles.headerText}>Booking</Text>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 <View style={styles.searchContainer}>
@@ -61,7 +73,10 @@ const Booking: React.FC<Props> = ({ navigation }) => {
                 </View>
                 <Text style={styles.subHeaderText}>Today</Text>
                 {booking.length > 0 ? (
-                    <BookingList data={booking} navigation={navigation}  onCallPress={(no)=>{makeCall(no)}}/>
+                    <BookingList data={booking} loading={loading}
+                        navigation={navigation}
+                        onCallPress={(no) => { makeCall(no) }}
+                        onCancelPress={(id) => { cancelbooking(id) }} />
                 ) : (
                     <View style={styles.noBookingContainer}>
                         <Text style={styles.noBookingText}>No Booking Found</Text>
