@@ -15,13 +15,13 @@ interface ApiRequest {
     token?: string; // Optional Auth Token (per request)
 }
 
-const Login_witPhone = async (phoneNumber: string) => {
+const Login_witPhone = async (phoneNumber: string,device_token:string) => {
 
     console.log('====================================');
     console.log(phoneNumber);
     console.log('====================================');
     // Prepare the request body for login API
-    const requestBody = { phone: phoneNumber };
+    const requestBody = { phone: phoneNumber ,device_token};
 
     const apiRequests: ApiRequest[] = [
         {
@@ -106,9 +106,9 @@ const resend_Otp = async (phoneNumber: string) => {
         return { success: false, message: error.message, user: null };
     }
 };
-const otp_Verify = async (phoneNumber: string, otp: string) => {
+const otp_Verify = async (phoneNumber: string, otp: string,) => {
     // Prepare the request body for login API
-    const requestBody = { phone: phoneNumber, otp: otp };
+    const requestBody = { phone: phoneNumber, otp: otp, };
 
     const apiRequests: ApiRequest[] = [
         {

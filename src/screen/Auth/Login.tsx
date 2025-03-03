@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -8,7 +8,9 @@ import {
     TouchableOpacity,
     TextInput,
     Image,
-    FlatList
+    FlatList,
+    Alert,
+    Vibration
 } from 'react-native';
 import images, { icon } from '../../component/Image';
 import { color } from '../../constant';
@@ -20,7 +22,9 @@ import { errorToast } from '../../configs/customToast';
 import { Login_witPhone } from '../../redux/Api/apiRequests';
 import Loader from '../../component/Loader';
 import Loading from '../../configs/Loader';
-
+import messaging from '@react-native-firebase/messaging';
+import { notificationListener, requestUserPermission } from '../../component/Notification';
+import PushNotification from 'react-native-push-notification';
 // Define interface for button data
 interface BtnData {
     icon: any; // Adjust type as needed based on actual icon type
@@ -45,6 +49,11 @@ const Login: React.FC = ({ navigation }) => {
     const [isLoading, setisLoading] = useState<boolean>(false)
 
     const Login = async (): Promise<void> => {
+        const device_token = await messaging().getToken();
+
+console.log('=======================device_token=============');
+console.log(device_token);
+console.log('====================================');
         setisLoading(true)
         if (!phoneNumber) {
             return errorToast('Please Enter Phone Number');
@@ -54,7 +63,7 @@ const Login: React.FC = ({ navigation }) => {
         }
 
         // Construct the phone number with country code and call Login_witPhone
-        const response = await Login_witPhone(`+91${phoneNumber}`);
+        const response = await Login_witPhone(`+91${phoneNumber}`,device_token);
 
         // Handle the response
         if (response.success) {
@@ -68,6 +77,52 @@ const Login: React.FC = ({ navigation }) => {
         }
         setisLoading(false)
     };
+
+useEffect(() => {
+    notificationListener();
+    requestUserPermission();
+  }, []);
+
+ 
+  useEffect(() => {
+    // Handle notification when the app is launched from a killed state
+    messaging()
+      .getInitialNotification()
+      .then(remoteMessage => {
+        if (remoteMessage) {
+          const { title, body } = remoteMessage.notification;
+          Alert.alert(title, body); // Show an alert when the app starts
+        }
+      });
+
+    // Handle notifications when the app is in the foreground
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+        console.log('=================remoteMessage===================');
+        console.log(remoteMessage);
+        console.log('====================================');
+      if (remoteMessage) {
+        const { title, body } = remoteMessage.notification;
+
+        // 🎵 Handle sound and vibration settings
+        PushNotification.localNotification({
+          title: title,
+          message: body,
+          playSound: true, // Enable sound
+          soundName: 'default', // Use default notification sound
+          vibrate: true, // Enable vibration
+          vibration: 300, // Vibration duration in milliseconds
+        });
+
+        // Manually trigger vibration (optional)
+        Vibration.vibrate(300);
+      }
+    });
+
+    // Cleanup function
+    return () => unsubscribe();
+  }, []);
+
+
 
     return (
         <View style={styles.container}>

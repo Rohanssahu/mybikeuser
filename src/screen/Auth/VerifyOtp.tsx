@@ -4,6 +4,7 @@ import { color } from '../../constant';
 import Icon from '../../component/Icon';
 import { icon } from '../../component/Image';
 import { hp } from '../../component/utils/Constant';
+import messaging from '@react-native-firebase/messaging';
 import {
     CodeField,
     Cursor,
@@ -41,7 +42,8 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ navigation }) => {
     });
 
     const Verify_otps = async (): Promise<void> => {
-        console.log('==================Verify_otps==================');
+       
+
 
         setisLoading(true)
         if (!value) {

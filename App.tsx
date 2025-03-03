@@ -1,5 +1,5 @@
 
-import React, {FunctionComponent} from 'react';
+import React, {FunctionComponent, useEffect} from 'react';
 import {LogBox, StatusBar, View, Text, StyleSheet} from 'react-native';
 
 
@@ -10,7 +10,6 @@ import 'react-native-get-random-values';
 
 LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
 LogBox.ignoreAllLogs();//Ignore all log notifications
-
 
 
 
