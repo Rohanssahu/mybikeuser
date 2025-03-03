@@ -46,7 +46,12 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
         if (User) {
             setFirstName(User?.first_name || '');
             setLastName(User?.last_name || '');
-            setState(User?.state || '');
+              
+
+
+
+
+                  
             setCity(User?.city || '');
             setAddress(User?.address || '');
             setPinCode(User?.pincode ? User.pincode.toString() : '');
@@ -149,7 +154,7 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
         }
         setLoading(false)
     }
-    const update_image = async (uri) => {
+    const update_image = async (uri:string) => {
         setLoading(true)
         const res = await updateProfileImage({uri:uri})
         if (res?.success) {

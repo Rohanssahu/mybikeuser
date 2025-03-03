@@ -42,7 +42,7 @@ const VerticalshopList: React.FC<VerticalListProps> = ({ data,navigation,bike })
         style={styles.card}>
           <Image source={{uri:`${image_url}${item.shopImages[0]}`}} style={styles.image} resizeMode="cover" />
           <View style={styles.textContainer}>
-            <Text style={styles.title}>{item.name}</Text>
+            <Text style={styles.title}>{item.shopName}</Text>
             <Text style={styles.address}>{item.shopDescription}</Text>
             <View style={styles.infoContainer}>
               <Icon size={16}source={icon.pin} />
