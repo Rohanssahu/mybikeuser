@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Text } from 'react-native';
 import CustomHeader from '../../component/CustomHeaderProps';
 import { color } from '../../constant';
 import VerticalshopList from '../../component/VerticalshopList';
@@ -47,7 +47,7 @@ const NearByShops: React.FC<Props> = ({ navigation }) => {
         try {
             const [dealer] = await Promise.all([
 
-                get_FilterBydeler('40.7128', '74.006', item?.variant_id),
+                get_FilterBydeler('22.7028609', '75.8715857', item?.variant_id),
             ]);
 
             if (dealer.data) setDealerList(dealer.data);
@@ -63,7 +63,13 @@ const NearByShops: React.FC<Props> = ({ navigation }) => {
         <View style={styles.container}>
             <CustomHeader navigation={navigation} title="Near By Shops" onSkipPress={() => { }} showSkip={false} />
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                <VerticalshopList data={dealerList} navigation={navigation} bike={item}/>
+
+            {dealerList.length > 0 ? (
+              <VerticalshopList data={dealerList} navigation={navigation} bike={item}/>
+            ) : (
+              <Text style={{ textAlign: 'center', marginVertical: 10 ,color:'#fff'}}>No Dealers Found This Location</Text>
+            )}
+                
             </ScrollView>
         </View>
     );

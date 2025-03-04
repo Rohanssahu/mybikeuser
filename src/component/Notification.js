@@ -61,7 +61,7 @@ const getFcmToken = async () => {
 export const notificationListener = () => {
   messaging().onNotificationOpenedApp(remoteMessage => {
     console.log("Notification opened from background:", remoteMessage);
-    Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
+   // Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
     // Show local notification or navigate to relevant screen
    const parsedMain = remoteMessage?.data;
      showLocalNotification(parsedMain);
@@ -70,7 +70,7 @@ export const notificationListener = () => {
   messaging().onMessage(async remoteMessage => {
     console.log("Foreground message received:", remoteMessage);
     // Show local notification or process the data
-    Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
+   // Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
    const parsedMain = remoteMessage?.data;
      showLocalNotification(parsedMain);
   });
@@ -78,7 +78,7 @@ export const notificationListener = () => {
   messaging().getInitialNotification().then(remoteMessage => {
     if (remoteMessage) {
       console.log("App launched by notification:", remoteMessage);
-      Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
+     // Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
       // Show local notification or process the data
       const parsedMain = remoteMessage?.data;
      showLocalNotification(parsedMain);

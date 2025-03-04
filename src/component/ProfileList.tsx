@@ -38,6 +38,7 @@ const ProfileMenuList: React.FC<ProfileMenuListProps> = ({ data }) => {
             onPress={async () => {
 
               if (item.title === 'Logout') {
+            setIsModalVisible(true)
                 await AsyncStorage.clear()
                 navigation.navigate(item.screen)
               }
@@ -48,9 +49,7 @@ const ProfileMenuList: React.FC<ProfileMenuListProps> = ({ data }) => {
               else if (item.title !== 'Vehicles') {
                 navigation.navigate(item.screen, { profile: true })
               }
-              else {
-                setIsModalVisible(true)
-              }
+             
             }}
 
           >

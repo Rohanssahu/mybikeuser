@@ -23,12 +23,14 @@ const HomeHeader: React.FC<HomeHeaderProps> = ({
     return (
         <View style={styles.container}>
             {/* Location Section */}
-            
+            <View>
+
+            <Text style={{fontWeight:'600',fontSize:16,color:'#fff',marginLeft:5,marginVertical:5}}>{'Welcome'}</Text>
             <TouchableOpacity onPress={onLocationPress} style={styles.locationContainer}>
                 <Image source={icon.pin} style={styles.locationIcon} />
                 <Text style={styles.locationText}>{location}</Text>
             </TouchableOpacity>
-
+            </View>
             {/* Divider */}
             <View style={{flexDirection:'row',alignItems:'center'}}>
             <View style={styles.divider} />

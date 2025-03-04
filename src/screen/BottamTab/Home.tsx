@@ -62,7 +62,7 @@ const Home: React.FC = () => {
       const [res, banner, dealer] = await Promise.all([
         get_servicelist(),
         get_bannerlist(),
-        get_nearyBydeler('40.7128', '74.006'),
+        get_nearyBydeler('22.7028609', '75.8715857'),
       ]);
 
       if (dealer.data) setDealerList(dealer.data);
@@ -82,7 +82,7 @@ const Home: React.FC = () => {
       const [res, banner, dealer] = await Promise.all([
         get_servicelist(),
         get_bannerlist(),
-        get_nearyBydeler('40.7128', '74.006'),
+        get_nearyBydeler('22.7028609', '75.8715857'),
       ]);
 
       if (dealer.data) setDealerList(dealer.data);
@@ -135,7 +135,7 @@ const Home: React.FC = () => {
             {serviceList.length > 0 ? (
               <HorizontalList data={serviceList} />
             ) : (
-              <Text style={{ textAlign: 'center', marginVertical: 10,color:'#fff' }}>No Services Found</Text>
+              <Text style={{ textAlign: 'center', marginVertical: 10,color:'#fff' }}>No Services Found This Location</Text>
             )}
           </View>
 
@@ -146,7 +146,7 @@ const Home: React.FC = () => {
             {dealerList.length > 0 ? (
               <GarageList data={dealerList} />
             ) : (
-              <Text style={{ textAlign: 'center', marginVertical: 10 ,color:'#fff'}}>No Dealers Found</Text>
+              <Text style={{ textAlign: 'center', marginVertical: 10 ,color:'#fff'}}>No Dealers Found This Location</Text>
             )}
           </View>
         </ScrollView>

@@ -142,7 +142,8 @@ import Icon from '../../component/Icon';
     },
     messageText: {
       color: '#FFFFFF',
-      fontSize: 14,
+      fontSize: 12,
+      width:'85%'
     },
     avatar: {
       width: 30,
