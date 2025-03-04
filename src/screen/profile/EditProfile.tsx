@@ -270,6 +270,7 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                     />
                 </View>
 
+<View  style={{height:hp(10)}} />
             </ScrollView>
             <UploadImageModal
                 shown={isModalVisible}

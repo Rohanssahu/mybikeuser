@@ -36,7 +36,8 @@ const Booking: React.FC<Props> = ({ navigation }) => {
     const booking_list = async () => {
         try {
             const response = await get_userbooking();
-            if (response?.data) {
+    
+            if (response?.data?.length > 0) {
                 setBooking(response.data);
             } else {
                 setBooking([]);
@@ -62,9 +63,15 @@ const Booking: React.FC<Props> = ({ navigation }) => {
 
 
     }
-    const filteredBookings = booking.filter(item =>
-        item?.dealer_id?.shopName?.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredBookings = booking?.filter(item =>
+        item?.dealer_id?.shopName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        !item?.dealer_id
     );
+    
+
+    console.log('=========booking===========================');
+    console.log(booking);
+
     return (
         <View style={styles.container}>
             <StatusBar backgroundColor={color.baground} />
@@ -77,7 +84,7 @@ const Booking: React.FC<Props> = ({ navigation }) => {
                     />
                 </View>
                 <Text style={styles.subHeaderText}>Today</Text>
-                {booking.length > 0 ? (
+                {filteredBookings?.length > 0 ? (
                     <BookingList data={filteredBookings} loading={loading}
                         navigation={navigation}
                         onCallPress={(no) => { makeCall(no) }}

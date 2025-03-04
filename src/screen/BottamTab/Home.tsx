@@ -62,7 +62,7 @@ const Home: React.FC = () => {
       const [res, banner, dealer] = await Promise.all([
         get_servicelist(),
         get_bannerlist(),
-        get_nearyBydeler('22.7028609', '75.8715857'),
+        get_nearyBydeler('22.7028638', '75.8715857'),
       ]);
 
       if (dealer.data) setDealerList(dealer.data);
@@ -82,7 +82,7 @@ const Home: React.FC = () => {
       const [res, banner, dealer] = await Promise.all([
         get_servicelist(),
         get_bannerlist(),
-        get_nearyBydeler('22.7028609', '75.8715857'),
+        get_nearyBydeler('22.7028638', '75.8715857'),
       ]);
 
       if (dealer.data) setDealerList(dealer.data);

@@ -46,7 +46,7 @@ const ProfileMenuList: React.FC<ProfileMenuListProps> = ({ data }) => {
 
                 navigation.navigate(item.screen)
               }
-              else if (item.title !== 'Vehicles') {
+              else if (item.title === 'Vehicles') {
                 navigation.navigate(item.screen, { profile: true })
               }
              
