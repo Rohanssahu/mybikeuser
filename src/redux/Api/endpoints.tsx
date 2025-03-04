@@ -24,5 +24,7 @@ export const endpoint = {
   updateprofile: '/bikedoctor/customers/editcustomer/:id',
   profileimage: '/bikedoctor/customers/editimage',
   bookingdetails: '/bikedoctor/bookings/getBookingDetails/:id',
-  cancelbooking:"/bikedoctor/bookings/updateBookingStatus"
+  cancelbooking:"/bikedoctor/bookings/updateBookingStatus",
+  gettickets:"/bikedoctor/ticket/my-tickets",
+
 };

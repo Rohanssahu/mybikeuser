@@ -11,6 +11,7 @@ import Help from "../screen/BottamTab/Help";
 import Home from "../screen/BottamTab/Home";
 import Profile from "../screen/BottamTab/Profile";
 import Reward from "../screen/BottamTab/Reward";
+import TicketList from "../screen/BottamTab/TicketList";
 import AllServices from "../screen/Feature/AllServices";
 import BikeDetails from "../screen/Feature/BikeDetails";
 import BookingComplete from "../screen/Feature/BookingComplete";
@@ -124,7 +125,7 @@ const _routes = {
     },
     {
       name: ScreenNameEnum.SUPPORT_SCREEN,
-      Component: Help,
+      Component: TicketList,
       active: icon.support,
       logo: icon.support,
       lable: 'Help'
