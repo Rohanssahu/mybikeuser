@@ -15,6 +15,7 @@ import Geolocation from '@react-native-community/geolocation';
 import MapPickerModal from './MapPicker';
 import Loading from '../../configs/Loader';
 import { errorToast } from '../../configs/customToast';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 interface ServiceItem {
   title: string;
@@ -40,7 +41,7 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [PickupDistance, setPickupDistance] = useState(null)
   const [BookingDate, setBookingDate] = useState(new Date())
   const [BookingDateModal, setBookingDateModal] = useState(false)
-
+  const [date, setDate] = useState(new Date());
   useEffect(() => {
     requestLocationPermission();
   }, [GarageDetails]);
@@ -59,6 +60,11 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
     getCurrentLocation();
   };
 
+
+  const onChange = (event: any, selectedDate?: Date) => {
+    if (selectedDate) setBookingDate(selectedDate);
+    setBookingDateModal(Platform.OS === 'ios'); // Keep open on iOS
+  };
   const getCurrentLocation = () => {
 
     if (!GarageDetails?.latitude || !GarageDetails?.longitude) return
@@ -171,7 +177,7 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
     hours = hours % 12 || 12;
   
     // Format final string
-    return `${day} ${month} ${year} ${hours}:${minutes} ${amPm}`;
+    return `${day} ${month} ${year}`;
   };
   return (
     <View style={styles.container}>
@@ -359,7 +365,14 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
             }}
           />
         </View>
-
+        {BookingDateModal && (
+        <DateTimePicker
+          value={BookingDate}
+          mode="date"
+          display="default"
+          onChange={onChange}
+        />
+      )}
       </ScrollView>
       <MapPickerModal setModalVisible={() => {
         addPickupDrop()
