@@ -5,6 +5,7 @@ import Icon from '../../component/Icon';
 import { color } from '../../constant';
 import { hp } from '../../component/utils/Constant';
 import { get_profile } from '../../redux/Api/apiRequests';
+import { useRoute } from '@react-navigation/native';
 
 interface Message {
   id: string;
@@ -14,6 +15,13 @@ interface Message {
 
 const Help: React.FC = () => {
   const [User, setUser] = useState('');
+  const route = useRoute()
+
+  const { ticket } = route.params
+  console.log('==============ticket======================');
+  console.log(ticket);
+  console.log('====================================');
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -172,11 +180,13 @@ useEffect(() => {
     </View>
   );
 
+
+
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerText}>Support</Text>
+        <Text style={styles.headerText}>Tikit No :</Text>
         <TouchableOpacity>
           <Icon source={icon.phone} size={40} />
         </TouchableOpacity>
@@ -205,9 +215,9 @@ useEffect(() => {
           onChangeText={setInputText}
         />
         <View style={{ flexDirection: 'row' }}>
-          <TouchableOpacity onPress={() => { }}>
+          {/* <TouchableOpacity onPress={() => { }}>
             <Icon size={25} source={icon.mic} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity onPress={sendMessage} style={{ marginLeft: 10 }}>
             <Icon size={25} source={icon.send} />
           </TouchableOpacity>

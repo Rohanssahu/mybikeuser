@@ -101,6 +101,10 @@ const _routes = {
       name: ScreenNameEnum.MY_BIKES,
       Component: MyBikes,
     },
+    {
+      name: ScreenNameEnum.CHAT_SCREEN,
+      Component: Help,
+    },
 
   ],
 

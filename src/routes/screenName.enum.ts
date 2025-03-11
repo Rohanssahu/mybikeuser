@@ -26,7 +26,8 @@ enum ScreenNameEnum {
   PRIVACY_POLICY='PRIVACY_POLICY',
   SELECT_LOCATION ='SELECT_LOCATION',
   MY_BIKES='MY_BIKES',
-  SupportForm='SupportForm'
+  SupportForm='SupportForm',
+  CHAT_SCREEN='CHAT_SCREEN'
 
 
 }

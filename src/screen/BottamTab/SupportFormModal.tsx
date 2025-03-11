@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, Alert, StyleSheet, Modal } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
+import { create_tikit } from '../../redux/Api/apiRequests';
 
 interface SupportFormModalProps {
   visible: boolean;
@@ -24,7 +25,7 @@ const SupportFormModal: React.FC<SupportFormModalProps> = ({ visible, onClose })
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!subject || !message) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
@@ -34,17 +35,14 @@ const SupportFormModal: React.FC<SupportFormModalProps> = ({ visible, onClose })
     formData.append('subject', subject);
     formData.append('message', message);
 
-    if (image) {
-      formData.append('image', {
-        uri: image,
-        name: 'support_image.jpg',
-        type: 'image/jpeg',
-      });
+
+    const res = await create_tikit(subject, message)
+
+    if (res?.success) {
+      Alert.alert('Success', 'Tikit Submitted Successfully!');
+      onClose();
     }
 
-    console.log('Form Data:', formData);
-    Alert.alert('Success', 'Form submitted successfully!');
-    onClose(); // Close modal after submitting
   };
 
   return (
@@ -70,10 +68,10 @@ const SupportFormModal: React.FC<SupportFormModalProps> = ({ visible, onClose })
             multiline
           />
 
-          <Text style={styles.label}>Upload Image</Text>
+          {/* <Text style={styles.label}>Upload Image</Text>
           <TouchableOpacity style={styles.uploadButton} onPress={handleChooseImage}>
             <Text style={styles.uploadText}>Choose File</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {image && <Image source={{ uri: image }} style={styles.preview} />}
 

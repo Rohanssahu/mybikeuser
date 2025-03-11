@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, FlatList, StyleSheet } from 'react-native
 import { color } from '../../constant';
 import { get_tikit } from '../../redux/Api/apiRequests';
 import SupportFormModal from './SupportFormModal';
+import ScreenNameEnum from '../../routes/screenName.enum';
 
 interface Ticket {
     id: string; // using string ID to match the API response
@@ -69,20 +70,27 @@ const TicketList: React.FC = ({ navigation }) => {
                 data={filteredTickets}
                 keyExtractor={item => item.id} // ID is now string
                 renderItem={({ item }) => (
-                    <View style={styles.ticketItem}>
+                    <TouchableOpacity 
+                    
+                    onPress={()=>{
+                        navigation.navigate(ScreenNameEnum.CHAT_SCREEN,{ticket:item})
+                    }}
+                    style={styles.ticketItem}>
                         <Text style={styles.ticketTitle}>{item.subject}</Text>
-                        <Text>Created at: {new Date(item.created_at).toLocaleString()}</Text>
+                        <Text style={{ fontWeight: '800', fontSize: 12 }}>Created at: {new Date(item.created_at).toLocaleString()}</Text>
                         <Text>Message: {item.messages[0]?.message}</Text> {/* Displaying the first message */}
-                        <TouchableOpacity
+
+                        <View
                             style={[
                                 styles.statusButton,
                                 item.status === 'Open' ? styles.openButton : styles.closeButton,
                             ]}
-                            onPress={() => toggleTicketStatus(item.id)}
+
                         >
-                            <Text style={styles.buttonText}>{item.status === 'Open' ? 'Close' : 'Open'}</Text>
-                        </TouchableOpacity>
-                    </View>
+                            <Text style={styles.buttonText}>Status: {item.status}</Text>
+                        </View>
+
+                    </TouchableOpacity>
                 )}
             />
 
@@ -101,7 +109,10 @@ const TicketList: React.FC = ({ navigation }) => {
 
             {/* Support Modal */}
             {/* Assuming you have a modal component for adding tickets */}
-            <SupportFormModal visible={modalVisible} onClose={() => setModalVisible(false)} />
+            <SupportFormModal visible={modalVisible} onClose={() => {
+                tikit_list()
+                setModalVisible(false)
+            }} />
         </View>
     );
 };
@@ -139,13 +150,16 @@ const styles = StyleSheet.create({
     ticketTitle: {
         fontWeight: 'bold',
         color: '#007bff',
+        fontSize: 16
     },
     statusButton: {
         marginTop: 5,
         padding: 5,
         borderRadius: 5,
         alignItems: 'center',
-        width: 80,
+        alignSelf: 'flex-end',
+        position: 'absolute',
+        right: 10, top: 10
     },
     openButton: {
         backgroundColor: '#28a745',

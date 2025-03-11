@@ -26,5 +26,6 @@ export const endpoint = {
   bookingdetails: '/bikedoctor/bookings/getBookingDetails/:id',
   cancelbooking:"/bikedoctor/bookings/updateBookingStatus",
   gettickets:"/bikedoctor/ticket/my-tickets",
+  createTikit:"/bikedoctor/ticket/create",
 
 };
