@@ -1137,9 +1137,7 @@ const tikitstatus = async (id: string, status: string) => {
     const requestBody = { status }
     const token = await AsyncStorage.getItem('token')
 
-    console.log('===============endpoint.tikitstatus=====================');
-    console.log(endpoint.tikitstatus?.replace(':ticket_id', id));
-    console.log('====================================');
+
     const apiRequests: ApiRequest[] = [
         {
             endpoint: endpoint.tikitstatus?.replace(':ticket_id', id),
@@ -1159,9 +1157,7 @@ const tikitstatus = async (id: string, status: string) => {
         const results = await callMultipleApis(apiRequests);
         const response = results[0];
 
-console.log('===================response=================');
-console.log(response);
-console.log('====================================');
+
         
         if (response?.success) {
             // successToast('Bike Remove Successfully')

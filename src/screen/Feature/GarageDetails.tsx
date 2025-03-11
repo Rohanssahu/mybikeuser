@@ -179,6 +179,10 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
     // Format final string
     return `${day} ${month} ${year}`;
   };
+
+  console.log('====================================');
+  console.log(GarageDetails?.shopImages);
+  console.log('====================================');
   return (
     <View style={styles.container}>
       {/* Header */}
