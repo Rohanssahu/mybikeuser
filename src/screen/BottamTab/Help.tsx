@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Image, Alert } from 'react-native';
 import { icon } from '../../component/Image';
 import Icon from '../../component/Icon';
 import { color } from '../../constant';
 import { hp } from '../../component/utils/Constant';
-import { get_profile } from '../../redux/Api/apiRequests';
+import { get_profile, get_tikitdetails, replay_tikit, tikitstatus } from '../../redux/Api/apiRequests';
 import { useRoute } from '@react-navigation/native';
 
 interface Message {
@@ -13,165 +13,101 @@ interface Message {
   sender: 'user' | 'bot';
 }
 
-const Help: React.FC = () => {
+const Help: React.FC = ({navigation}) => {
   const [User, setUser] = useState('');
-  const route = useRoute()
+  const [TikitDetails, setTikitDetails] = useState('');
+  const route = useRoute();
+  const { ticket } = route.params;
 
-  const { ticket } = route.params
-  console.log('==============ticket======================');
-  console.log(ticket);
-  console.log('====================================');
-
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: "Hi! Thanks for contacting MRbike. Please select your service type.\n\n" +
-        "1. Service\n" +
-        "2. Bike Repair\n" +
-        "3. Complain\n" +
-        "4. Payment\n\n" +
-        "Reply with the option number (e.g., 1 for Service).",
-      sender: 'bot'
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
-  const [currentState, setCurrentState] = useState<'main' | 'bikeRepair' | 'serviceLocation' | 'enterPincode'>('main');
+
+  // Fetch user and ticket details
+  const getUser = async () => {
+    const res = await get_profile();
+    const tikit = await get_tikitdetails(ticket?._id);
+
+    if (tikit.success) {
+      setTikitDetails(tikit.data);
+
+      const formattedMessages = tikit.data.messages.map((msg: any) => ({
+        id: msg._id,
+        text: msg.message,
+        sender: msg.sender_type === 4 ? 'user' : 'bot',
+      }));
+
+      setMessages(formattedMessages);
+    } else {
+      setTikitDetails('');
+    }
+
+    if (res.success) {
+      setUser(res.data);
+    } else {
+      setUser('');
+    }
+  };
+
+  useEffect(() => {
+    getUser();
+  }, []);
 
   // Function to send a message
-  const sendMessage = () => {
+  const replayTikit = async () => {
     if (!inputText.trim()) return;
 
-    const newMessage: Message = { id: Date.now().toString(), text: inputText, sender: 'user' };
-    setMessages((prevMessages) => [...prevMessages, newMessage]);
-    setInputText('');
+    const userMessage: Message = { id: Date.now().toString(), text: inputText, sender: 'user' };
+    setMessages((prevMessages) => [...prevMessages, userMessage]);
 
-    // Handle chatbot responses
-    handleUserSelection(inputText.trim());
-  };
+    try {
+      const res = await replay_tikit(ticket?._id, inputText);
 
-  // Function to handle user's selection
-  const handleUserSelection = (option: string) => {
-    let botReplyText = '';
+      if (res.success) {
+        const botReply: Message = {
+          id: Date.now().toString(),
+          text: res.data?.message || "Thank you for your response. Our team will get back to you.",
+          sender: 'bot',
+        };
 
-    if (currentState === 'main') {
-      switch (option) {
-        case '1':
-          botReplyText = "You selected **Service**. How can we assist you?";
-          break;
-        case '2':
-          botReplyText = "You can choose from the following options:\n\n" +
-            "1. Waiting for Pickup\n" +
-            "2. Reschedule Order\n" +
-            "3. Cancel Order\n" +
-            "4. Service Availability\n" +
-            "5. Invoice Related Issues\n" +
-            "6. Wrong Cancellation\n" +
-            "7. FAQs\n\n" +
-            "OR\n\n" +
-            "Type 'home 🏠' to go to the main menu.";
-          setCurrentState('bikeRepair');
-          break;
-        case '3':
-          botReplyText = "You selected **Complain**. Kindly provide more details.";
-          break;
-        case '4':
-          botReplyText = "Please help me with some details about the service location.\n\n" +
-            "1. Enter a pincode\n" +
-            "2. Pick from my saved addresses\n\n" +
-            "OR\n\n" +
-            "Type 'home 🏠' to go to the main menu.";
-          break;
-        default:
-          botReplyText = "Invalid option. Please reply with a number between 1 and 4.";
-          break;
-      }
-    } else if (currentState === 'bikeRepair') {
-      // Handle the bikeRepair state
-      switch (option) {
-        case '1':
-          botReplyText = "Waiting for Pickup.";
-          break;
-        case '2':
-          botReplyText = "Reschedule Order.";
-          break;
-        case '3':
-          botReplyText = "Cancel Order.";
-          break;
-        case '4':
-          botReplyText = "Please help me with some details\n" +
-            "about the service location.\n\n" +
-            "1. Enter a pincode\n" +
-            "2. Pick from my saved addresses\n\n" +
-            "OR \n\n" +
-            "Type home 🏠 to go to the main menu\n" +
-            setCurrentState('serviceLocation');
-          break;
-        case '5':
-          botReplyText = "Invoice Related Issues.";
-          break;
-        case '6':
-          botReplyText = "Wrong Cancellation.";
-          break;
-        case '7':
-          botReplyText = "FAQs.";
-          break;
-        default:
-          botReplyText = "Invalid option. Please reply with a valid option.";
-          break;
-      }
-    } else if (currentState === 'serviceLocation') {
-      if (option === '1') {
-        botReplyText = "Please provide me your area pincode.\n\n" +
-          "OR\n" +
-          "Type 'home 🏠' to go to the main menu.";
-        setCurrentState('enterPincode');
-      } else if (option === '2') {
-        botReplyText = "You can choose from your saved addresses.";
-        // Logic for selecting saved addresses can be added here
-      }
-    } else if (currentState === 'enterPincode') {
-      // Here, you would validate the pincode entered by the user
-      if (option.match(/^\d{6}$/)) { // Example for 6-digit pincode format
-        botReplyText = `We provide the following services in your area:\n\n` +
-          "Bike Repair, Battery Repair, Front Light Repair, Break Repair, Clutch Repair, " +
-          "Charging battery Repair, horn Repair, Back Panel Repair, Proximity Sensor Repair, " +
-          "Seat Repair, Back light Repair.\n\n" +
-          "To know more about repair services, please click on the link below and search for your device.\n\n" +
-          "https://mrbikesupport/\n\n" +
-          "Thank you for taking out time to chat with me.\n\n" +
-          "OR\n\n" +
-          "Type 'home 🏠' to go to the main menu.";
-          
+        setMessages((prevMessages) => [...prevMessages, botReply]);
+        getUser();
       } else {
-        botReplyText = "Invalid pincode. Please enter a valid pincode.\n\n" +
-          "OR\n" +
-          "Type 'home 🏠' to go to the main menu.";
+        Alert.alert("Failed to send message. Please try again.");
       }
+    } catch (error) {
+      console.error("Error sending reply:", error);
+      Alert.alert("Something went wrong. Please try again.");
     }
 
-    const botReply: Message = { id: Date.now().toString(), text: botReplyText, sender: 'bot' };
-    setMessages((prevMessages) => [...prevMessages, botReply]);
+    setInputText('');
+  };
+  const confirmCloseTikit = () => {
+    Alert.alert(
+      "Close Ticket",
+      "Are you sure you want to close this ticket?",
+      [
+        { text: "No", style: "cancel" },
+        { text: "Yes", onPress: closeTikit },
+      ]
+    );
+  };
+  // Function to close ticket
+  const closeTikit = async () => {
+    try {
+      const res = await tikitstatus(ticket?._id, "Closed");
+      if (res.success) {
+        Alert.alert("Success", "Ticket has been closed.");
+        navigation.goBack()
+        getUser(); // Refresh ticket details
+      } else {
+        Alert.alert("Error", "Failed to close ticket.");
+      }
+    } catch (error) {
+      console.error("Error closing ticket:", error);
+      Alert.alert("Something went wrong.");
+    }
   };
 
-
-
-
-  const getUser = async () => {
-    
-    const res = await get_profile();
-    if (res.success) {
-        setUser(res.data);
-        console.log(res.data); // Log the response to verify
-    } else {
-        setUser('');
-    }
-   
-};
-
-useEffect(() => {
-
-  getUser()
-}, [])
   // Render each message in chat
   const renderMessage = ({ item }: { item: Message }) => (
     <View style={[styles.messageContainer, item.sender === 'user' ? styles.userMessage : styles.botMessage]}>
@@ -180,20 +116,27 @@ useEffect(() => {
     </View>
   );
 
-
-
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerText}>Tikit No :</Text>
-        <TouchableOpacity>
+        <Text style={styles.headerText}>{ticket?.ticket_number}</Text>
+        <View style={{flexDirection:'row',alignItems:'center'}}>
+        <TouchableOpacity style={styles.closeButton} onPress={()=>{
+          confirmCloseTikit()
+        }}>
+        <Text style={styles.closeButtonText}>Close</Text>
+      </TouchableOpacity>
+        <TouchableOpacity style={{marginLeft:10}}>
           <Icon source={icon.phone} size={40} />
         </TouchableOpacity>
+        </View>
       </View>
 
       {/* Greeting */}
-      <Text style={styles.greetingText}>Hello, <Text style={styles.highlight}>{User?.first_name}</Text></Text>
+      <Text style={styles.greetingText}>
+        Hello, <Text style={styles.highlight}>{User?.first_name}</Text>
+      </Text>
 
       {/* Chat Messages */}
       <FlatList
@@ -201,24 +144,24 @@ useEffect(() => {
         showsVerticalScrollIndicator={false}
         keyExtractor={(item) => item.id}
         renderItem={renderMessage}
-        ListFooterComponent={({ item }) => <View style={{ height: hp(10) }} />}
+        ListFooterComponent={<View style={{ height: hp(10) }} />}
         contentContainerStyle={styles.chatContainer}
       />
+
+      {/* Close Ticket Button */}
+
 
       {/* Message Input */}
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Ask Chatbot"
+          placeholder="Type your message..."
           placeholderTextColor="#fff"
           value={inputText}
           onChangeText={setInputText}
         />
         <View style={{ flexDirection: 'row' }}>
-          {/* <TouchableOpacity onPress={() => { }}>
-            <Icon size={25} source={icon.mic} />
-          </TouchableOpacity> */}
-          <TouchableOpacity onPress={sendMessage} style={{ marginLeft: 10 }}>
+          <TouchableOpacity onPress={replayTikit} style={{ marginLeft: 10 }}>
             <Icon size={25} source={icon.send} />
           </TouchableOpacity>
         </View>
@@ -308,5 +251,18 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     color: '#FFFFFF',
+  },
+  closeButton: {
+    backgroundColor: '#FF5733',
+
+    height:40,width:40,
+    borderRadius: 20,
+    alignItems: 'center',
+   justifyContent:'center'
+  },
+  closeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });

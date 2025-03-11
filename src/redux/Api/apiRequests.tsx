@@ -1020,6 +1020,42 @@ const get_tikit = async () => {
         return { success: false, message: error.message, data: [] };
     }
 };
+const get_tikitdetails = async (id:string) => {
+    console.log('===============get_tikit===details==================',);
+    const token = await AsyncStorage.getItem('token')
+
+    console.log(token);
+    
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.gettikitdetails?.replace(':ticket_id', id),
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'token': token
+            },
+        },
+    ];
+
+
+    try {
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+
+        const response = results[0];
+
+        if (response?.success) {
+            return { success: true, message: "success", data: response?.data };
+        }
+        else {
+            return { success: false, message: "Data Not Found", data: [] };
+        }
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, data: [] };
+    }
+};
 
 const create_tikit = async (subject: string, message: string) => {
     const requestBody = { subject, message }
@@ -1059,4 +1095,89 @@ const create_tikit = async (subject: string, message: string) => {
         return { success: false, message: error.message, state: [] };
     }
 };
-export {create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  
+const replay_tikit = async (id: string, message: string) => {
+    const requestBody = {  message }
+    const token = await AsyncStorage.getItem('token')
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.replytikit?.replace(':ticket_id', id),
+            method: 'POST',
+            data: requestBody,
+
+            headers: {
+                'Content-Type': 'application/json',
+                token: token
+            },
+        },
+    ];
+
+
+    try {
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+
+
+        
+        if (response?.success) {
+            // successToast('Bike Remove Successfully')
+            return { success: true, message: "Success", data: response.data, };
+        }
+        else {
+
+            return { success: false, message: "Unexpected response", data: [] };
+        }
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, state: [] };
+    }
+};
+const tikitstatus = async (id: string, status: string) => {
+    const requestBody = { status }
+    const token = await AsyncStorage.getItem('token')
+
+    console.log('===============endpoint.tikitstatus=====================');
+    console.log(endpoint.tikitstatus?.replace(':ticket_id', id));
+    console.log('====================================');
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.tikitstatus?.replace(':ticket_id', id),
+            method: 'PUT',
+            data: requestBody,
+
+            headers: {
+                'Content-Type': 'application/json',
+                token: token
+            },
+        },
+    ];
+
+
+    try {
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+
+console.log('===================response=================');
+console.log(response);
+console.log('====================================');
+        
+        if (response?.success) {
+            // successToast('Bike Remove Successfully')
+            return { success: true, message: "Success", data: response.data, };
+        }
+        else {
+
+            return { success: false, message: "Unexpected response", data: [] };
+        }
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, state: [] };
+    }
+};
+
+
+
+export {tikitstatus,replay_tikit,get_tikitdetails,create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  

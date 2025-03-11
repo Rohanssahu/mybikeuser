@@ -76,9 +76,10 @@ const TicketList: React.FC = ({ navigation }) => {
                         navigation.navigate(ScreenNameEnum.CHAT_SCREEN,{ticket:item})
                     }}
                     style={styles.ticketItem}>
-                        <Text style={styles.ticketTitle}>{item.subject}</Text>
+                        <Text style={styles.ticketTitle}>{item.ticket_number}</Text>
+                        <Text style={[styles.ticketTitle,{fontSize:14}]}>{item.subject}</Text>
                         <Text style={{ fontWeight: '800', fontSize: 12 }}>Created at: {new Date(item.created_at).toLocaleString()}</Text>
-                        <Text>Message: {item.messages[0]?.message}</Text> {/* Displaying the first message */}
+                     <Text style={{ fontWeight: '800', fontSize: 12 }}>Message: {item.messages[0]?.message}</Text> {/* Displaying the first message */}
 
                         <View
                             style={[
