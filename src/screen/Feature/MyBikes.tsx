@@ -27,6 +27,7 @@ const MyBikes: React.FC<Props> = ({ navigation }) => {
   const route = useRoute()
 
   const {profile } =route.params
+  
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [Bikes, setBikes] = useState<any>([]);
   const [loading, setLoading] = useState<boolean>(true);

@@ -220,9 +220,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
 
                             get_citys_list(value.id)
                             setState(value.name)
-                            console.log('=================value.name===================');
-                            console.log(value.name);
-                            console.log('====================================');
+                          
                         }}
                         placeholder="State"
                         label={'name'}

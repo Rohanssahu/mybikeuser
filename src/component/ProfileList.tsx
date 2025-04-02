@@ -42,7 +42,7 @@ const ProfileMenuList: React.FC<ProfileMenuListProps> = ({ data }) => {
                 await AsyncStorage.clear()
                 navigation.navigate(item.screen)
               }
-              if (item.title !== 'Logout') {
+              else if (item.title !== 'Logout' && item.title !== 'Vehicles') {
 
                 navigation.navigate(item.screen)
               }

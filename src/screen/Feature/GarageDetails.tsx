@@ -331,6 +331,9 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
           </View>
 
           {/* Services */}
+          {GarageDetails?.services?.length > 0 
+          ?<>
+      
           {GarageDetails?.services?.map((service, index) => (
             <TouchableOpacity
               onPress={() => {
@@ -358,7 +361,28 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
               <Text style={styles.serviceText}>{service.description}</Text>
             </TouchableOpacity>
           ))}
+              </>
+              :
+              <View>
+                 <View style={{
+                backgroundColor: color.borderColor,
+                padding: 10, marginLeft: -50,
+                paddingLeft: 50,
+                borderRadius: 30,
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginTop:20
+              }}>
+
+                <Text style={[styles.serviceTitle, { color: '#000', width: '92%' }]}>No Service Added</Text>
+
+                
+              </View>
+                </View>
+
+}
         </View>
+        {GarageDetails?.services?.length > 0 &&
         <View style={{ marginVertical: 15, paddingHorizontal: 20, marginBottom: 60 }}>
           <CustomButton
             title='Continue'
@@ -369,6 +393,7 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
             }}
           />
         </View>
+}
         {BookingDateModal && (
         <DateTimePicker
           value={BookingDate}
