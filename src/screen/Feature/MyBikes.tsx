@@ -26,7 +26,9 @@ type Props = NativeStackScreenProps<RootStackParamList, 'AllServices'>;
 const MyBikes: React.FC<Props> = ({ navigation }) => {
   const route = useRoute()
 
-  const {profile } =route.params
+  const {profile,Grageid } =route.params
+  
+  console.log('Grageid',Grageid);
   
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [Bikes, setBikes] = useState<any>([]);
@@ -81,7 +83,16 @@ const MyBikes: React.FC<Props> = ({ navigation }) => {
 {!profile &&
                   <TouchableOpacity 
                   onPress={()=>{
-                    navigation.navigate(ScreenNameEnum.NEARBY_SHOPS,{item:item})
+
+                    if(Grageid){
+                      navigation.navigate(ScreenNameEnum.GARAGE_DETAILS,{bike:item,id:Grageid})
+                    }
+                    else{
+
+                      navigation.navigate(ScreenNameEnum.NEARBY_SHOPS,{item:item})
+                    }
+
+                    
                   }}
                   style={{
                     marginTop: 10,

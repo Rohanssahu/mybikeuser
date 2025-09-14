@@ -14,7 +14,7 @@ import { color } from '../../constant';
 import { hp, wp } from '../../component/utils/Constant';
 
 // Initialize Geocoder with API key
-Geocoder.init('AIzaSyADzwSBu_YTmqWZj7ys5kp5UcFDG9FQPVY');
+Geocoder.init('AIzaSyB_Lz_b22Sf5eKRSHhgxOnoZ8InrtXkpSM');
 
 // Define interface for coordinates
 interface Coordinates {

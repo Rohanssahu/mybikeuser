@@ -10,9 +10,10 @@ import HorizontalList from '../../component/HorizontalList';
 import SeeallHeader from '../../component/SeeallHeader';
 import GarageList from '../../component/GarageList';
 import ScreenNameEnum from '../../routes/screenName.enum';
-import { get_bannerlist, get_nearyBydeler, get_servicelist } from '../../redux/Api/apiRequests';
+import { get_bannerlist, get_nearyBydeler, get_profile, get_servicelist } from '../../redux/Api/apiRequests';
 import { useLocation } from '../../component/LocationContext';
 import Skeleton from "react-native-reanimated-skeleton";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // Define navigation type
 type RootStackParamList = {
   SELECT_LOCATION: undefined;
@@ -53,9 +54,17 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     fetchServiceData();
-
+    getUser()
   }, []);
-
+  const getUser = async () => {
+    setLoading(true)
+    const res = await get_profile();
+    if (res.success) {
+  await AsyncStorage.setItem('user_id',res.data?._id)
+        
+    } 
+    setLoading(false)
+};
   const fetchServiceData = async () => {
     setLoading(true);
     try {
@@ -82,7 +91,7 @@ const Home: React.FC = () => {
       const [res, banner, dealer] = await Promise.all([
         get_servicelist(),
         get_bannerlist(),
-        get_nearyBydeler('22.7028638', '75.8715857'),
+        get_nearyBydeler('22.6845065', '75.8644601'),
       ]);
 
       if (dealer.data) setDealerList(dealer.data);

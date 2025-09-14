@@ -20,7 +20,7 @@ import Icon from './Icon';
 import { icon } from './Image';
 import ScreenNameEnum from '../routes/screenName.enum';
 
-const GOOGLE_PLACES_API_KEY = 'AIzaSyADzwSBu_YTmqWZj7ys5kp5UcFDG9FQPVY'; // Store securely!
+const GOOGLE_PLACES_API_KEY = 'AIzaSyB_Lz_b22Sf5eKRSHhgxOnoZ8InrtXkpSM'; // Store securely!
 
 const SelectLocation = () => {
     const [location, setLocation] = useState(null);
@@ -156,6 +156,22 @@ const SelectLocation = () => {
 
     return (
         <View style={styles.container}>
+
+
+<View>
+    <TouchableOpacity 
+    
+    
+    onPress={()=>{
+        navigation.goBack()
+    }}
+    style={{
+        backgroundColor:'#333',padding:15,width:80,borderRadius:20,margin:5
+    }}>
+        <Text style={{fontSize:16,color:'#fff'}}>Back</Text>
+    </TouchableOpacity>
+</View>
+
             <View style={{ width: '100%', marginTop: 10 }}>
                 <GooglePlacesInput placeholder="Search location" onPlaceSelected={handleSelectLocation} />
             </View>
@@ -166,7 +182,7 @@ const SelectLocation = () => {
                 <Text style={styles.sectionTitle}>Nearby Locations</Text>
                 {nearbyLocations.length > 0 ? (
                     <FlatList
-                        data={nearbyLocations}
+                        data={nearbyLocations?.slice(0,7)}
                         renderItem={renderLocationItem}
                         keyExtractor={(item, index) => index.toString()}
                     />

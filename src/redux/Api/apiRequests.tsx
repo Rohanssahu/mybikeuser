@@ -5,6 +5,7 @@ import { endpoint } from './endpoints';
 import { successToast } from '../../configs/customToast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { callMultipleApis } from './index';
+import { string } from 'prop-types';
 
 // Interface for API request
 interface ApiRequest {
@@ -136,12 +137,12 @@ const otp_Verify = async (phoneNumber: string, otp: string,) => {
                 await AsyncStorage.setItem('token', response.token)
                 successToast(response.message)
 
-                return { success: true, message: "OTP verified successfully", user: response || null,isProfile:response?.isProfile };
+                return { success: true, message: "OTP verified successfully", user: response  };
             } else if (response.message === "User not found") {
                 successToast(response.message)
 
                 await AsyncStorage.setItem('token', response.token)
-                return { success: true, message: "User not found", user: response.user || null };
+                return { success: true, message: "User not found", user: response.user[0] || null };
             }
         }
         return { success: false, message: "Unexpected response", user: null };
@@ -330,9 +331,7 @@ const get_nearyBydeler = async (lat: string, long: string) => {
 const get_bannerlist = async () => {
 
     const token = await AsyncStorage.getItem('token')
-    console.log('====================================');
-    console.log(token);
-    console.log('====================================');
+  
     const apiRequests: ApiRequest[] = [
         {
             endpoint: endpoint.bannerlist,
@@ -360,15 +359,15 @@ const get_bannerlist = async () => {
         return { success: false, message: error.message, data: [] };
     }
 };
-const get_userbooking = async () => {
-    console.log('===============get_userbooking=====================', endpoint.userbooking);
+const get_userbooking = async (_id:string) => {
+    console.log('===============get_userbooking=====================',  endpoint.userbooking+`/${_id}?user_type=4`);
     const token = await AsyncStorage.getItem('token')
 
     console.log(token);
 
     const apiRequests: ApiRequest[] = [
         {
-            endpoint: endpoint.userbooking,
+            endpoint: endpoint.userbooking+`/${_id}?user_type=4`,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -636,14 +635,12 @@ const remove_bike = async (id: string) => {
         return { success: false, message: error.message, state: [] };
     }
 };
-const garage_details = async (id: string) => {
-    console.log('==============garagedetails======================', id);
-
-    const token = await AsyncStorage.getItem('token')
+const garage_details = async (id: string, digitsOnly: string) => {
+    const token = await AsyncStorage.getItem('token');
+   
     const apiRequests: ApiRequest[] = [
         {
-
-            endpoint: `${endpoint.garagedetails}?dealer_id=${id}`,
+            endpoint: `${endpoint.garagedetails}/${id}?cc=${digitsOnly}`,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -653,17 +650,12 @@ const garage_details = async (id: string) => {
     ];
 
     try {
-        // Call the multiple APIs and await the result
         const results = await callMultipleApis(apiRequests);
-        console.log('API Response=>>>>>>>>>>:', results);
         const response = results[0];
 
         if (response?.success) {
-            // successToast('Bike Remove Successfully')
-            return { success: true, message: "Success", data: response.data, };
-        }
-        else {
-
+            return { success: true, message: "Success", data: response.data };
+        } else {
             return { success: false, message: "Unexpected response", data: [] };
         }
 
@@ -672,6 +664,7 @@ const garage_details = async (id: string) => {
         return { success: false, message: error.message, state: [] };
     }
 };
+
 
 const get_FilterBydeler = async (lat: string, long: string, variant_id: string,) => {
 
@@ -684,6 +677,7 @@ const get_FilterBydeler = async (lat: string, long: string, variant_id: string,)
                 'Content-Type': 'application/json',
                 "token": token
             },
+            
         },
     ];
     try {
@@ -703,9 +697,13 @@ const get_FilterBydeler = async (lat: string, long: string, variant_id: string,)
         return { success: false, message: error.message, data: [] };
     }
 };
-const addPickupAddress = async (user_lat: string, user_lng: string, dealer_id: string) => {
-    const requestBody = { user_lat, user_lng, dealer_id };
+const addPickupAddress = async (user_lat: string, user_lng: string, dealer_id: string,user_id:string) => {
+    const requestBody = { user_lat, user_lng, dealer_id,user_id };
     const token = await AsyncStorage.getItem('token')
+
+console.log('============requestBody========================');
+console.log(requestBody);
+console.log('====================================');
     const apiRequests: ApiRequest[] = [
         {
             endpoint: endpoint.addpickndrop,
@@ -734,7 +732,34 @@ const addPickupAddress = async (user_lat: string, user_lng: string, dealer_id: s
         return { success: false, message: error.message, data: [] };
     }
 };
-
+const additionalservices = async (id: string, token: string, cc: string) => {
+    const apiRequests: ApiRequest[] = [
+      {
+        endpoint: `${endpoint.additionalservices}/${id}?cc=${cc}`,
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          token: token,
+        },
+      },
+    ];
+  
+    try {
+      // Call the multiple APIs and await the result
+      const results = await callMultipleApis(apiRequests);
+      const response = results[0];
+  
+      if (response?.status == '200') {
+        // successToast('Bike Remove Successfully')
+        return {success: true, message: 'Success', data: response.data};
+      } else {
+        return {success: false, message: 'Unexpected response', data: []};
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      return {success: false, message: error.message, state: []};
+    }
+  };
 const create_booking = async (dealer_id: string, services: string, pickupAndDropId: string, userBike_id: string, pickupDate: string) => {
     // Prepare the request body for login API
     const requestBody = { dealer_id, services, pickupAndDropId, userBike_id, pickupDate };
@@ -1176,4 +1201,4 @@ const tikitstatus = async (id: string, status: string) => {
 
 
 
-export {tikitstatus,replay_tikit,get_tikitdetails,create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  
+export {additionalservices, tikitstatus,replay_tikit,get_tikitdetails,create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  

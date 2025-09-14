@@ -35,7 +35,7 @@ const RegistrationRoutes: FunctionComponent = () => {
 
 
         // Fetch geocode
-        const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyADzwSBu_YTmqWZj7ys5kp5UcFDG9FQPVY`;
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyB_Lz_b22Sf5eKRSHhgxOnoZ8InrtXkpSM`;
 
 
         const res = await fetch(url);

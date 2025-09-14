@@ -47,7 +47,7 @@ const GarageList: React.FC<GarageListProps> = ({ data }) => {
             </View>
             <TouchableOpacity 
               style={styles.button} 
-              onPress={() =>   navigation.navigate(ScreenNameEnum.MY_BIKES,{profile:false})}
+              onPress={() =>   navigation.navigate(ScreenNameEnum.MY_BIKES,{profile:false,Grageid:item?._id})}
             >
               <Text style={styles.buttonText}>BOOK NOW</Text>
             </TouchableOpacity>

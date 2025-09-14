@@ -69,7 +69,7 @@ console.log('====================================');
         if (response.success) {
             console.log('Login successful: ', response.message);
             navigation.navigate(ScreenNameEnum.OTP_SCREEN, { phone: `+91${phoneNumber}` })
-            response.user && console.log('User Info:', response.user);
+            response.user && console.log('Login User Info:', response.user);
             setisLoading(false)
         } else {
             console.log('Login failed: ', response.message);

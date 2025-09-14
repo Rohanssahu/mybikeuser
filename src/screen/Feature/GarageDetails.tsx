@@ -16,6 +16,7 @@ import MapPickerModal from './MapPicker';
 import Loading from '../../configs/Loader';
 import { errorToast } from '../../configs/customToast';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface ServiceItem {
   title: string;
@@ -109,11 +110,16 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
   }, [id])
 
   const get_dealer_details = async () => {
-
-    const res = await garage_details(id)
+  
+    const digitsOnly = bike?.bike_cc.replace(/\D/g, '');
+  
+   
+    const res = await garage_details(id,digitsOnly)
 
     if (res?.success) {
       setGarageDetails(res?.data)
+     
+     
     }
     else {
       setGarageDetails([])
@@ -122,23 +128,29 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
 
   }
 
+ 
 
   const addPickupDrop = async () => {
     const user = { latitude: PickupLocation?.latitude, longitude: PickupLocation?.longitude }
 
     if (PickupLocation?.latitude, PickupLocation?.longitude) {
       const ls = haversineFormula(user, shopLocation)
+console.log('ls',ls);
 
       setPickupDistance(ls ? ls : '')
     }
 
-    const res = await addPickupAddress(PickupLocation?.latitude, PickupLocation?.longitude, GarageDetails?._id)
+    const user_id = await AsyncStorage.getItem('user_id')
+
+    const res = await addPickupAddress(PickupLocation?.latitude, PickupLocation?.longitude, GarageDetails?._id,user_id)
 
 
     if (res?.data?._id) {
       setPickupLocationId(res?.data?._id)
     }
   }
+
+
   const createBooking = async () => {
 
     if (!selectedService) return errorToast('Please Choose Service')
@@ -180,9 +192,8 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
     return `${day} ${month} ${year}`;
   };
 
-  console.log('====================================');
-  console.log(GarageDetails?.shopImages);
-  console.log('====================================');
+
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -233,7 +244,7 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
           <View style={[styles.featureRow, { justifyContent: 'space-between' }]}>
             <Icon source={icon.pickups} size={30} />
             <View style={{ width: '88%' }}>
-              <Text style={styles.featureText}>Pick-Up & Drop ({PickupDistance?.toFixed(2)}km)</Text>
+              <Text style={styles.featureText}>Pick-Up & Drop ({Number(PickupDistance)?.toFixed(2)}km)</Text>
               {PickupLocationName == '' && choosePickupOption === '' && <Text style={styles.featureText2}>{GarageDetails?.pickupAndDrop ? 'We Offer Pickup & Drop Services' : 'Pickup & drop Services Not Available'}</Text>}
            
 
@@ -325,7 +336,7 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
             <Icon source={icon.Expert} size={30} />
             <View>
               <Text style={styles.featureText}>Expert Advice</Text>
-              <Text style={styles.featureText2}>Skilled mechanics for your every need.</Text>
+              <Text style={styles.featureText}>Skilled mechanics for your every need.</Text>
 
             </View>
           </View>
@@ -349,7 +360,7 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
                 alignItems: 'center'
               }}>
 
-                <Text style={[styles.serviceTitle, { color: '#000', width: '92%' }]}>{service.name?.toUpperCase()}  ₹{service?.estimated_cost}</Text>
+                <Text style={[styles.serviceTitle, { color: '#000', width: '92%' }]}>{service.name?.toUpperCase()}  ₹{service?.bikes[0].price}</Text>
 
                 <View style={{}}>
                   {selectedService == service?._id ? <Image source={icon.check}
@@ -385,7 +396,7 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
         {GarageDetails?.services?.length > 0 &&
         <View style={{ marginVertical: 15, paddingHorizontal: 20, marginBottom: 60 }}>
           <CustomButton
-            title='Continue'
+            title='Book Now'
 
             onPress={() => {
 

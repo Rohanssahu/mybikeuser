@@ -33,9 +33,6 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ navigation }) => {
 
     const ref = useBlurOnFulfill({ value, cellCount: 4 });
 
-
-    console.log('phone', phone);
-
     const [props, getCellOnLayoutHandler] = useClearByFocusCell({
         value,
         setValue,
@@ -58,16 +55,16 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ navigation }) => {
 
         // Handle the response
         if (response.success) {
-            console.log('Login successful: ', response);
-            if(response?.user?.isProfile){
 
-     
+
+            if(response?.user?.isProfile){
                 navigation.navigate(ScreenNameEnum.BOTTAM_TAB)
             }
             else{
-                navigation.navigate(ScreenNameEnum.PROFILE_DETAILS)
+               navigation.navigate(ScreenNameEnum.PROFILE_DETAILS)
+             //navigation.navigate(ScreenNameEnum.BOTTAM_TAB)
             }
-            response.user && console.log('User Info:', response.user);
+            
             setisLoading(false)
         } else {
             console.log('Login failed: ', response.message);

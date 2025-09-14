@@ -10,7 +10,7 @@ export interface ApiRequest {
   token?: string;
 }
 
-export const base_url = 'https://mrbikedoctors.com/api';
+export const base_url = 'https://dr-bike-backend.onrender.com';
 export const image_url = 'https://mrbikedoctors.com/image/';
 
 

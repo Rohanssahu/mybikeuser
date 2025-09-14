@@ -54,7 +54,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
             }}
             enablePoweredByContainer={false}
             query={{
-                key: 'AIzaSyADzwSBu_YTmqWZj7ys5kp5UcFDG9FQPVY',
+                key: 'AIzaSyB_Lz_b22Sf5eKRSHhgxOnoZ8InrtXkpSM',
                 language: 'en',
             }}
             styles={styles}
