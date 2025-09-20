@@ -21,7 +21,7 @@ import {icon} from './Image';
 import ScreenNameEnum from '../routes/screenName.enum';
 import CustomHeader from './CustomHeaderProps';
 
-const GOOGLE_PLACES_API_KEY = 'AIzaSyB_Lz_b22Sf5eKRSHhgxOnoZ8InrtXkpSM'; // Store securely!
+const GOOGLE_PLACES_API_KEY = ''; // Store securely!
 
 const SelectLocation = () => {
   const [location, setLocation] = useState(null);
