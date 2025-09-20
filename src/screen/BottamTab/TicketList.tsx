@@ -4,6 +4,8 @@ import { color } from '../../constant';
 import { get_tikit } from '../../redux/Api/apiRequests';
 import SupportFormModal from './SupportFormModal';
 import ScreenNameEnum from '../../routes/screenName.enum';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {format} from 'date-fns';
 
 interface Ticket {
     id: string; // using string ID to match the API response
@@ -23,8 +25,9 @@ const TicketList: React.FC = ({ navigation }) => {
     }, []);
 
     const tikit_list = async () => {
-        try {
-            const res = await get_tikit();
+        try { 
+             const user_id = await  AsyncStorage.getItem('user_id')            
+            const res = await get_tikit(user_id);
             if (res?.success) {
                 setTickets(res?.data);
             } else {
@@ -37,16 +40,10 @@ const TicketList: React.FC = ({ navigation }) => {
 
     const filteredTickets = tickets.filter(ticket => ticket.status === selectedTab);
 
-    const toggleTicketStatus = (id: string) => {
-        setTickets(
-            tickets.map(ticket =>
-                ticket.id === id
-                    ? { ...ticket, status: ticket.status === 'Open' ? 'Closed' : 'Open' }
-                    : ticket
-            )
-        );
-    };
 
+    const formatDate = dateString => {
+        return format(new Date(dateString), 'dd MMM yyyy, hh:mm a');
+      };
     return (
         <View style={styles.container}>
             {/* Tabs */}
@@ -65,36 +62,64 @@ const TicketList: React.FC = ({ navigation }) => {
                 </TouchableOpacity>
             </View>
 
-            {/* Ticket List */}
-            <FlatList
-                data={filteredTickets}
-                keyExtractor={item => item.id} // ID is now string
-                renderItem={({ item }) => (
-                    <TouchableOpacity 
-                    
-                    onPress={()=>{
-                        navigation.navigate(ScreenNameEnum.CHAT_SCREEN,{ticket:item})
-                    }}
-                    style={styles.ticketItem}>
-                        <Text style={styles.ticketTitle}>{item.ticket_number}</Text>
-                        <Text style={[styles.ticketTitle,{fontSize:14}]}>{item.subject}</Text>
-                        <Text style={{ fontWeight: '800', fontSize: 12 }}>Created at: {new Date(item.created_at).toLocaleString()}</Text>
-                     <Text style={{ fontWeight: '800', fontSize: 12 }}>Message: {item.messages[0]?.message}</Text> {/* Displaying the first message */}
+            <View
+        style={{
+          flex: 1,
+          marginTop: 30,
+        }}>
+        {filteredTickets?.length > 0 ? (
+          <FlatList
+            data={filteredTickets}
+            keyExtractor={item => item.id} // ID is now string
+            renderItem={({item}) => (
+              <TouchableOpacity
+                onPress={() => {
+                  navigation.navigate(ScreenNameEnum.CHAT_SCREEN, {
+                    ticket: item,
+                  });
+                }}
+                style={styles.ticketItem}>
+                <Text style={styles.ticketTitle}>T-{item?.ticketNo}</Text>
+                <Text style={[styles.ticketTitle, {fontSize: 16}]}>
+                  {item?.subject}
+                </Text>
+                <Text style={{fontWeight: '800', fontSize: 16}}>
+                  Created at: {formatDate(item?.created_at)}
+                </Text>
+                <Text style={{fontWeight: '800', fontSize: 16}}>
+                  Last Message: {item?.messages[item?.messages?.length - 1]?.message?.slice(0,50)}
+                </Text>
 
-                        <View
-                            style={[
-                                styles.statusButton,
-                                item.status === 'Open' ? styles.openButton : styles.closeButton,
-                            ]}
-
-                        >
-                            <Text style={styles.buttonText}>Status: {item.status}</Text>
-                        </View>
-
-                    </TouchableOpacity>
-                )}
-            />
-
+                <View
+                  style={[
+                    styles.statusButton,
+                    item.status === 'Open'
+                      ? styles.openButton
+                      : styles.closeButton,
+                  ]}>
+                  <Text style={styles.buttonText}>Status: {item.status}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          />
+        ) : (
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            <Text
+              style={{
+                fontSize: 16,
+                color: '#fff',
+                fontWeight: '600',
+              }}>
+              No Tickets Found
+            </Text>
+          </View>
+        )}
+      </View>
             <TouchableOpacity
                 onPress={() => {
                     setModalVisible(true);

@@ -73,8 +73,7 @@ const profileData: ProfileMenuItem[] = [
         id: 6,
         title: 'Logout',
         icon: icon.logout,
-      
-        screen: ScreenNameEnum.LOGIN_SCREEN
+        screen: 'Logout',
     },
 ];
 

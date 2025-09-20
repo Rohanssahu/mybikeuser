@@ -15,6 +15,7 @@ import { get_citys, get_profile, get_states, updateProfile, updateProfileImage }
 import { captureImage, image_url, selectImageFromGallery } from '../../redux/Api';
 import UploadImageModal from '../../component/UploadImageModal';
 import Loading from '../../configs/Loader';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface ProfileDetailsProps {
     navigation: StackNavigationProp<any, any>;
@@ -64,7 +65,9 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
 
     const getUser = async () => {
         setLoading(true)
-        const res = await get_profile();
+        const user_id = await  AsyncStorage.getItem('user_id')
+
+        const res = await get_profile(user_id);
         if (res.success) {
             setUser(res.data);
             console.log(res.data); // Log the response to verify
@@ -150,7 +153,9 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
         setLoading(true)
         const res = await updateProfile(User?._id, phone, firstName, lastName, state, city, address, pinCode, image, email)
         if (res?.success) {
-            get_profile()
+            const user_id = await  AsyncStorage.getItem('user_id')
+
+            get_profile(user_id)
         }
         setLoading(false)
     }

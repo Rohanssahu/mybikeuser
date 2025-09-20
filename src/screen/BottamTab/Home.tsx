@@ -58,7 +58,10 @@ const Home: React.FC = () => {
   }, []);
   const getUser = async () => {
     setLoading(true)
-    const res = await get_profile();
+  const user_id = await  AsyncStorage.getItem('user_id')
+
+
+    const res = await get_profile(user_id);
     if (res.success) {
   await AsyncStorage.setItem('user_id',res.data?._id)
         
@@ -126,7 +129,7 @@ const Home: React.FC = () => {
             location={locationName || locationNames || 'Fetching'}
             hasNotifications={true}
             onLocationPress={() => navigation.navigate(ScreenNameEnum.SELECT_LOCATION)}
-            onNotificationPress={() => console.log("Notifications Pressed")}
+            onNotificationPress={() => navigation.navigate(ScreenNameEnum.Notification) }
           />
 
           {/* Banner Section */}

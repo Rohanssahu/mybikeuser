@@ -1,6 +1,11 @@
 import React from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet } from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import {
+  View,
+  Text,
+  Modal,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
 import Icon from '../../component/Icon';
 import { icon } from '../../component/Image';
 
@@ -10,24 +15,56 @@ interface LogoutModalProps {
   onConfirm: () => void;
 }
 
-const LogoutModal: React.FC<LogoutModalProps> = ({ visible, onClose, onConfirm }) => {
+const LogoutModal: React.FC<LogoutModalProps> = ({
+  visible,
+  onClose,
+  onConfirm,
+}) => {
   return (
-    <Modal transparent animationType="fade" visible={visible} onRequestClose={onClose}>
+    <Modal
+      transparent
+      animationType="fade"
+      visible={visible}
+      onRequestClose={onClose}
+    >
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
           {/* Close Button */}
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Icon source={icon.close} size={20} />
+            <Icon source={icon.close} size={22} />
           </TouchableOpacity>
 
-          {/* Logout Text */}
-          <Text style={styles.title}>Log Out?</Text>
-          <Text style={styles.subtitle}>Are you sure you want to log out?</Text>
+          {/* Icon */}
+          <View style={styles.iconWrapper}>
+            <Icon
+              source={icon.logout}
+              size={50}
+              style={{ tintColor: '#FF4D4F' }}
+            />
+          </View>
 
-          {/* Logout Button */}
-          <TouchableOpacity style={styles.logoutButton} onPress={onConfirm}>
-            <Text style={styles.logoutText}>Log Out</Text>
-          </TouchableOpacity>
+          {/* Title & Subtitle */}
+          <Text style={styles.title}>Confirm Logout</Text>
+          <Text style={styles.subtitle}>
+            You will be logged out from your account. All session data will be cleared.
+          </Text>
+
+          {/* Buttons */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[styles.button, styles.cancelButton]}
+              onPress={onClose}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, styles.logoutButton]}
+              onPress={onConfirm}
+            >
+              <Text style={styles.logoutText}>Log Out</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </Modal>
@@ -39,45 +76,71 @@ export default LogoutModal;
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContainer: {
-    width: '80%',
-    backgroundColor: '#FFFFFF',
-    padding: 30,
-    borderRadius:20,
+    width: '85%',
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    paddingVertical: 30,
+    paddingHorizontal: 20,
     alignItems: 'center',
+    position: 'relative',
   },
   closeButton: {
     position: 'absolute',
-    top: 20,
-    left:20,
+    top: 15,
+    right: 15,
+    zIndex: 1,
+  },
+  iconWrapper: {
+    backgroundColor: '#FFF1F0',
+    padding: 20,
+    borderRadius: 50,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 20,
+    fontWeight: '700',
     color: '#000',
-    marginTop: 50,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
-    color: '#7A7A7A',
-    marginTop: 10,
+    color: '#6B7280',
     textAlign: 'center',
+    marginTop: 10,
+    lineHeight: 20,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    marginTop: 25,
+    width: '100%',
+    justifyContent: 'space-between',
+  },
+  button: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginHorizontal: 5,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#E5E7EB',
   },
   logoutButton: {
-
-    marginTop: 60,
-    backgroundColor: '#000',
-    paddingVertical: 12,
-    paddingHorizontal: 40,
-    borderRadius: 10,
+    backgroundColor: '#FF4D4F',
+  },
+  cancelText: {
+    color: '#374151',
+    fontWeight: '600',
+    fontSize: 14,
   },
   logoutText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
   },
 });

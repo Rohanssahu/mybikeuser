@@ -51,14 +51,14 @@ const Login: React.FC = ({ navigation }) => {
     const Login = async (): Promise<void> => {
         const device_token = await messaging().getToken();
 
-console.log('=======================device_token=============');
-console.log(device_token);
-console.log('====================================');
         setisLoading(true)
         if (!phoneNumber) {
+            setisLoading(false)
             return errorToast('Please Enter Phone Number');
+            
         }
         if (phoneNumber.length !== 10) {
+            setisLoading(false)
             return errorToast('Please Enter Valid Phone Number');
         }
 
@@ -173,7 +173,7 @@ useEffect(() => {
             </SafeAreaView>
 
             {/* Social Login Options */}
-            <View style={styles.socialLoginContainer}>
+            {/* <View style={styles.socialLoginContainer}>
                 <Text style={styles.orText}>Or</Text>
                 <View style={styles.socialButtons}>
                     <FlatList
@@ -187,7 +187,7 @@ useEffect(() => {
                         )}
                     />
                 </View>
-            </View>
+            </View> */}
         </View>
     );
 };

@@ -21,6 +21,7 @@ import {
 } from '../../redux/Api/apiRequests';
 import {useIsFocused} from '@react-navigation/native';
 import {successToast} from '../../configs/customToast';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Define navigation type
 type RootStackParamList = {
@@ -47,7 +48,10 @@ const Booking: React.FC<Props> = ({navigation}) => {
   }, [isFocus]);
 
   const getUser = async () => {
-    const res = await get_profile();
+    const user_id = await  AsyncStorage.getItem('user_id')
+
+
+    const res = await get_profile(user_id);
     if (res.success) {
       setUser(res.data);
       booking_list(res.data);
@@ -58,7 +62,9 @@ const Booking: React.FC<Props> = ({navigation}) => {
 
   const booking_list = async (User) => {
     try {
-      const response = await get_userbooking(User?._id);
+      const user_id = await  AsyncStorage.getItem('user_id')
+
+      const response = await get_userbooking(user_id);
 
       if (response?.data?.length > 0) {
         setBooking(response.data);

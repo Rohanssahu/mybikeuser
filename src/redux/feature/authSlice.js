@@ -321,7 +321,15 @@ const AuthSlice = createSlice({
       state.isLogOut = false;
       state.userData = action.payload;
     },
-   
+    logout(state) {
+      state.isLoading = false;
+      state.isSuccess = false;
+      state.isError = false;
+      state.isLogin = false;
+      state.isLogOut = true;
+      state.userData = null;
+      state.token = null;
+    },
   },
   extraReducers: builder => {
     // login cases
@@ -442,7 +450,7 @@ const AuthSlice = createSlice({
   },
 });
 
-export const { loginSuccess,} =
+export const { loginSuccess,logout} =
   AuthSlice.actions;
 
 export default AuthSlice.reducer;

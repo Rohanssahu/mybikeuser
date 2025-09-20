@@ -20,7 +20,7 @@ export const endpoint = {
   garagedetails: '/bikedoctor/dealer/getShopDetails',
   createBooking: '/bikedoctor/bookings/createBooking',
   addpickndrop: '/bikedoctor/pickndrop/addpickndrop',
-  getprofile: '/bikedoctor/customers/customer',
+  getprofile: '/bikedoctor/customers/customersdata',
   updateprofile: '/bikedoctor/customers/editcustomer/:id',
   profileimage: '/bikedoctor/customers/editimage',
   bookingdetails: '/bikedoctor/bookings/getBookingDetails/:id',

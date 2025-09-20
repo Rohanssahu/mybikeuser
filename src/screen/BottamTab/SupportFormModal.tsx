@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, Alert, StyleSheet, Modal } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { create_tikit } from '../../redux/Api/apiRequests';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface SupportFormModalProps {
   visible: boolean;
@@ -13,18 +14,6 @@ const SupportFormModal: React.FC<SupportFormModalProps> = ({ visible, onClose })
   const [message, setMessage] = useState('');
   const [image, setImage] = useState<string | null>(null);
 
-  const handleChooseImage = () => {
-    launchImageLibrary({ mediaType: 'photo' }, (response) => {
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
-      } else if (response.errorMessage) {
-        console.log('Image Picker Error: ', response.errorMessage);
-      } else if (response.assets && response.assets.length > 0) {
-        setImage(response.assets[0].uri);
-      }
-    });
-  };
-
   const handleSubmit = async () => {
     if (!subject || !message) {
       Alert.alert('Error', 'Please fill in all fields');
@@ -34,9 +23,10 @@ const SupportFormModal: React.FC<SupportFormModalProps> = ({ visible, onClose })
     const formData = new FormData();
     formData.append('subject', subject);
     formData.append('message', message);
+    const user_id = await  AsyncStorage.getItem('user_id')
 
 
-    const res = await create_tikit(subject, message)
+    const res = await create_tikit(subject, message,user_id,'2')
 
     if (res?.success) {
       Alert.alert('Success', 'Tikit Submitted Successfully!');

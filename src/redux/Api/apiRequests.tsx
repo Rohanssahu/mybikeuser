@@ -135,6 +135,7 @@ const otp_Verify = async (phoneNumber: string, otp: string,) => {
             if (response.message === "OTP verified successfully") {
 
                 await AsyncStorage.setItem('token', response.token)
+                await AsyncStorage.setItem('user_id', response.user_id)
                 successToast(response.message)
 
                 return { success: true, message: "OTP verified successfully", user: response  };
@@ -802,15 +803,15 @@ const create_booking = async (dealer_id: string, services: string, pickupAndDrop
     }
 };
 
-const get_profile = async () => {
-    console.log('===============get_profile=====================', endpoint.getprofile);
+const get_profile = async (user_id:string) => {
+  
     const token = await AsyncStorage.getItem('token')
 
     console.log(token);
 
     const apiRequests: ApiRequest[] = [
         {
-            endpoint: endpoint.getprofile,
+            endpoint: `${endpoint.getprofile}/${user_id}`,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -1009,19 +1010,19 @@ const cancel_booking = async (bookingId: string, status: string) => {
     }
 };
 
-const get_tikit = async () => {
-    console.log('===============get_tikit=====================', endpoint.gettickets);
+const get_tikit = async (user_id) => {
+
     const token = await AsyncStorage.getItem('token')
 
     console.log(token);
 
     const apiRequests: ApiRequest[] = [
         {
-            endpoint: endpoint.gettickets,
+            endpoint: `${endpoint.gettickets}/${user_id}`,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'token': token
+              
             },
         },
     ];
@@ -1082,82 +1083,83 @@ const get_tikitdetails = async (id:string) => {
     }
 };
 
-const create_tikit = async (subject: string, message: string) => {
-    const requestBody = { subject, message }
-    const token = await AsyncStorage.getItem('token')
+const create_tikit = async (
+    subject: string,
+    message: string,
+    user_id: string,
+  ) => {
+    const requestBody = {
+      sender_id: user_id,
+      subject,
+      message,
+      user_type: 'user',
+      sender_type: 'user',
+      attachments: [],
+    };
+  
     const apiRequests: ApiRequest[] = [
-        {
-            endpoint: endpoint.createTikit,
-            method: 'POST',
-            data: requestBody,
-
-            headers: {
-                'Content-Type': 'application/json',
-                token: token
-            },
+      {
+        endpoint: `${endpoint.createTikit}/${user_id}`,
+        method: 'POST',
+        data: requestBody,
+        headers: {
+          'Content-Type': 'application/json',
         },
+      },
     ];
-
-
+  
     try {
-        // Call the multiple APIs and await the result
-        const results = await callMultipleApis(apiRequests);
-        const response = results[0];
-
-
-        
-        if (response?.success) {
-            // successToast('Bike Remove Successfully')
-            return { success: true, message: "Success", data: response.data, };
-        }
-        else {
-
-            return { success: false, message: "Unexpected response", data: [] };
-        }
-
+      // Call the multiple APIs and await the result
+      const results = await callMultipleApis(apiRequests);
+      const response = results[0];
+      console.log('response', response);
+  
+      if (response?.success) {
+        // successToast('Bike Remove Successfully')
+        return {success: true, message: 'Success', data: response.data};
+      } else {
+        return {success: false, message: 'Unexpected response', data: []};
+      }
     } catch (error) {
-        console.error('Error fetching data:', error);
-        return { success: false, message: error.message, state: [] };
+      console.error('Error fetching data:', error);
+      return {success: false, message: error.message, state: []};
     }
-};
-const replay_tikit = async (id: string, message: string) => {
-    const requestBody = {  message }
-    const token = await AsyncStorage.getItem('token')
+  };
+  const replay_tikit = async (id: string, message: string, sender_id: string) => {
+    const requestBody = {
+      sender_id: sender_id,
+      sender_type: 'user',
+      message,
+    };
+  
     const apiRequests: ApiRequest[] = [
-        {
-            endpoint: endpoint.replytikit?.replace(':ticket_id', id),
-            method: 'POST',
-            data: requestBody,
-
-            headers: {
-                'Content-Type': 'application/json',
-                token: token
-            },
+      {
+        endpoint: endpoint.replytikit?.replace(':ticket_id', id),
+        method: 'POST',
+        data: requestBody,
+  
+        headers: {
+          'Content-Type': 'application/json',
         },
+      },
     ];
-
-
+  
     try {
-        // Call the multiple APIs and await the result
-        const results = await callMultipleApis(apiRequests);
-        const response = results[0];
-
-
-        
-        if (response?.success) {
-            // successToast('Bike Remove Successfully')
-            return { success: true, message: "Success", data: response.data, };
-        }
-        else {
-
-            return { success: false, message: "Unexpected response", data: [] };
-        }
-
+      // Call the multiple APIs and await the result
+      const results = await callMultipleApis(apiRequests);
+      const response = results[0];
+  
+      if (response?.success) {
+        // successToast('Bike Remove Successfully')
+        return {success: true, message: 'Success', data: response.data};
+      } else {
+        return {success: false, message: 'Unexpected response', data: []};
+      }
     } catch (error) {
-        console.error('Error fetching data:', error);
-        return { success: false, message: error.message, state: [] };
+      console.error('Error fetching data:', error);
+      return {success: false, message: error.message, state: []};
     }
-};
+  };
 const tikitstatus = async (id: string, status: string) => {
     const requestBody = { status }
     const token = await AsyncStorage.getItem('token')

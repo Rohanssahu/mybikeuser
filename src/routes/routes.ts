@@ -9,6 +9,7 @@ import VerifyOtp from "../screen/Auth/VerifyOtp";
 import Booking from "../screen/BottamTab/Booking";
 import Help from "../screen/BottamTab/Help";
 import Home from "../screen/BottamTab/Home";
+import Notification from "../screen/BottamTab/Notification";
 import Profile from "../screen/BottamTab/Profile";
 import Reward from "../screen/BottamTab/Reward";
 import TicketList from "../screen/BottamTab/TicketList";
@@ -104,6 +105,10 @@ const _routes = {
     {
       name: ScreenNameEnum.CHAT_SCREEN,
       Component: Help,
+    },
+    {
+      name: ScreenNameEnum.Notification,
+      Component: Notification,
     },
 
   ],

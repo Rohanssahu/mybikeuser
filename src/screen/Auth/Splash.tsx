@@ -16,9 +16,7 @@ const Splash: React.FC = async() => {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const checkLogout = async () => {
         const token = await AsyncStorage.getItem('token')
-        console.log('====================token================');
-        console.log(token);
-       
+
         if (!token) {
 
             navigation.navigate(ScreenNameEnum.LOGIN_SCREEN);

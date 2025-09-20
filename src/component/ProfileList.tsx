@@ -6,6 +6,11 @@ import Icon from './Icon';
 import { icon } from './Image';
 import LogoutModal from '../screen/modal/LogoutModal';
 import ScreenNameEnum from '../routes/screenName.enum';
+import { color } from '../constant';
+import { useDispatch } from 'react-redux';
+
+import { successToast } from '../configs/customToast';
+import { logout } from '../redux/feature/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Define the data type for menu items
@@ -25,7 +30,13 @@ interface ProfileMenuListProps {
 const ProfileMenuList: React.FC<ProfileMenuListProps> = ({ data }) => {
   const navigation = useNavigation();
   const [isModalVisible, setIsModalVisible] = useState(false);
-
+  const dispatch = useDispatch();
+  const handleLogout = () => {
+    dispatch(logout());
+    AsyncStorage.clear()
+    navigation.replace(ScreenNameEnum.LOGIN_SCREEN);
+    successToast('Logout Successful');
+};
   return (
     <>
       <FlatList
@@ -35,27 +46,23 @@ const ProfileMenuList: React.FC<ProfileMenuListProps> = ({ data }) => {
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.card}
 
-            onPress={async () => {
+            onPress={() => {
 
-              if (item.title === 'Logout') {
-            setIsModalVisible(true)
-                await AsyncStorage.clear()
-                navigation.navigate(item.screen)
+              if (item.title !== 'Logout') {
+                navigation.navigate(item.screen as never)
               }
-              else if (item.title !== 'Logout' && item.title !== 'Vehicles') {
+              else{
 
-                navigation.navigate(item.screen)
+                
+     
+                setIsModalVisible(true)
               }
-              else if (item.title === 'Vehicles') {
-                navigation.navigate(item.screen, { profile: true })
-              }
-             
             }}
 
           >
             <Icon source={item.icon} size={50} />
             <Text style={styles.text}>{item.title}</Text>
-            <Icon size={24} source={icon.rightarrow} />
+            <Icon size={24} source={icon.rightarrow}  style={{tintColor:'#081041'}}/>
           </TouchableOpacity>
         )}
       />
@@ -64,8 +71,7 @@ const ProfileMenuList: React.FC<ProfileMenuListProps> = ({ data }) => {
         visible={isModalVisible}
         onClose={() => setIsModalVisible(false)}
         onConfirm={() => {
-          setIsModalVisible(false);
-          navigation.navigate(ScreenNameEnum.LOGIN_SCREEN)
+          handleLogout()
         }}
       />
     </>
@@ -94,7 +100,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '500',
-    color: '#FFFFFF',
+    color: '#fff',
     marginLeft: 20
   },
 });
