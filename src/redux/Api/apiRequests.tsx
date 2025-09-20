@@ -974,17 +974,19 @@ const bookingdetails = async (id: string) => {
     }
 };
 const cancel_booking = async (bookingId: string, status: string) => {
-    const requestBody = { bookingId, status }
-    const token = await AsyncStorage.getItem('token')
+    const user_id = await  AsyncStorage.getItem('user_id')
+
+    const requestBody = { user_id, status }
+
     const apiRequests: ApiRequest[] = [
         {
-            endpoint: endpoint.cancelbooking,
+            endpoint: endpoint.cancelbooking+`/${bookingId}/status`,
             method: 'POST',
             data: requestBody,
 
             headers: {
                 'Content-Type': 'application/json',
-                token: token
+          
             },
         },
     ];

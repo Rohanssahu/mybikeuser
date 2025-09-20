@@ -28,8 +28,8 @@ const styles = StyleSheet.create({
     height:55
   },
   text: {
-    color: '#FFFFFF', // White text
-    fontSize: 16,
+    color: '#111827', // White text
+    fontSize: 18,
     fontWeight: 'bold',
   },
 });

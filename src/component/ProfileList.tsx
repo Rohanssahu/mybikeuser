@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import { View, FlatList, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, {useState} from 'react';
+import {View, FlatList, Text, StyleSheet, TouchableOpacity} from 'react-native';
 
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import Icon from './Icon';
-import { icon } from './Image';
+import {icon} from './Image';
 import LogoutModal from '../screen/modal/LogoutModal';
 import ScreenNameEnum from '../routes/screenName.enum';
-import { color } from '../constant';
-import { useDispatch } from 'react-redux';
+import {color} from '../constant';
+import {useDispatch} from 'react-redux';
 
-import { successToast } from '../configs/customToast';
-import { logout } from '../redux/feature/authSlice';
+import {successToast} from '../configs/customToast';
+import {logout} from '../redux/feature/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Define the data type for menu items
@@ -27,42 +27,45 @@ interface ProfileMenuListProps {
 }
 
 // Profile menu list component
-const ProfileMenuList: React.FC<ProfileMenuListProps> = ({ data }) => {
+const ProfileMenuList: React.FC<ProfileMenuListProps> = ({data}) => {
   const navigation = useNavigation();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const dispatch = useDispatch();
   const handleLogout = () => {
     dispatch(logout());
-    AsyncStorage.clear()
+    AsyncStorage.clear();
     navigation.replace(ScreenNameEnum.LOGIN_SCREEN);
     successToast('Logout Successful');
-};
+  };
   return (
     <>
       <FlatList
         data={data}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         contentContainerStyle={styles.listContainer}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.card}
-
+        renderItem={({item}) => (
+          <TouchableOpacity
+            style={styles.card}
             onPress={() => {
-
               if (item.title !== 'Logout') {
-                navigation.navigate(item.screen as never)
+                if (item.title == 'My Bikes') {
+                  navigation.navigate(ScreenNameEnum.MY_BIKES, {
+                    profile: true,
+                  });
+                } else {
+                  navigation.navigate(item.screen as never);
+                }
+              } else {
+                setIsModalVisible(true);
               }
-              else{
-
-                
-     
-                setIsModalVisible(true)
-              }
-            }}
-
-          >
+            }}>
             <Icon source={item.icon} size={50} />
             <Text style={styles.text}>{item.title}</Text>
-            <Icon size={24} source={icon.rightarrow}  style={{tintColor:'#081041'}}/>
+            <Icon
+              size={24}
+              source={icon.rightarrow}
+              style={{tintColor: '#081041'}}
+            />
           </TouchableOpacity>
         )}
       />
@@ -71,7 +74,7 @@ const ProfileMenuList: React.FC<ProfileMenuListProps> = ({ data }) => {
         visible={isModalVisible}
         onClose={() => setIsModalVisible(false)}
         onConfirm={() => {
-          handleLogout()
+          handleLogout();
         }}
       />
     </>
@@ -101,7 +104,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: '#fff',
-    marginLeft: 20
+    marginLeft: 20,
   },
 });
 

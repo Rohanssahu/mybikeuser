@@ -21,6 +21,7 @@ import Icon from '../../component/Icon';
 import {icon} from '../../component/Image';
 import Geolocation from '@react-native-community/geolocation';
 import {getAddressFromLatLng} from '../../component/helperFunction';
+import OtpBox from './OtpBox';
 // Define types for service items
 interface ServiceItem {
   name: string;
@@ -43,8 +44,26 @@ const ServiceSummary: React.FC<ServiceSummaryProps> = ({navigation}) => {
   const [addiservices, setAddiServices] = useState<any[]>([]);
 
   useEffect(() => {
-    get_booking_details();
+    let interval;
+  
+    if (id) {
+      // Call once immediately
+      get_booking_details();
+  
+      // Repeat every 10 seconds
+      interval = setInterval(() => {
+        get_booking_details();
+      }, 10000); // 10000 ms = 10 seconds
+    }
+  
+    // Cleanup when component unmounts or id changes
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
   }, [id]);
+  
 
   const get_booking_details = async () => {
     const res = await bookingdetails(id);
@@ -132,14 +151,22 @@ const ServiceSummary: React.FC<ServiceSummaryProps> = ({navigation}) => {
   };
 
 
-  console.log('====================================');
-  console.log(addiservices);
-  console.log('====================================');
+
   return (
     <View style={styles.container}>
       <CustomHeader title="Booking Details" navigation={navigation} />
       <ScrollView>
-        <View style={styles.card}>
+
+        
+      {booking?.status === 'confirmed' && booking?.status !== 'completed'  &&
+        <OtpBox
+          otp={booking.pickupStatus === 'arrived'?booking.pickupOtp:booking?.deliveryOtp}
+          label={
+            booking.pickupStatus === 'arrived' ? 'Pickup Otp' : 'Completed Otp'
+          }
+        />
+        }
+        <View style={[styles.card, {marginTop: 10}]}>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
             <Image
               source={{uri: image_url + booking?.dealer_id?.shopImages[0]}}
@@ -280,20 +307,12 @@ const ServiceSummary: React.FC<ServiceSummaryProps> = ({navigation}) => {
                   borderColor: 'white',
                   padding: 12,
                 }}>
-                <Text
-                  style={[
-                    styles.linkText,
-                   
-                  ]}>
+                <Text style={[styles.linkText]}>
                   {service.name?.charAt(0).toUpperCase() +
                     service.name?.slice(1)}{' '}
                   (Additional Service){' '}
                 </Text>
-                <Text
-                  style={[
-                    styles.linkText,
-                    
-                  ]}>
+                <Text style={[styles.linkText]}>
                   ₹ {service?.bikes[0]?.price}
                   {/* ₹ {service.estimated_cost || "0"} */}
                 </Text>

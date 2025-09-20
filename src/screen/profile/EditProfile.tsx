@@ -181,90 +181,71 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                         setIsModalVisible(true)
                     }}
                     style={styles.profileImageContainer}>
-                    <Image source={image?.path ? { uri: image?.path } : images.profileUpdate} style={styles.profileImage} />
+                    <Image 
+                  //  source={image?.path ? { uri: image?.path } : images.profileUpdate} 
+                    
+                    source={{uri:'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png'}}
+                    style={styles.profileImage} />
                     <View style={styles.addIcon}>
                         <Icon source={icon.add} size={20} />
                     </View>
                 </TouchableOpacity>
 
-                {/* Form Fields */}
                 <View style={styles.formContainer}>
-                    <CustomTextInput
-                        placeholder='First Name'
-                        onChangeText={setFirstName}
-                        value={firstName}
-                        inputStyle={[styles.input, errors.firstName && styles.errorInput]}
-                    />
-                    {errors.firstName ? <Text style={styles.errorText}>{errors.firstName}</Text> : null}
 
-                    <CustomTextInput
-                        placeholder='Last Name'
-                        onChangeText={setLastName}
-                        value={lastName}
-                        inputStyle={[styles.input, errors.lastName && styles.errorInput, { marginTop: 15 }]}
-                    />
-                    {errors.lastName ? <Text style={styles.errorText}>{errors.lastName}</Text> : null}
-                    <CustomTextInput
-                        placeholder='Email '
-                        onChangeText={setEmail}
-                        value={email}
-                        inputStyle={[styles.input, errors.lastName && styles.errorInput, { marginTop: 15 }]}
-                    />
-                    {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
-                    <CustomTextInput
-                        placeholder='Phone number'
-                        onChangeText={setPhone}
-                        value={phone}
-                        inputStyle={[styles.input, errors.lastName && styles.errorInput, { marginTop: 15 }]}
-                    />
-                    {errors.phone ? <Text style={styles.errorText}>{errors.phone}</Text> : null}
+{/* First Name */}
+<Text style={styles.label}>First Name</Text>
+<CustomTextInput
+    placeholder='Enter first name'
+    onChangeText={setFirstName}
+    value={firstName}
+    inputStyle={[styles.input, errors.firstName && styles.errorInput]}
+/>
+{errors.firstName ? <Text style={styles.errorText}>{errors.firstName}</Text> : null}
 
-                    <CustomDropdown
-                        data={StateData}
-                        onSelect={(value) => {
+{/* Last Name */}
+<Text style={styles.label}>Last Name</Text>
+<CustomTextInput
+    placeholder='Enter last name'
+    onChangeText={setLastName}
+    value={lastName}
+    inputStyle={[styles.input, errors.lastName && styles.errorInput, { marginTop: 8 }]}
+/>
+{errors.lastName ? <Text style={styles.errorText}>{errors.lastName}</Text> : null}
 
-                            get_citys_list(value.id)
-                            setState(value.name)
-                            console.log('=================value.name===================');
-                            console.log(value.name);
-                            console.log('====================================');
-                        }}
-                        placeholder="State"
-                        label={'name'}
-                        value={'id'}
-                    />
-                    {errors.state ? <Text style={styles.errorText}>{errors.state}</Text> : null}
+{/* Email */}
+<Text style={styles.label}>Email</Text>
+<CustomTextInput
+    placeholder='Enter email'
+    onChangeText={setEmail}
+    value={email}
+    inputStyle={[styles.input, errors.email && styles.errorInput, { marginTop: 8 }]}
+/>
+{errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
 
-                    <CustomDropdown
-                        data={cityData}
-                        onSelect={(value) => {
+{/* Phone Number */}
+<Text style={styles.label}>Phone Number</Text>
+<CustomTextInput
+    placeholder='Enter phone number'
+    onChangeText={setPhone}
+    value={phone}
+    inputStyle={[styles.input, errors.phone && styles.errorInput, { marginTop: 8 }]}
+/>
+{errors.phone ? <Text style={styles.errorText}>{errors.phone}</Text> : null}
+
+{/* Address */}
+<Text style={styles.label}>Address</Text>
+<CustomTextInput
+    placeholder='Enter address'
+    onChangeText={setAddress}
+    value={address}
+    inputStyle={[styles.input, errors.address && styles.errorInput, { marginTop: 8 }]}
+/>
+{errors.address ? <Text style={styles.errorText}>{errors.address}</Text> : null}
 
 
-                            setCity(value.name)
-                        }}
-                        placeholder="City"
-                        label={'name'}
-                        value={'id'}
+</View>
 
-                    />
-                    {errors.city ? <Text style={styles.errorText}>{errors.city}</Text> : null}
-
-                    <CustomTextInput
-                        placeholder='Address'
-                        onChangeText={setAddress}
-                        value={address}
-                        inputStyle={[styles.input, errors.address && styles.errorInput, { marginTop: 15 }]}
-                    />
-                    {errors.address ? <Text style={styles.errorText}>{errors.address}</Text> : null}
-
-                    <CustomTextInput
-                        placeholder='Pin-code'
-                        onChangeText={setPinCode}
-                        value={pinCode}
-                        inputStyle={[styles.input, errors.pinCode && styles.errorInput, { marginTop: 15 }]}
-                    />
-                    {errors.pinCode ? <Text style={styles.errorText}>{errors.pinCode}</Text> : null}
-                </View>
 
                 {/* Submit Button */}
                 <View style={styles.buttonContainer}>
@@ -289,6 +270,14 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
 
 
 const styles = StyleSheet.create({
+    label: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#fff',
+        marginBottom: 5,
+        marginTop: 15,
+    },
+    
     profileImageContainer: {
         marginTop: 20,
         alignItems: 'center',
@@ -311,7 +300,7 @@ const styles = StyleSheet.create({
     },
     formContainer: {
         paddingHorizontal: 25,
-        marginTop: hp(8),
+
     },
     input: {
         borderWidth: 1,

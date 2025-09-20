@@ -42,7 +42,8 @@ const BannerSlider: React.FC<BannerSliderProps> = ({ navigation, data }) => {
     const renderItem = ({ item }: { item: Banner }) => (
         <View style={styles.bannerContainer}>
             <Image
-                source={{ uri: `${image_url}${item.banner_image}` }}
+               // source={  { uri: `${image_url}${item.banner_image}` }}
+                source={ require('../assets/images/image.png')}
                 resizeMode='cover'
                 style={styles.bannerImage}
             />
@@ -100,13 +101,14 @@ const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
         marginTop: 20,
+       
     },
     bannerContainer: {
         width: width * 0.9,
         height: 180,
         borderRadius: 10,
         overflow: 'hidden',
-        backgroundColor: color.baground,
+        backgroundColor: '#1E293B',
         position: 'relative',
         marginHorizontal: 20,
     },
@@ -114,6 +116,7 @@ const styles = StyleSheet.create({
         width: wp(100),
         height: '100%',
         borderRadius: 20,
+        backgroundColor:'#1E293B'
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
@@ -144,7 +147,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     buttonText: {
-        color: '#fff',
+        color: '#111827',
         fontWeight: 'bold',
     },
     pagination: {

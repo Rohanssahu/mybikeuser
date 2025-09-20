@@ -36,7 +36,10 @@ const HorizontalList: React.FC<HorizontalListProps> = ({ data }) => {
           navigation.navigate(ScreenNameEnum.MY_BIKES,{profile:false})
         }}
         style={styles.card}>
-          <Image source={{ uri: `${image_url}${item.image}` }} style={styles.image} resizeMode="contain" />
+        
+          
+           <Image source={require('../assets/images/LOGO2x.png')}
+                    style={styles.image} resizeMode="contain" /> 
           <Text style={styles.text}>{item.name}</Text>
         </TouchableOpacity>
       )}
@@ -50,7 +53,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: SCREEN_WIDTH * 0.3,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1E293B',
     borderRadius: 20,
     marginTop: 20,
     padding: 10,
@@ -72,7 +75,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#fff',
   },
 });
 

@@ -47,7 +47,7 @@ const profileData: ProfileMenuItem[] = [
     },
     {
         id: 2,
-        title: 'Vehicles',
+        title: 'My Bikes',
         icon: icon.bikep,
         screen: ScreenNameEnum.MY_BIKES ,
     },

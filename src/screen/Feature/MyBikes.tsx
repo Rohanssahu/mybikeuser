@@ -64,6 +64,7 @@ const MyBikes: React.FC<Props> = ({ navigation }) => {
     <View style={styles.container}>
       {loading && <Loading />}
       <CustomHeader navigation={navigation} title="My Bikes" onSkipPress={() => { }} showSkip={false} />
+     
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ marginTop: 20 }}>
         {Bikes?.length > 0 ?
 
@@ -96,7 +97,7 @@ const MyBikes: React.FC<Props> = ({ navigation }) => {
                   }}
                   style={{
                     marginTop: 10,
-                    backgroundColor: color.buttonColor,
+                    backgroundColor: '#081041',
                     height: 35, borderRadius: 30,
                     alignItems: 'center',
                     justifyContent: 'center',

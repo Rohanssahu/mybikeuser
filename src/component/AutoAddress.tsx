@@ -69,7 +69,7 @@ const GooglePlacesInput = ({ placeholder, onPlaceSelected }) => {
                         fontFamily: 'Federo-Regular',
                         fontSize: 13,
                         color: '#000',
-                        height: '100%',
+                        height: 50,
                         width: '90%',
                         borderWidth: 1,
                         borderRadius: 10,

@@ -17,6 +17,7 @@ import Loading from '../../configs/Loader';
 import { errorToast } from '../../configs/customToast';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { showBookingNotification } from '../../component/Notification';
 
 interface ServiceItem {
   title: string;
@@ -161,7 +162,11 @@ console.log('ls',ls);
 
 
     if (res?.success) {
-
+      showBookingNotification(
+        GarageDetails?.services?.find(s => s._id === selectedService)?.name || 'Service',
+        GarageDetails?.shopName,
+        formatDateTime(BookingDate)
+      );
       navigation.navigate(ScreenNameEnum.BOOKING_COMPLETE)
     }
     setLoading(false)

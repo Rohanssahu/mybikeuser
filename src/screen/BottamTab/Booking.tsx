@@ -22,6 +22,7 @@ import {
 import {useIsFocused} from '@react-navigation/native';
 import {successToast} from '../../configs/customToast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { showBookingNotificationCancel, showLocalNotificationcancel } from '../../component/Notification';
 
 // Define navigation type
 type RootStackParamList = {
@@ -54,13 +55,13 @@ const Booking: React.FC<Props> = ({navigation}) => {
     const res = await get_profile(user_id);
     if (res.success) {
       setUser(res.data);
-      booking_list(res.data);
+      booking_list();
     } else {
       setUser('');
     }
   };
 
-  const booking_list = async (User) => {
+  const booking_list = async () => {
     try {
       const user_id = await  AsyncStorage.getItem('user_id')
 
@@ -86,7 +87,11 @@ const Booking: React.FC<Props> = ({navigation}) => {
 
     if (res.success) {
       booking_list();
-      successToast('Booking Cancel Successfully');
+      successToast('Your booking has been cancelled successfully.');
+      showLocalNotificationcancel(
+        'Booking Cancelled',
+        'Your booking has been cancelled successfully.'
+      );
     }
     setLoading(false);
   };

@@ -59,11 +59,14 @@ const BookingList: React.FC<BookingListProps> = ({ data, navigation, onCancelPre
         <View style={styles.card}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Image
-              source={{ uri: image_url + item?.dealer_id?.shopImages[0] }}
-
+             // source={{ uri: image_url + item?.dealer_id?.shopImages[0] }}
+              source={{uri:'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png'}}
+  
               style={{ height: 40, width: 40, borderRadius: 20, borderWidth: 1, backgroundColor: '#ccc', marginVertical: 10 }}
             />
-            <View style={{ marginLeft: 10 }}>
+
+
+          <View style={{ marginLeft: 10 }}>
 
               <Text style={styles.label}>{item?.dealer_id?.shopName}</Text>
               <Text style={[styles.label, { fontSize: 12, fontWeight: '400' }]}>{item?.dealer_id?.address}</Text>
@@ -109,63 +112,108 @@ const BookingList: React.FC<BookingListProps> = ({ data, navigation, onCancelPre
 
 const styles = StyleSheet.create({
   listContainer: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingBottom: 20,
   },
   card: {
-    backgroundColor: '#2C2F5B', // Dark blue background
-    borderRadius: 20,
-    padding: 15,
+    backgroundColor: '#1E293B', // Dark navy background
+    borderRadius: 16,
+    padding: 16,
     marginBottom: 15,
     width: '100%',
     alignSelf: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4, // For Android shadow
   },
+
+  // Header section with shop image + name
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  shopImage: {
+    height: 50,
+    width: 50,
+    borderRadius: 25,
+    backgroundColor: '#ccc',
+  },
+  shopInfo: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  shopName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFD700', // Highlight shop name in gold
+  },
+  shopAddress: {
+    fontSize: 12,
+    color: '#A0A3BD',
+    marginTop: 2,
+  },
+
+  // Booking details rows
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 5,
+    marginVertical: 4,
   },
   label: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 13,
+    fontWeight: '500',
     color: '#FFFFFF',
   },
   value: {
-    fontSize: 16,
-    color: '#A0A3BD', // Light gray text
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#E0E0E0',
   },
-  amount: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+  statusValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#4ADE80', // Green for active
   },
+  cancelledStatus: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#F87171', // Red for cancelled
+  },
+
+  // Footer buttons
   footer: {
-
-    justifyContent: 'space-between',
+    marginTop: 16,
     alignItems: 'center',
-    marginTop: 10,
-  },
-  callButton: {
-
-    padding: 10,
-    borderRadius: 30,
-    position: 'absolute', right: 0, bottom: 10,
   },
   billButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFD700',
     paddingVertical: 12,
-    marginTop: 30,
-    borderRadius: 8,
-    width: wp(80),
+    borderRadius: 10,
+    width: '100%',
     alignItems: 'center',
-    justifyContent: 'center'
+    marginBottom: 10,
+  },
+  cancelButton: {
+    backgroundColor: '#EF4444',
+    paddingVertical: 12,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
   },
   billText: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#000000',
+    fontWeight: '600',
+    color: '#1E1E2E',
+  },
+  cancelText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
   },
 });
+
 
 export default BookingList;

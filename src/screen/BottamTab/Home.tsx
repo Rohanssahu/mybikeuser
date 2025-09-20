@@ -63,8 +63,7 @@ const Home: React.FC = () => {
 
     const res = await get_profile(user_id);
     if (res.success) {
-  await AsyncStorage.setItem('user_id',res.data?._id)
-        
+     
     } 
     setLoading(false)
 };

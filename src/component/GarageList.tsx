@@ -11,7 +11,7 @@ import ScreenNameEnum from '../routes/screenName.enum';
 interface GarageItem {
   id: string;
   shopName: string;
-  address: string;
+  fullAddress: string;
   latitude: string;
   longitude: string;
   shopImages: any;
@@ -33,26 +33,30 @@ const GarageList: React.FC<GarageListProps> = ({ data }) => {
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.listContainer}
       renderItem={({ item }) => (
-        <View style={styles.card}>
-          <Image source={{uri: `${image_url}${item.shopImages[0]}`}} style={styles.image} resizeMode="contain" />
+        <TouchableOpacity
+        onPress={() =>   navigation.navigate(ScreenNameEnum.MY_BIKES,
+          {profile:false,Grageid:item?._id})}
+          
+        style={styles.card}>
+          <Image source={require('../assets/images/gragd.png')}
+           style={styles.image}  />
+        
+          {/* <Image source={{uri: `${image_url}${item.shopImages[0]}`}} style={styles.image} resizeMode="contain" />
+         */}
+        
           <View style={styles.textContainer}>
             <Text style={styles.title}>{item.shopName}</Text>
-            <View style={styles.row}>
-              <Icon size={16} source={icon.pin} />
-              <Text style={styles.subText}>{item.address}</Text>
+            <View style={[styles.row,{width:'90%'}]}>
+              <Icon size={20} source={icon.pin} />
+              <Text style={styles.subText}>{item.fullAddress}</Text>
             </View>
             <View style={styles.row}>
-              <Icon size={16} source={icon.pickups} />
-              <Text style={styles.subText}>3 km away</Text>
+              <Icon size={20} source={icon.pickups} />
+              <Text style={[styles.subText,{fontSize:14}]}>3 km away</Text>
             </View>
-            <TouchableOpacity 
-              style={styles.button} 
-              onPress={() =>   navigation.navigate(ScreenNameEnum.MY_BIKES,{profile:false,Grageid:item?._id})}
-            >
-              <Text style={styles.buttonText}>BOOK NOW</Text>
-            </TouchableOpacity>
+          
           </View>
-        </View>
+        </TouchableOpacity>
       )}
     />
   );
@@ -65,7 +69,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1E293B', 
     borderRadius: 15,
     padding: 15,
     alignItems: 'center',
@@ -79,18 +83,19 @@ const styles = StyleSheet.create({
     elevation: 5, // Android shadow
   },
   image: {
-    width: 90,
-    height: 90,
-    borderRadius: 10,
+    width:120,
+    height: 120,
+    borderRadius: 20,
     marginRight: 15,
   },
   textContainer: {
-    flex: 1,
+    width:'60%',
+    height:'100%'
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#fff',
   },
   row: {
     flexDirection: 'row',
@@ -98,15 +103,15 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   subText: {
-    fontSize: 10,
-    color: '#9E9E9E',
+    fontSize: 12,
+    color: '#fff',
     marginLeft: 5,
     fontWeight:'500'
   },
   button: {
     backgroundColor: '#081041',
     paddingVertical: 8,
-    paddingHorizontal: 15,
+    paddingHorizontal: 70,
     borderRadius: 30,
     marginTop: 10,
     alignSelf: 'flex-start',

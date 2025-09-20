@@ -133,3 +133,59 @@ export const initializeNotifications = () => {
   requestUserPermission();
   notificationListener();
 };
+
+
+
+// notificationService.js
+export const showBookingNotification = (serviceName, garageName, date) => {
+  PushNotification.createChannel(
+    {
+      channelId: 'com.mrbikeuser',
+      channelName: 'mrbikeuser',
+      channelDescription: 'A channel to categorize your notifications',
+      playSound: true,
+      soundName: 'default',
+      importance: 4,
+      vibrate: true,
+    },
+    (created) => console.log(`CreateChannel returned '${created}'`)
+  );
+
+  PushNotification.localNotification({
+    channelId: 'com.mrbikeuser',
+    title: 'Booking Confirmed!',
+    message: `Your booking for ${serviceName} at ${garageName} is confirmed on ${date}`,
+    playSound: true,
+    soundName: 'default',
+    priority: 'high',
+    badge: true,
+    smallIcon: 'ic_notification', // Make sure you have this icon in android/app/src/main/res/mipmap/
+  });
+};
+
+export const showLocalNotificationcancel = (title, message) => {
+  // Ensure the Android channel exists
+  PushNotification.createChannel(
+    {
+      channelId: 'com.mrbikeuser',
+      channelName: 'mrbikeuser',
+      channelDescription: 'A channel for booking notifications',
+      playSound: true,
+      soundName: 'default',
+      importance: 4,
+      vibrate: true,
+    },
+    (created) => console.log(`CreateChannel returned '${created}'`)
+  );
+
+  PushNotification.localNotification({
+    channelId: 'com.mrbikeuser',
+    title: title,
+    message: message,
+    playSound: true,
+    soundName: 'default',
+    priority: 'high',
+    badge: true,
+    smallIcon: 'ic_notification',
+  });
+};

@@ -15,7 +15,7 @@ const RegistrationRoutes: FunctionComponent = () => {
   function getFormattedAddress(response) {
     if (response.status === "OK" && response.results.length > 0) {
       // Get the formatted address from the results
-      return response.results[0].formatted_address;
+      return response.results[3].formatted_address;
     } else {
       return "Address not found";
     }
@@ -30,9 +30,10 @@ const RegistrationRoutes: FunctionComponent = () => {
         }
 
         // Get current location
-        const { latitude, longitude } = await getCurrentLocation();
+        const { latitudes, longitudes } = await getCurrentLocation();
 
-
+        let latitude = '22.7028638';
+        let longitude = '75.8715857';
 
         // Fetch geocode
         const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyB_Lz_b22Sf5eKRSHhgxOnoZ8InrtXkpSM`;
@@ -43,7 +44,9 @@ const RegistrationRoutes: FunctionComponent = () => {
 
         if (json.status === 'OK' && json.results.length) {
 
-
+console.log('===================json=================');
+console.log(json);
+console.log('====================================');
          
           const city = getFormattedAddress(json);
 

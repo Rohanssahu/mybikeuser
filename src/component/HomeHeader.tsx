@@ -25,7 +25,7 @@ const HomeHeader: React.FC<HomeHeaderProps> = ({
             {/* Location Section */}
             <View>
 
-            <Text style={{fontWeight:'600',fontSize:16,color:'#fff',marginLeft:5,marginVertical:5}}>{'Welcome'}</Text>
+            <Text style={{fontWeight:'600',fontSize:20,color:'#fff',marginLeft:5,marginVertical:5}}>{'Welcome'}</Text>
             <TouchableOpacity onPress={onLocationPress} style={styles.locationContainer}>
                 <Image source={icon.pin} style={styles.locationIcon} />
                 <Text style={styles.locationText}>{location}</Text>
@@ -33,7 +33,7 @@ const HomeHeader: React.FC<HomeHeaderProps> = ({
             </View>
             {/* Divider */}
             <View style={{flexDirection:'row',alignItems:'center'}}>
-            <View style={styles.divider} />
+            
 
             {/* Notification Icon */}
             <TouchableOpacity onPress={onNotificationPress} style={styles.notificationContainer}>
@@ -59,13 +59,13 @@ const styles = StyleSheet.create({
         
     },
     locationIcon: {
-        width: 16,
-        height: 16,
+        width: 30,
+        height:30,
         tintColor: '#FFC107',
         marginRight: 5,
     },
     locationText: {
-        fontSize: 10,
+        fontSize: 12,
         color: '#fff',
         fontWeight: '500',
         width:'70%'
@@ -81,8 +81,8 @@ const styles = StyleSheet.create({
         position: 'relative',
     },
     notificationIcon: {
-        width: 30,
-        height: 30,
+        width: 40,
+        height: 40,
         tintColor: '#fff',
     },
     badge: {
