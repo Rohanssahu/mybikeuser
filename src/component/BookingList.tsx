@@ -30,6 +30,7 @@ interface BookingListProps {
 
 const BookingList: React.FC<BookingListProps> = ({ data, navigation, onCancelPress,onCallPress ,loading}) => {
 
+  const [Index,setindex] = useState(null)
   const formatDateTime = (isoDate) => {
     const date = new Date(isoDate);
 
@@ -50,12 +51,14 @@ const BookingList: React.FC<BookingListProps> = ({ data, navigation, onCancelPre
     return `${day}-${month}-${year} ${hours}:${minutes} ${amPm}`;
   };
 
+
+  
   return (
     <FlatList
       data={data}
       keyExtractor={(item) => item._id}
       contentContainerStyle={styles.listContainer}
-      renderItem={({ item }) => (
+      renderItem={({ item ,index}) => (
         <View style={styles.card}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Image
@@ -74,11 +77,11 @@ const BookingList: React.FC<BookingListProps> = ({ data, navigation, onCancelPre
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Booking ID</Text>
-            <Text style={styles.label}>Status:</Text>
+            <Text style={styles.label}>Pickup Status: {item.status !== 'completed'?item?.pickupStatus:'Delivered'}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.value}>{item.bookingId}</Text>
-            <Text style={styles.value}>{item.status === 'user_cancelled'?'Cancelled By User':item.status}</Text>
+            <Text style={styles.value}>Booking: {item.status === 'user_cancelled'?'Cancelled By User':item.status}</Text>
           </View>
 
           <View style={styles.row}>
@@ -99,9 +102,10 @@ const BookingList: React.FC<BookingListProps> = ({ data, navigation, onCancelPre
               <TouchableOpacity
                 onPress={() => {
                   onCancelPress(item?._id)
+                  setindex(index)
                 }}
                 style={[styles.billButton, { marginTop: 5, backgroundColor: 'red' }]} >
-                {loading ?<ActivityIndicator  size={20} color={'#fff'} />: <Text style={[styles.billText, { color: '#fff' }]}>Cancel Booking</Text>}
+                {loading && Index == index  ?<ActivityIndicator  size={20} color={'#fff'} />: <Text style={[styles.billText, { color: '#fff' }]}>Cancel Booking</Text>}
               </TouchableOpacity>}
           </View>
         </View>
@@ -163,22 +167,22 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   label: {
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: '500',
     color: '#FFFFFF',
   },
   value: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
     color: '#E0E0E0',
   },
   statusValue: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     color: '#4ADE80', // Green for active
   },
   cancelledStatus: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     color: '#F87171', // Red for cancelled
   },
