@@ -38,7 +38,7 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [PickupLocationId, setPickupLocationId] = useState('')
   const [selectedService, setselectedService] = useState('')
   const [loading, setLoading] = useState(false)
-  const [choosePickup, setchoosePickup] = useState(false)
+  const [choosePickup, setchoosePickup] = useState(true)
   const [choosePickupOption, setchoosePickupOption] = useState('')
   const [PickupDistance, setPickupDistance] = useState(null)
   const [BookingDate, setBookingDate] = useState(new Date())
@@ -273,7 +273,7 @@ console.log('ls',ls);
                     width: '25%', alignItems: 'center', justifyContent: 'center',
                     backgroundColor: choosePickupOption === 'Self' ? color.buttonColor : '#ccc', padding: 5, borderRadius: 5
                   }}>
-                  <Text style={[styles.featureText, { marginLeft: 0, fontSize: 14 }]}>Self</Text>
+                  <Text style={[styles.featureText, { marginLeft: 0, fontSize: 14,color:'#000' }]}>Self</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
 
@@ -289,7 +289,7 @@ console.log('ls',ls);
                     width: '25%',
                     backgroundColor: choosePickupOption === 'PickDrop' ? color.buttonColor : '#ccc', padding: 5, borderRadius: 5
                   }}>
-                  <Text style={[styles.featureText, { marginLeft: 0, fontSize: 14 }]}>PickDrop</Text>
+                  <Text style={[styles.featureText, { marginLeft: 0, fontSize: 14 ,color:'#000',fontWeight:'600'}]}>PickDrop</Text>
                 </TouchableOpacity>
               </View>
               }
@@ -298,6 +298,7 @@ console.log('ls',ls);
               onPress={() => {
                 setchoosePickup(choosePickup => !choosePickup)
               }}
+              disabled
               style={{}}>
               {choosePickup ? <Image source={icon.check}
                 style={{ height: 22, width: 22 }} />
@@ -306,7 +307,7 @@ console.log('ls',ls);
             </TouchableOpacity>
 
           </View>
-          <View style={[styles.featureRow, { justifyContent: 'space-between' }]}>
+          {/* <View style={[styles.featureRow, { justifyContent: 'space-between' }]}>
             <Icon source={icon.calendar} size={25} style={{tintColor:color.buttonColor,marginLeft:4}} />
             <View style={{ width: '88%' }}>
               <Text style={styles.featureText}>Pick-Up Booking Date</Text>
@@ -328,20 +329,21 @@ console.log('ls',ls);
               }
             </TouchableOpacity>
 
-          </View>
+          </View> */}
           <View style={styles.featureRow}>
             <Icon source={icon.Mobile} size={30} />
             <View>
-              <Text style={styles.featureText}>Our Promise</Text>
-              <Text style={styles.featureText2}>{GarageDetails?.ourPromise}</Text>
-
+            <Text style={styles.featureText}>Our Promise</Text>
+<Text style={styles.featureText2}>
+  {GarageDetails?.ourPromise || "We promise fast, reliable, and affordable bike service for every customer."}
+</Text>
             </View>
           </View>
           <View style={styles.featureRow}>
             <Icon source={icon.Expert} size={30} />
             <View>
               <Text style={styles.featureText}>Expert Advice</Text>
-              <Text style={styles.featureText}>Skilled mechanics for your every need.</Text>
+              <Text style={styles.featureText2}>Skilled mechanics for your every need.</Text>
 
             </View>
           </View>

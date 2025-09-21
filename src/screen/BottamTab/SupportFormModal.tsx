@@ -30,6 +30,9 @@ const SupportFormModal: React.FC<SupportFormModalProps> = ({ visible, onClose })
 
     if (res?.success) {
       Alert.alert('Success', 'Tikit Submitted Successfully!');
+
+      setSubject('')
+      setMessage('')
       onClose();
     }
 
@@ -66,7 +69,11 @@ const SupportFormModal: React.FC<SupportFormModalProps> = ({ visible, onClose })
           {image && <Image source={{ uri: image }} style={styles.preview} />}
 
           <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+            <TouchableOpacity style={styles.cancelButton} onPress={()=>{
+              setSubject('')
+              setMessage('')
+              onClose()
+            }}>
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>

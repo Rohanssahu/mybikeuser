@@ -33,18 +33,28 @@ const BikeDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
         }
     }
 
-    const validateForm = () => {
-        let newErrors: { [key: string]: string } = {};
-
-        if (!selectedBike) newErrors.selectedBike = 'Bike company is required';
-        if (!modelName) newErrors.modelName = 'Model name is required';
-        if (!variant) newErrors.variant = 'Variant is required';
-        if (!plateNumber) newErrors.plateNumber = 'Plate number is required';
-
-        setErrors(newErrors);
-
-        return Object.keys(newErrors).length === 0;
-    };
+// --- Add regex validator for bike plate ---
+const isValidBikePlate = (plate: string) => {
+    const re = /^[A-Z]{2}[ -]?\d{1,2}[ -]?[A-Z]{1,2}[ -]?\d{1,4}$/i;
+    return re.test(plate.trim());
+  };
+  
+  const validateForm = () => {
+    let newErrors: { [key: string]: string } = {};
+  
+    if (!selectedBike) newErrors.selectedBike = 'Bike company is required';
+    if (!modelName) newErrors.modelName = 'Model name is required';
+    if (!variant) newErrors.variant = 'Variant is required';
+    if (!plateNumber) {
+      newErrors.plateNumber = 'Plate number is required';
+    } else if (!isValidBikePlate(plateNumber)) {
+      newErrors.plateNumber = 'Enter a valid plate number (e.g. MH12AB1234)';
+    }
+  
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+  
 
     // Form submission
     const handleSubmit =async () => {
@@ -136,12 +146,33 @@ const BikeDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
             
                 <View style={{ height: 10 }} />
                 <CustomTextInput
-                    placeholder="Plate Number"
-                    onChangeText={(text) => setPlateNumber(text)}
-                    value={plateNumber?.toLocaleUpperCase()}
-                    inputStyle={[styles.input, errors.plateNumber && styles.inputError,]}
-                />
-                {errors.plateNumber && <Text style={styles.errorText}>{errors.plateNumber}</Text>}
+  placeholder="Plate Number"
+  onChangeText={(text) => {
+    const upperText = text.toUpperCase();
+    setPlateNumber(upperText);
+
+    // Live validation (show error as user types)
+    if (!isValidBikePlate(upperText)) {
+      setErrors((prev) => ({
+        ...prev,
+        plateNumber: 'Enter a valid plate number (e.g. MH12AB1234)',
+      }));
+    } else {
+      setErrors((prev) => {
+        const { plateNumber, ...rest } = prev;
+        return rest; // remove plate error if valid
+      });
+    }
+  }}
+  value={plateNumber}
+  maxLength={10}
+  inputStyle={[
+    styles.input,
+    errors.plateNumber && styles.inputError,
+  ]}
+/>
+{errors.plateNumber && <Text style={styles.errorText}>{errors.plateNumber}</Text>}
+
             </View>
 
             {/* Submit Button */}

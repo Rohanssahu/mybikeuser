@@ -9,6 +9,7 @@ interface CustomTextInputProps {
   inputStyle?: ViewStyle;
   textStyle?: TextStyle;
   editable:boolean;
+  maxLength:Number
   placeholderStyle?: TextStyle; // Secondary placeholder style
 }
 
@@ -20,7 +21,8 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
   editable = true, 
   inputStyle, 
   textStyle, 
-  placeholderStyle 
+  placeholderStyle ,
+  maxLength = 255
 }) => {
   return (
     <TextInput
@@ -31,6 +33,7 @@ const CustomTextInput: React.FC<CustomTextInputProps> = ({
       editable={editable}
       onChangeText={onChangeText}
       keyboardType={keyboardType}
+      maxLength={maxLength}
     />
   );
 };
