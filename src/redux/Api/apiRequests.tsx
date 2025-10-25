@@ -308,7 +308,7 @@ const get_nearyBydeler = async (lat: string, long: string) => {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                "token": token
+              
             },
         },
     ];
@@ -521,6 +521,7 @@ const get_BikeVariant = async (id: string) => {
 const add_Bikes = async (name: string, model: string, bike_cc: string, plate_number: string, variant_id: string) => {
     // Prepare the request body for login API
     const requestBody = { name, model, bike_cc, plate_number, variant_id };
+    
     const token = await AsyncStorage.getItem('token')
     const apiRequests: ApiRequest[] = [
         {

@@ -56,6 +56,7 @@ const Home: React.FC = () => {
     fetchServiceData();
     getUser()
   }, []);
+  
   const getUser = async () => {
     setLoading(true)
   const user_id = await  AsyncStorage.getItem('user_id')
@@ -76,6 +77,8 @@ const Home: React.FC = () => {
         get_nearyBydeler('22.7028638', '75.8715857'),
       ]);
 
+      console.log('dealer.data', dealer.data);
+      
       if (dealer.data) setDealerList(dealer.data);
       if (res.data) setServiceList(res.data);
       if (banner.data) setBannerList(banner.data);
@@ -89,13 +92,16 @@ const Home: React.FC = () => {
   // Pull to Refresh Function
   const onRefresh = async () => {
     setRefreshing(true);
+
     try {
       const [res, banner, dealer] = await Promise.all([
         get_servicelist(),
+      
         get_bannerlist(),
         get_nearyBydeler('22.6845065', '75.8644601'),
       ]);
-
+  fetchServiceData()
+        getUser()
       if (dealer.data) setDealerList(dealer.data);
       if (res.data) setServiceList(res.data);
       if (banner.data) setBannerList(banner.data);

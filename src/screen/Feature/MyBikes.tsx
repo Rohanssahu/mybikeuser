@@ -1,14 +1,23 @@
-
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, Text, FlatList, TouchableOpacity, Image, Dimensions, Alert } from 'react-native';
-import images, { icon } from '../../component/Image';
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  Dimensions,
+  Alert,
+} from 'react-native';
+import images, {icon} from '../../component/Image';
 import VerticalList from '../../component/VerticalList';
 import CustomHeader from '../../component/CustomHeaderProps';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { color } from '../../constant';
-import { get_mybikes, remove_bike } from '../../redux/Api/apiRequests';
-import { useIsFocused, useRoute } from '@react-navigation/native';
-import { hp } from '../../component/utils/Constant';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {color} from '../../constant';
+import {get_mybikes, remove_bike} from '../../redux/Api/apiRequests';
+import {useIsFocused, useRoute} from '@react-navigation/native';
+import {hp} from '../../component/utils/Constant';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import CustomButton from '../../component/CustomButton';
 import Loading from '../../configs/Loader';
@@ -23,89 +32,108 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 // Define props for the component
 type Props = NativeStackScreenProps<RootStackParamList, 'AllServices'>;
 
-const MyBikes: React.FC<Props> = ({ navigation }) => {
-  const route = useRoute()
+const MyBikes: React.FC<Props> = ({navigation}) => {
+  const route = useRoute();
 
-  const {profile,Grageid } =route.params
-  
-  console.log('Grageid',Grageid);
-  
+  const {profile, Grageid} = route.params;
+
+  console.log('Grageid', Grageid);
+  const [selectedBike, setSelectedBike] = useState<any | null>(null);
+  const [modelName, setModelName] = useState<any | null>(null);
+  const [variant, setVariant] = useState<any | null>(null);
+
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [Bikes, setBikes] = useState<any>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const isFocus = useIsFocused()
+  const isFocus = useIsFocused();
   useEffect(() => {
-    booking_list()
-  }, [isFocus])
+    booking_list();
+  }, [isFocus]);
   const booking_list = async () => {
     setLoading(true);
     try {
-      const bikes = await get_mybikes()
-      setBikes(bikes?.data)
+      const bikes = await get_mybikes();
+      setBikes(bikes?.data);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  const removeBike = async (id) => {
+  const removeBike = async id => {
     setLoading(true);
-    const res = await remove_bike(id)
+    const res = await remove_bike(id);
     console.log('===========remove_bike=========================', id);
     if (res?.success) {
-      booking_list()
+      booking_list();
     }
 
     setLoading(false);
-  }
+  };
+
+  console.log('Bikes', Bikes[0]);
 
   return (
     <View style={styles.container}>
       {loading && <Loading />}
-      <CustomHeader navigation={navigation} title="My Bikes" onSkipPress={() => { }} showSkip={false} />
-     
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ marginTop: 20 }}>
-        {Bikes?.length > 0 ?
+      <CustomHeader
+        navigation={navigation}
+        title="My Bikes"
+        onSkipPress={() => {}}
+        showSkip={false}
+      />
 
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{marginTop: 20}}>
+        {Bikes?.length > 0 ? (
           <FlatList
             data={Bikes}
-            keyExtractor={(item) => item.id}
+            keyExtractor={item => item.id}
             contentContainerStyle={styles.listContainer}
-            renderItem={({ item }) => (
-              <View
-
-                style={styles.card}>
+            renderItem={({item}) => (
+              <View style={styles.card}>
                 <View style={styles.textContainer}>
-                  <Text style={styles.title}>{item.plate_number?.toUpperCase()}</Text>
+                  <Text style={styles.title}>
+                    {item.plate_number?.toUpperCase()}
+                  </Text>
                   <Text style={styles.title}>Name: {item.name}</Text>
                   <Text style={styles.description}>Modal: {item.model}</Text>
                   <Text style={styles.description}>CC: {item.bike_cc}</Text>
-{!profile &&
-                  <TouchableOpacity 
-                  onPress={()=>{
-
-                    if(Grageid){
-                      navigation.navigate(ScreenNameEnum.GARAGE_DETAILS,{bike:item,id:Grageid})
-                    }
-                    else{
-
-                      navigation.navigate(ScreenNameEnum.NEARBY_SHOPS,{item:item})
-                    }
-
-                    
-                  }}
-                  style={{
-                    marginTop: 10,
-                    backgroundColor: '#081041',
-                    height: 35, borderRadius: 30,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '40%',
-
-                  }}>
-                    <Text style={{ fontWeight: '600', fontSize: 16, color: '#fff' }}>Continue</Text>
-                  </TouchableOpacity>}
+                  {!profile && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        if (Grageid) {
+                          navigation.navigate(ScreenNameEnum.GARAGE_DETAILS, {
+                            bike: item,
+                            id: Grageid,
+                          });
+                        } else {
+                          navigation.navigate(ScreenNameEnum.NEARBY_SHOPS, {
+                            item: item,
+                          });
+                        }
+                      }}
+                      style={{
+                        marginTop: 10,
+                        backgroundColor: '#081041',
+                        height: 35,
+                        borderRadius: 30,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '40%',
+                      }}>
+                      <Text
+                        style={{
+                          fontWeight: '600',
+                          fontSize: 16,
+                          color: '#fff',
+                        }}>
+                        Continue
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
                 <TouchableOpacity
                   onPress={() => {
@@ -113,42 +141,55 @@ const MyBikes: React.FC<Props> = ({ navigation }) => {
                       'Confirm Removal',
                       'Are you sure you want to remove this bike from the list?',
                       [
-                        { text: 'Cancel', style: 'cancel' },
-                        { text: 'Remove', style: 'destructive', onPress: () => removeBike(item._id) }
-                      ]
+                        {text: 'Cancel', style: 'cancel'},
+                        {
+                          text: 'Remove',
+                          style: 'destructive',
+                          onPress: () => removeBike(item._id),
+                        },
+                      ],
                     );
-                  }}
-                >
-                  <Image source={icon.delete} style={styles.image} resizeMode="contain" />
+                  }}>
+                  <Image
+                    source={icon.delete}
+                    style={styles.image}
+                    resizeMode="contain"
+                  />
                 </TouchableOpacity>
-
               </View>
             )}
-          /> :
-          <View style={{
-            justifyContent: 'center',
-            alignItems: 'center'
+          />
+        ) : (
+          <View
+            style={{
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginVertical: 30,
+            }}>
+            <Text style={{fontWeight: '400', color: '#fff'}}>
+              No Bikes Found
+            </Text>
+          </View>
+        )}
 
-          }}>
-            <Text style={{ fontWeight: '400', color: '#fff' }}>No Booking Found</Text>
-          </View>}
-
-        <CustomButton title='Add Bike' buttonStyle={{ marginHorizontal: 20 }} onPress={() => {
-          navigation.navigate(ScreenNameEnum.BIKE_DETAILS)
-        }} />
+        <CustomButton
+          title="Add New Bike"
+          buttonStyle={{marginHorizontal: 20}}
+          onPress={() => {
+            navigation.navigate(ScreenNameEnum.BIKE_DETAILS);
+          }}
+        />
       </ScrollView>
     </View>
   );
 };
-
-
 
 // Sample shop list data
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: color.baground
+    backgroundColor: color.baground,
   },
   listContainer: {
     paddingHorizontal: 10,

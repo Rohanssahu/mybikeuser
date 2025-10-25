@@ -47,13 +47,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
         if (User) {
             setFirstName(User?.first_name || '');
             setLastName(User?.last_name || '');
-              
-
-
-
-
-                  
-            setCity(User?.city || '');
             setAddress(User?.address || '');
             setPinCode(User?.pincode ? User.pincode.toString() : '');
             setEmail(User?.email || '');
@@ -219,34 +212,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                     />
                     {errors.phone ? <Text style={styles.errorText}>{errors.phone}</Text> : null}
 
-                    <CustomDropdown
-                        data={StateData}
-                        onSelect={(value) => {
-
-                            get_citys_list(value.id)
-                            setState(value.name)
-                          
-                        }}
-                        placeholder="State"
-                        label={'name'}
-                        value={'id'}
-                    />
-                    {errors.state ? <Text style={styles.errorText}>{errors.state}</Text> : null}
-
-                    <CustomDropdown
-                        data={cityData}
-                        onSelect={(value) => {
-
-
-                            setCity(value.name)
-                        }}
-                        placeholder="City"
-                        label={'name'}
-                        value={'id'}
-
-                    />
-                    {errors.city ? <Text style={styles.errorText}>{errors.city}</Text> : null}
-
+                  
                     <CustomTextInput
                         placeholder='Address'
                         onChangeText={setAddress}
