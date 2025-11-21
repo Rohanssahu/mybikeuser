@@ -9,6 +9,8 @@ export const endpoint = {
   servicelist: '/bikedoctor/service/servicelist',
   bannerlist: '/bikedoctor/banner/bannerlist',
   nearbydeler: '/bikedoctor/dealer/dealerWithInRange',
+  paymentCash:"/bikedoctor/payment/cash",
+  updateBooking:"/bikedoctor/bookings/updateBooking",
   userbooking: '/bikedoctor/bookings/getuserbookings',
   mybikes: '/bikedoctor/customers/getMyBikes',
   addUserBike: '/bikedoctor/customers/addUserBike',

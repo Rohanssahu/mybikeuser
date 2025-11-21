@@ -352,6 +352,31 @@ const ServiceSummary: React.FC<ServiceSummaryProps> = ({navigation}) => {
             </View>
           )}
 
+        {booking?.status === 'completed' && booking?.billStatus === 'pending' && (
+          <View
+            style={{
+              marginTop: 30,
+              width: '100%',
+              paddingHorizontal: 30,
+              marginBottom: 30,
+            }}>
+            <CustomButton
+              title="Pay Now"
+              onPress={() => {
+                navigation.navigate(ScreenNameEnum.PaymentScreen, {
+                
+                  User: booking,
+                  totalPrice: booking?.totalBill,
+                  response: booking,
+
+                });
+               
+              }}
+            />
+          </View>
+        )
+        }
+
           {/* Footer */}
           <Text style={styles.footerText}>
             Thank you for servicing with{' '}
@@ -390,6 +415,7 @@ const ServiceSummary: React.FC<ServiceSummaryProps> = ({navigation}) => {
             />
           </View>
         )}
+
       </ScrollView>
     </View>
   );

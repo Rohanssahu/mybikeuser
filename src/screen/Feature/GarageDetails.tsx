@@ -465,14 +465,14 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
             <View style={{marginTop:20}}>
 
          
-              <Text style={styles.serviceTitle}>{selected.name?.toUpperCase()}</Text>
+              <Text style={[styles.serviceTitle,{color:'#000'}]}>{selected.name?.toUpperCase()}</Text>
               <Text style={styles.servicePrice}>Price :  ₹{selected?.bikes?.[0]?.price}</Text>
               
               </View>
-              <Text style={styles.serviceDescription}>
+              <Text style={[styles.serviceDescription,{color:'#000'}]}>
                Description:
               </Text>
-              <Text style={styles.serviceDescription}>
+              <Text style={[styles.serviceDescription,{color:'#000'}]}>
                 {selected.description || 'No description available'}
               </Text>
               <View style={styles.checkContainer}>
@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
 
   serviceCard: {
     marginTop: 15,
-    backgroundColor: '#1F1F1F',
+    backgroundColor: '#fff',
     borderRadius: 15,
     padding: 15,
     borderWidth: 1,
@@ -691,11 +691,7 @@ const styles = StyleSheet.create({
 
     borderRadius: 10,
   },
-  serviceTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
+
   serviceText: {
     fontSize: 14,
     color: '#A0A3BD',

@@ -19,6 +19,7 @@ import BookingComplete from "../screen/Feature/BookingComplete";
 import GarageDetails from "../screen/Feature/GarageDetails";
 import MyBikes from "../screen/Feature/MyBikes";
 import NearByShops from "../screen/Feature/NearByShops";
+import PaymentScreen from "../screen/Feature/PaymentScreen";
 import ServiceSummary from "../screen/Feature/ServiceSummary";
 import AboutUsScreen from "../screen/profile/AboutUsScreen";
 import EditProfile from "../screen/profile/EditProfile";
@@ -109,6 +110,10 @@ const _routes = {
     {
       name: ScreenNameEnum.Notification,
       Component: Notification,
+    },
+    {
+      name: ScreenNameEnum.PaymentScreen,
+      Component: PaymentScreen,
     },
 
   ],

@@ -2,7 +2,7 @@
 import axios, { AxiosRequestConfig } from 'axios';
 
 import { endpoint } from './endpoints';
-import { successToast } from '../../configs/customToast';
+import { errorToast, successToast } from '../../configs/customToast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { callMultipleApis } from './index';
 import { string } from 'prop-types';
@@ -107,6 +107,115 @@ const resend_Otp = async (phoneNumber: string) => {
         return { success: false, message: error.message, user: null };
     }
 };
+
+const updateBooking = async (
+    save: string,
+    Price: number,
+    dataUser: any,
+    token: string,
+    lastServiceKm: string,
+    id: any,
+    setLoading: any,
+    navigation: any,
+  ) => {
+    const requestBody = {
+      bookingId: dataUser?._id,
+      billGenerated: false,
+      lastServiceKm: lastServiceKm,
+      tax: dataUser?.tax,
+      totalBill: Price,
+      billStatus: 'pending',
+      services: id,
+    };
+  
+    setLoading(true); // Start loader
+  
+    console.log('requestBody', requestBody);
+  
+    const apiRequests: ApiRequest[] = [
+      {
+        endpoint: endpoint.updateBooking,
+        method: 'POST',
+        data: requestBody,
+        headers: {
+          'Content-Type': 'application/json',
+          token: token,
+        },
+      },
+    ];
+  
+    try {
+      const results = await callMultipleApis(apiRequests);
+      const response = results[0];
+      if (response.message) {
+        setLoading(false); // Stop loader
+  
+        if (save === 'save') {
+          // navigation.navigate(ScreenNameEnum.BOTTAM_TAB);
+          successToast(response.message);
+          navigation.goBack();
+          setLoading(false);
+          return {success: true, message: response.message, user: null};
+        } else {
+          setLoading(false);
+          return {success: true, message: response.message, user: null};
+        }
+      }
+      setLoading(false);
+      return {success: false, message: 'Unexpected response', user: null};
+    } catch (error: any) {
+      errorToast(error.message);
+      setLoading(false); // Stop loader
+      return {success: false, message: error.message, user: null};
+    }
+  };
+  
+  const payment_Cash = async (
+    token: string,
+    totalPrice: number,
+    setLoading: any,
+    User: any,
+    navigation: any,
+  ) => {
+    const requestBody = {
+      booking_id: User?._id,
+      customer_id: User?.user_id?._id,
+      dealer_id: User?.dealer_id?._id,
+      order_amount: totalPrice,
+      pay_type: 'cash',
+    };
+  
+    setLoading(true); // Start loader
+    const apiRequests: ApiRequest[] = [
+      {
+        endpoint: endpoint.paymentCash,
+        method: 'POST',
+        data: requestBody,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    ];
+  
+    try {
+      const results = await callMultipleApis(apiRequests);
+      const response = results[0];
+  
+      console.log('response cadsh payment ', response);
+  
+      if (response.status == 200) {
+        setLoading(false); // Stop loader
+        successToast(response.message);
+        return {success: true, message: response.message, user: null};
+      }
+      setLoading(false);
+      return {success: false, message: 'Unexpected response', user: null};
+    } catch (error: any) {
+      errorToast(error.message);
+      setLoading(false); // Stop loader
+      return {success: false, message: error.message, user: null};
+    }
+  };
 const otp_Verify = async (phoneNumber: string, otp: string,) => {
     // Prepare the request body for login API
     const requestBody = { phone: phoneNumber, otp: otp, };
@@ -1206,4 +1315,4 @@ const tikitstatus = async (id: string, status: string) => {
 
 
 
-export {additionalservices, tikitstatus,replay_tikit,get_tikitdetails,create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  
+export {additionalservices,updateBooking,payment_Cash, tikitstatus,replay_tikit,get_tikitdetails,create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  

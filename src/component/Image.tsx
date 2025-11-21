@@ -20,6 +20,8 @@ const images = {
 };
 const icon = {
   downwhite: require('../assets/icons/Drop_Arrow.png'),
+  online: require('../assets/icons/onli.png'),
+  cash: require('../assets/icons/cash.png'),
   close: require('../assets/icons/Close2x.png'),
   check: require('../assets/icons/check.png'),
   coins: require('../assets/icons/coins.png'),
