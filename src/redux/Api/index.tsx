@@ -10,8 +10,8 @@ export interface ApiRequest {
   token?: string;
 }
 
-export const base_url = 'https://dr-bike-backend.onrender.com';
-export const image_url = 'https://mrbikedoctors.com/image/';
+export const base_url = 'https://api.mrbikedoctor.cloud';
+export const image_url = 'https://api.mrbikedoctor.cloud/';
 
 
 export const callMultipleApis = async (requests: ApiRequest[]) => {

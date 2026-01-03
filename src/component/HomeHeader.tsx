@@ -1,99 +1,110 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { icon } from './Image';
-import { color } from '../constant';
-
+import {View, Text, TouchableOpacity, StyleSheet, Image} from 'react-native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {icon} from './Image';
+import {color} from '../constant';
 
 interface HomeHeaderProps {
-    navigation: StackNavigationProp<any, any>;
-    location: string;
-    hasNotifications?: boolean;
-    onLocationPress?: () => void;
-    onNotificationPress?: () => void;
+  navigation: StackNavigationProp<any, any>;
+  location: string;
+  hasNotifications?: boolean;
+  onLocationPress?: () => void;
+  onNotificationPress?: () => void;
+  User: {};
 }
 
-const HomeHeader: React.FC<HomeHeaderProps> = ({ 
-    navigation, 
-    location, 
-    hasNotifications = false, 
-    onLocationPress, 
-    onNotificationPress 
+const HomeHeader: React.FC<HomeHeaderProps> = ({
+  navigation,
+  location,
+  hasNotifications = false,
+  onLocationPress,
+  onNotificationPress,
+  User,
 }) => {
-    return (
-        <View style={styles.container}>
-            {/* Location Section */}
-            <View>
-
-            <Text style={{fontWeight:'600',fontSize:20,color:'#fff',marginLeft:5,marginVertical:5}}>{'Welcome'}</Text>
-            <TouchableOpacity onPress={onLocationPress} style={styles.locationContainer}>
-                <Image source={icon.pin} style={styles.locationIcon} />
-                <Text style={styles.locationText}>{location}</Text>
-            </TouchableOpacity>
-            </View>
-            {/* Divider */}
-            <View style={{flexDirection:'row',alignItems:'center'}}>
-            
-
-            {/* Notification Icon */}
-            <TouchableOpacity onPress={onNotificationPress} style={styles.notificationContainer}>
-                <Image source={icon.notification} style={styles.notificationIcon} />
-                {hasNotifications && <View style={styles.badge} />}
-            </TouchableOpacity>
-            </View>
-        </View>
-    );
+  return (
+    <View style={styles.container}>
+      {/* Location Section */}
+      <View>
+        <Text
+          style={{
+            fontWeight: '600',
+            fontSize: 20,
+            color: '#fff',
+            marginLeft: 5,
+            marginVertical: 5,
+          }}>
+          {'Welcome'} {User?.first_name}
+        </Text>
+        <TouchableOpacity
+          onPress={onLocationPress}
+          style={styles.locationContainer}>
+          <Image source={icon.pin} style={styles.locationIcon} />
+          <Text style={styles.locationText}>{location}</Text>
+        </TouchableOpacity>
+      </View>
+      {/* Divider */}
+      <View style={{flexDirection: 'row', alignItems: 'center'}}>
+        {/* Notification Icon */}
+        <TouchableOpacity
+          onPress={onNotificationPress}
+          style={styles.notificationContainer}>
+          <Image source={icon.notification} style={styles.notificationIcon} />
+          {hasNotifications && <View style={styles.badge} />}
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 10,
-        backgroundColor: color.baground,
-    },
-    locationContainer: {
-        flexDirection: 'row',
-        
-    },
-    locationIcon: {
-        width: 30,
-        height:30,
-        tintColor: '#FFC107',
-        marginRight: 5,
-    },
-    locationText: {
-        fontSize: 12,
-        color: '#fff',
-        fontWeight: '500',
-        width:'70%'
-    },
-    divider: {
-        height: 15,
-        width: 15,
-      borderRadius:7.5,
-        borderWidth:1,borderColor:color.borderColor,
-        marginHorizontal: 15,
-    },
-    notificationContainer: {
-        position: 'relative',
-    },
-    notificationIcon: {
-        width: 40,
-        height: 40,
-        tintColor: '#fff',
-    },
-    badge: {
-        position: 'absolute',
-        top: 0,
-        right: 0,
-        width: 8,
-        height: 8,
-        backgroundColor: 'red',
-        borderRadius: 4,
-    },
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: color.baground,
+  },
+  locationContainer: {
+    flexDirection: 'row',
+  },
+  locationIcon: {
+    width: 25,
+    height: 25,
+    tintColor: '#FFC107',
+    marginRight: 5,
+  },
+  locationText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '500',
+    width: '70%',
+  },
+  divider: {
+    height: 15,
+    width: 15,
+    borderRadius: 7.5,
+    borderWidth: 1,
+    borderColor: color.borderColor,
+    marginHorizontal: 15,
+  },
+  notificationContainer: {
+    position: 'relative',
+  },
+  notificationIcon: {
+    width: 40,
+    height: 40,
+    tintColor: '#fff',
+  },
+  badge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 8,
+    height: 8,
+    backgroundColor: 'red',
+    borderRadius: 4,
+  },
 });
 
 export default HomeHeader;

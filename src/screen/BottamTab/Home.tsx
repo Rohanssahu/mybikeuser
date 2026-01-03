@@ -52,6 +52,8 @@ const Home: React.FC = () => {
   const [locationNames, setLocationNames] = useState<string>('');
   const { locationName } = useLocation();
 
+  const [User,setUser] = useState('');
+
   useEffect(() => {
     fetchServiceData();
     getUser()
@@ -64,7 +66,7 @@ const Home: React.FC = () => {
 
     const res = await get_profile(user_id);
     if (res.success) {
-     
+      setUser(res.data);
     } 
     setLoading(false)
 };
@@ -76,11 +78,9 @@ const Home: React.FC = () => {
         get_bannerlist(),
         get_nearyBydeler('22.7028638', '75.8715857'),
       ]);
-
-      console.log('dealer.data', dealer.data);
-      
       if (dealer.data) setDealerList(dealer.data);
       if (res.data) setServiceList(res.data);
+    
       if (banner.data) setBannerList(banner.data);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -133,6 +133,7 @@ const Home: React.FC = () => {
             navigation={navigation}
             location={locationName || locationNames || 'Fetching'}
             hasNotifications={true}
+            User={User}
             onLocationPress={() => navigation.navigate(ScreenNameEnum.SELECT_LOCATION)}
             onNotificationPress={() => navigation.navigate(ScreenNameEnum.Notification) }
           />

@@ -250,7 +250,7 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                 {/* Submit Button */}
                 <View style={styles.buttonContainer}>
                     <CustomButton
-                        title="Update"
+                        title="Updateh Profile"
                         onPress={() => { update_profile() }}
                         buttonStyle={styles.button}
                     />

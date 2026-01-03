@@ -42,8 +42,8 @@ const BannerSlider: React.FC<BannerSliderProps> = ({ navigation, data }) => {
     const renderItem = ({ item }: { item: Banner }) => (
         <View style={styles.bannerContainer}>
             <Image
-               // source={  { uri: `${image_url}${item.banner_image}` }}
-                source={ require('../assets/images/image.png')}
+               source={  { uri: `${image_url}${item.banner_image}` }}
+               // source={ require('../assets/images/image.png')}
                 resizeMode='cover'
                 style={styles.bannerImage}
             />

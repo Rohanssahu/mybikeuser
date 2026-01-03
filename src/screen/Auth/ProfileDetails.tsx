@@ -149,6 +149,11 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
         const res = await updateProfile(User?._id, phone, firstName, lastName, state, city, address, pinCode, image, email)
         if (res?.success) {
             get_profile(user_id)
+            navigation.reset({
+                index: 0,
+                routes: [{ name: ScreenNameEnum.BOTTAM_TAB }],
+              });
+              
         }
         setLoading(false)
     }
@@ -157,6 +162,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
         const res = await updateProfileImage({uri:uri})
         if (res?.success) {
             setImage(res?.image_base_url)
+
       
         }
         setLoading(false)
@@ -164,7 +170,11 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
     return (
         <View style={{ flex: 1, backgroundColor: color.baground }}>
             {/* Header */}
-            <CustomHeader navigation={navigation} title='Profile' onSkipPress={() => { navigation.navigate(ScreenNameEnum.BOTTAM_TAB); }} showSkip={true} />
+            <CustomHeader navigation={navigation} title='Profile' onSkipPress={() => {navigation.reset({
+  index: 0,
+  routes: [{ name: ScreenNameEnum.BOTTAM_TAB }],
+});
+ }} showSkip={true} />
             {loading && <Loading />}
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Profile Image Section */}
@@ -233,7 +243,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                 {/* Submit Button */}
                 <View style={styles.buttonContainer}>
                     <CustomButton
-                        title="Update"
+                        title="Update Profile"
                         onPress={() => { update_profile() }}
                         buttonStyle={styles.button}
                     />

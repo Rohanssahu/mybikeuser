@@ -12,14 +12,39 @@ const Stack = createNativeStackNavigator();
 const RegistrationRoutes: FunctionComponent = () => {
 
   const { locationName, setLocationName } = useLocation();
-  function getFormattedAddress(response) {
-    if (response.status === "OK" && response.results.length > 0) {
-      // Get the formatted address from the results
-      return response.results[3].formatted_address;
-    } else {
-      return "Address not found";
-    }
-  }
+  const getShortAddress = (geoJson) => {
+    if (!geoJson?.results?.length) return '';
+  
+    const addressComponents = geoJson.results[0].address_components;
+  
+    let locality = '';
+    let subLocality = '';
+    let city = '';
+  
+    addressComponents.forEach(component => {
+      if (component.types.includes('sublocality_level_1')) {
+        subLocality = component.long_name;
+      }
+  
+      if (component.types.includes('locality')) {
+        city = component.long_name;
+      }
+  
+      if (component.types.includes('neighborhood')) {
+        locality = component.long_name;
+      }
+    });
+  
+    // Priority: subLocality > locality
+    const area = subLocality || locality;
+  
+    if (area && city) return `${area}, ${city}`;
+    if (city) return city;
+  
+    return geoJson.results[0].formatted_address;
+  };
+  
+
   useEffect(() => {
     const fetchLocationData = async () => {
       try {
@@ -44,13 +69,9 @@ const RegistrationRoutes: FunctionComponent = () => {
 
         if (json.status === 'OK' && json.results.length) {
 
-console.log('===================json=================');
-console.log(json);
-console.log('====================================');
-         
-          const city = getFormattedAddress(json);
+          const shortAddress = getShortAddress(json);
+          setLocationName(shortAddress);
 
-        setLocationName(city);
           // _update_location(latitude, longitude);
         }
 
