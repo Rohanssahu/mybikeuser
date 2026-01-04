@@ -1,25 +1,30 @@
 import {PermissionsAndroid, Platform} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+export const getCurrentLocation = async () => {
+  // 1️⃣ Check saved location first
+  const saved = await AsyncStorage.getItem('LocationsLat');
 
-export const getCurrentLocation = () =>
-  new Promise((resolve, reject) => {
+  if (saved) {
+    const { lat, lng } = JSON.parse(saved);
+    return { latitude: lat, longitude: lng };
+  }
+
+  // 2️⃣ Fallback to GPS
+  return new Promise((resolve, reject) => {
     Geolocation.getCurrentPosition(
       position => {
-        const cords = {
+        resolve({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
-          heading: position?.coords?.heading,
-        };
-        console;
-        resolve(cords);
+        });
       },
-      error => {
-        reject(error.message);
-      },
-      {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
+      error => reject(error),
+      { enableHighAccuracy: true, timeout: 15000 }
     );
   });
+};
 
 export const locationPermission = () =>
   new Promise(async (resolve, reject) => {

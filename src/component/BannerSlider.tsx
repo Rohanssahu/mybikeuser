@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
@@ -39,6 +39,28 @@ const BannerSlider: React.FC<BannerSliderProps> = ({ navigation, data }) => {
         }
     };
 
+    useEffect(() => {
+        if (!updatedData || updatedData.length === 0) return;
+    
+        const interval = setInterval(() => {
+            let nextIndex = currentIndex + 1;
+    
+            if (nextIndex >= updatedData.length) {
+                nextIndex = 0;
+            }
+    
+            flatListRef.current?.scrollToIndex({
+                index: nextIndex,
+                animated: true,
+            });
+    
+            setCurrentIndex(nextIndex);
+        }, 8000); // ⏱️ 4 seconds
+    
+        return () => clearInterval(interval);
+    }, [currentIndex, updatedData]);
+    
+
     const renderItem = ({ item }: { item: Banner }) => (
         <View style={styles.bannerContainer}>
             <Image
@@ -50,13 +72,13 @@ const BannerSlider: React.FC<BannerSliderProps> = ({ navigation, data }) => {
             <View style={styles.overlay} />
             <View style={styles.textContainer}>
                 <Text style={styles.title}>{item.name}</Text>
-                <Text style={styles.description}>{item.description}</Text>
+                
                 <View>
                     <TouchableOpacity
                         style={styles.button}
                         onPress={() => navigation.navigate('ServiceDetails', { id: item.id })}
                     >
-                        <Text style={styles.buttonText}>BOOK</Text>
+                        <Text style={styles.buttonText}>Bike Service</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -73,17 +95,23 @@ const BannerSlider: React.FC<BannerSliderProps> = ({ navigation, data }) => {
 
     return (
         <View style={styles.container}>
-            <FlatList
-                ref={flatListRef}
-                data={updatedData}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                renderItem={renderItem}
-                keyExtractor={(item) => item.id}
-                onViewableItemsChanged={handleViewableItemsChanged}
-                viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
-            />
+     <FlatList
+    ref={flatListRef}
+    data={updatedData}
+    horizontal
+    pagingEnabled
+    showsHorizontalScrollIndicator={false}
+    renderItem={renderItem}
+    keyExtractor={(item) => item.id}
+    onViewableItemsChanged={handleViewableItemsChanged}
+    viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
+    getItemLayout={(_, index) => ({
+        length: width * 0.9 + 40,
+        offset: (width * 0.9 + 40) * index,
+        index,
+    })}
+/>
+
             {/* Pagination Dots */}
             <View style={styles.pagination}>
                 {updatedData.map((_, index) => (
@@ -115,7 +143,7 @@ const styles = StyleSheet.create({
     bannerImage: {
         width: wp(100),
         height: '100%',
-        borderRadius: 20,
+        borderRadius: 10,
         backgroundColor:'#1E293B'
     },
     overlay: {
@@ -139,16 +167,18 @@ const styles = StyleSheet.create({
     },
     button: {
         backgroundColor: '#FFC107',
-        paddingHorizontal: 20,
+        paddingHorizontal: 10,
         paddingVertical: 8,
         borderRadius: 20,
         width: wp(30),
         alignItems: 'center',
         justifyContent: 'center',
+        marginTop:5
     },
     buttonText: {
         color: '#111827',
         fontWeight: 'bold',
+        fontSize:12
     },
     pagination: {
         flexDirection: 'row',

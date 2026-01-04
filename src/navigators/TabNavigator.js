@@ -62,11 +62,11 @@ export default function TabNavigator() {
                   <>
                     <Image
                       source={screen.logo} // Assuming you have imported icon for each screen
-                      style={{ width: 24, height: 24, tintColor: focused ? '#FED428' : color }} // Adjust size and style as needed
+                      style={{ width: 25, height: 25, tintColor: focused ? '#081041' : color }} // Adjust size and style as needed
                     />
-                    <Text style={{ fontWeight: '700', color: focused ? '#FED428' : '#777777', fontSize: 11, marginTop: 5 }}>{screen.lable}</Text>
+                    <Text style={{ fontWeight: '700', color: focused ?'#081041' : '#777777', fontSize: 14, marginTop: 5 }}>{screen.lable}</Text>
                   </> :
-                  <Image source={screen.logo} style={{ height: 50, width:50}} />
+                  <Image source={screen.logo} style={{ height: 60, width:60,marginTop:-10,}} />
                 }
               </>
             ),

@@ -1,12 +1,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, FlatList, StyleSheet, Text } from 'react-native';
-import NotificationItem from '../../component/NotificationItem';
-import { get_Notification } from '../../Api/apiRequests';
 import { useSelector } from 'react-redux';
-import Loading from '../../configs/Loader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CustomHeader from '../../component/CustomHeaderProps';
+import Loading from '../../configs/Loader';
+
 
 
 const Notification = ({navigation}) => {
@@ -22,7 +21,7 @@ const Notification = ({navigation}) => {
             const token = await AsyncStorage.getItem('token');
 
             const dealerId = isLogOut?.userData?.dealer_id;
-            const res = await get_Notification(dealerId, setIsLoading);
+            const res = { data: { data: [] } }; // Default empty response}
             if (res) {
                 setnotifications(res?.data?.data);
             } else {

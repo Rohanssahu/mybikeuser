@@ -7,6 +7,7 @@ import images from '../../component/Image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useRoute } from '@react-navigation/native';
 import { get_FilterBydeler } from '../../redux/Api/apiRequests';
+import { getCurrentLocation } from '../../component/helperFunction';
 
 // Define navigation type
 type RootStackParamList = {
@@ -44,10 +45,11 @@ const NearByShops: React.FC<Props> = ({ navigation }) => {
 
     const fetchServiceData = async () => {
         setLoading(true);
+                  const { latitude, longitude } = await getCurrentLocation();
         try {
             const [dealer] = await Promise.all([
 
-                get_FilterBydeler('22.7028609', '75.8715857', item?.variant_id),
+                get_FilterBydeler(latitude, longitude, item?.variant_id),
             ]);
 
             if (dealer.data) setDealerList(dealer.data);

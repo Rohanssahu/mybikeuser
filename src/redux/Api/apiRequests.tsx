@@ -18,9 +18,7 @@ interface ApiRequest {
 
 const Login_witPhone = async (phoneNumber: string,device_token:string) => {
 
-    console.log('====================================');
-    console.log(phoneNumber);
-    console.log('====================================');
+
     // Prepare the request body for login API
     const requestBody = { phone: phoneNumber ,device_token};
 

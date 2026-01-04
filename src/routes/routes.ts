@@ -144,13 +144,21 @@ const _routes = {
       logo: icon.support,
       lable: 'Help'
     },
+
     {
-      name: ScreenNameEnum.REWARD_SCREEN,
-      Component: Reward,
-      active: icon.reward,
-      logo: icon.reward,
-      lable: 'Reward'
+      name: ScreenNameEnum.Notification,
+      Component: Notification,
+      active: icon.notificationbell,
+      logo: icon.notificationbell,
+      lable: 'Alerts'
     },
+    // {
+    //   name: ScreenNameEnum.REWARD_SCREEN,
+    //   Component: Reward,
+    //   active: icon.reward,
+    //   logo: icon.reward,
+    //   lable: 'Reward'
+    // },
     {
       name: ScreenNameEnum.PROFILE_SCREEN,
       Component: Profile,

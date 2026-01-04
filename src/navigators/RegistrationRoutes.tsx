@@ -55,10 +55,9 @@ const RegistrationRoutes: FunctionComponent = () => {
         }
 
         // Get current location
-        const { latitudes, longitudes } = await getCurrentLocation();
+        const { latitude, longitude } = await getCurrentLocation();
 
-        let latitude = '22.7028638';
-        let longitude = '75.8715857';
+    
 
         // Fetch geocode
         const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyB_Lz_b22Sf5eKRSHhgxOnoZ8InrtXkpSM`;

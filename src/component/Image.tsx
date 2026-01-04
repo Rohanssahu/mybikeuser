@@ -20,6 +20,7 @@ const images = {
 };
 const icon = {
   downwhite: require('../assets/icons/Drop_Arrow.png'),
+  notificationbell: require('../assets/icons/notification-bell.png'),
   online: require('../assets/icons/onli.png'),
   cash: require('../assets/icons/cash.png'),
   close: require('../assets/icons/Close2x.png'),
