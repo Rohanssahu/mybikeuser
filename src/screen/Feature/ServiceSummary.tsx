@@ -151,7 +151,9 @@ const ServiceSummary: React.FC<ServiceSummaryProps> = ({navigation}) => {
   };
 
 
-
+console.log('====================================');
+console.log(booking?.services);
+console.log('====================================');
   return (
     <View style={styles.container}>
       <CustomHeader title="Booking Details" navigation={navigation} />

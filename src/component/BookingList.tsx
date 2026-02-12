@@ -52,7 +52,6 @@ const BookingList: React.FC<BookingListProps> = ({ data, navigation, onCancelPre
   };
 
 
-  
   return (
     <FlatList
       data={data}
@@ -80,7 +79,7 @@ const BookingList: React.FC<BookingListProps> = ({ data, navigation, onCancelPre
             <Text style={styles.label}>Pickup Status: {item.status !== 'completed'?item?.pickupStatus:'Delivered'}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.value}>{item.bookingId}</Text>
+            <Text style={styles.value}>{item.__v}</Text>
             <Text style={styles.value}>Booking: {item.status === 'user_cancelled'?'Cancelled By User':item.status}</Text>
           </View>
 

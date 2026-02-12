@@ -160,9 +160,13 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
     }
   };
 
+
   const createBooking = async () => {
+  
     if (!selectedService) return errorToast('Please Choose Service');
 
+
+    
     if (!choosePickupOption)
       return errorToast('Please Choose Picup_up & Drop Option');
     setLoading(true);
@@ -176,7 +180,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
 
     if (res?.success) {
       showBookingNotification(
-        GarageDetails?.services?.find(s => s._id === selectedService)?.name ||
+        GarageDetails?.services?.find(s => s.base_service_id._id === selectedService)?.name ||
           'Service',
         GarageDetails?.shopName,
         formatDateTime(BookingDate),
@@ -220,6 +224,8 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
     // Format final string
     return `${day} ${month} ${year}`;
   };
+
+
 
   return (
     <View style={styles.container}>
@@ -441,8 +447,8 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
       selectedTextStyle={styles.selectedTextStyle}
       data={
         GarageDetails?.services?.map(service => ({
-          label: `${service.name?.toUpperCase()} ₹${service?.bikes?.[0]?.price || 0}`,
-          value: service._id,
+          label: `${service.base_service_id.name?.toUpperCase()} ₹${service?.bikes?.[0]?.price || 0}`,
+          value: service.base_service_id?._id,
         })) || []
       }
       maxHeight={300}
@@ -465,7 +471,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
             <View style={{marginTop:20}}>
 
          
-              <Text style={[styles.serviceTitle,{color:'#000'}]}>{selected.name?.toUpperCase()}</Text>
+              <Text style={[styles.serviceTitle,{color:'#000'}]}>{selected.base_service_id?.name?.toUpperCase()}</Text>
               <Text style={styles.servicePrice}>Price :  ₹{selected?.bikes?.[0]?.price}</Text>
               
               </View>

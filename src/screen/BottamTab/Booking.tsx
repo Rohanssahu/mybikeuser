@@ -66,7 +66,6 @@ const Booking: React.FC<Props> = ({navigation}) => {
       const user_id = await  AsyncStorage.getItem('user_id')
 
       const response = await get_userbooking(user_id);
-
       if (response?.data?.length > 0) {
         setBooking(response.data);
       } else {
@@ -103,7 +102,9 @@ const Booking: React.FC<Props> = ({navigation}) => {
   );
 
  
-
+console.log('====================filteredBookings================');
+console.log(filteredBookings);
+console.log('====================================');
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor={color.baground} />
