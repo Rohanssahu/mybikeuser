@@ -8,7 +8,7 @@ import {
   ImageBackground,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
-import {ScratchCard} from 'rn-scratch-card';
+
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
@@ -113,17 +113,7 @@ const onScratch = useCallback((percentage) => {
                 
               </View>
              
-              <ScratchCard
-                source={imageUri}
-                brushWidth={20}
-                onScratch={(percentage) => {
-                  onScratch(percentage)
-                }}
-                style={{
-                  height: hp(45),
-                  width: wp(80),
-                }}
-              />
+        
             </View>
           </View>
         </View>

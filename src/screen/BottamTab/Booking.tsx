@@ -102,9 +102,7 @@ const Booking: React.FC<Props> = ({navigation}) => {
   );
 
  
-console.log('====================filteredBookings================');
-console.log(filteredBookings);
-console.log('====================================');
+
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor={color.baground} />

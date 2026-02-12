@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,18 +9,18 @@ import {
   Linking,
   Platform,
 } from 'react-native';
-import {color} from '../../constant';
+import { color } from '../../constant';
 import CustomHeader from '../../component/CustomHeaderProps';
-import {hp} from '../../component/utils/Constant';
+import { hp } from '../../component/utils/Constant';
 import CustomButton from '../../component/CustomButton';
 import ScreenNameEnum from '../../routes/screenName.enum';
-import {useIsFocused, useRoute} from '@react-navigation/native';
-import {additionalservices, bookingdetails} from '../../redux/Api/apiRequests';
-import {image_url} from '../../redux/Api';
+import { useIsFocused, useRoute } from '@react-navigation/native';
+import { additionalservices, bookingdetails, garage_details } from '../../redux/Api/apiRequests';
+import { image_url } from '../../redux/Api';
 import Icon from '../../component/Icon';
-import {icon} from '../../component/Image';
+import { icon } from '../../component/Image';
 import Geolocation from '@react-native-community/geolocation';
-import {getAddressFromLatLng} from '../../component/helperFunction';
+import { getAddressFromLatLng } from '../../component/helperFunction';
 import OtpBox from './OtpBox';
 // Define types for service items
 interface ServiceItem {
@@ -37,25 +37,25 @@ interface ServiceSummaryProps {
   totalAmount: string;
 }
 
-const ServiceSummary: React.FC<ServiceSummaryProps> = ({navigation}) => {
+const ServiceSummary: React.FC<ServiceSummaryProps> = ({ navigation }) => {
   const route = useRoute();
-  const {id} = route.params;
+  const { id } = route.params;
   const [booking, setBooking] = useState('');
   const [addiservices, setAddiServices] = useState<any[]>([]);
-
+  const [GarageDetails, setGarageDetails] = useState([]);
   useEffect(() => {
     let interval;
-  
+
     if (id) {
       // Call once immediately
       get_booking_details();
-  
+
       // Repeat every 10 seconds
       interval = setInterval(() => {
         get_booking_details();
       }, 10000); // 10000 ms = 10 seconds
     }
-  
+
     // Cleanup when component unmounts or id changes
     return () => {
       if (interval) {
@@ -63,7 +63,7 @@ const ServiceSummary: React.FC<ServiceSummaryProps> = ({navigation}) => {
       }
     };
   }, [id]);
-  
+
 
   const get_booking_details = async () => {
     const res = await bookingdetails(id);
@@ -129,6 +129,10 @@ const ServiceSummary: React.FC<ServiceSummaryProps> = ({navigation}) => {
     get_additionalservices();
   }, [booking, isFocus]);
 
+  useEffect(() => {
+    get_dealer_details();
+  }, [booking, isFocus]);
+
   const get_additionalservices = async () => {
     console.log('get_additionalservices');
 
@@ -151,30 +155,64 @@ const ServiceSummary: React.FC<ServiceSummaryProps> = ({navigation}) => {
   };
 
 
-console.log('====================================');
-console.log(booking?.services);
-console.log('====================================');
+
+
+
+  const get_dealer_details = async () => {
+
+    try {
+
+
+      const digitsOnly = booking?.services[0]?.bikes[0]?.cc
+      const deler_id = booking?.services[0]?.dealer_id
+
+      const res = await garage_details(deler_id, digitsOnly);
+
+      if (res?.success) {
+        setGarageDetails(res?.data);
+      } else {
+        setGarageDetails([]);
+      }
+    }
+    catch (err) {
+      console.log('err', err);
+
+    }
+
+
+  };
+
+    const services = GarageDetails?.services?.find(s => s._id == booking?.services[0]?._id)
+
+
+
+const servicesName =  services?.base_service_id?.name
+const Price =  services?.bikes[0]?.price
+
+
+
+
   return (
     <View style={styles.container}>
       <CustomHeader title="Booking Details" navigation={navigation} />
       <ScrollView>
 
-        
-      {booking?.status === 'confirmed' && booking?.status !== 'completed'  &&
-        <OtpBox
-          otp={booking.pickupStatus === 'arrived'?booking.pickupOtp:booking?.deliveryOtp}
-          label={
-            booking.pickupStatus === 'arrived' ? 'Pickup Otp' : 'Completed Otp'
-          }
-        />
+
+        {booking?.status === 'confirmed' && booking?.status !== 'completed' &&
+          <OtpBox
+            otp={booking.pickupStatus === 'arrived' ? booking.pickupOtp : booking?.deliveryOtp}
+            label={
+              booking.pickupStatus === 'arrived' ? 'Pickup Otp' : 'Completed Otp'
+            }
+          />
         }
-        <View style={[styles.card, {marginTop: 10}]}>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+        <View style={[styles.card, { marginTop: 10 }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Image
-              source={{uri: image_url + booking?.dealer_id?.shopImages[0]}}
-              style={{height: 50, width: 50, borderRadius: 25}}
+              source={{ uri: image_url + booking?.dealer_id?.shopImages[0] }}
+              style={{ height: 50, width: 50, borderRadius: 25 }}
             />
-            <View style={{width: '60%', marginLeft: 10}}>
+            <View style={{ width: '60%', marginLeft: 10 }}>
               <Text
                 style={{
                   fontSize: 16,
@@ -183,7 +221,7 @@ console.log('====================================');
                 }}>
                 {booking?.dealer_id?.shopName}
               </Text>
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Icon source={icon.pin} size={15} />
 
                 <Text
@@ -208,7 +246,7 @@ console.log('====================================');
               <Icon source={icon.googlemaps} size={35} />
             </TouchableOpacity>
             <TouchableOpacity
-              style={{marginLeft: 5}}
+              style={{ marginLeft: 5 }}
               onPress={() => {
                 makeCall(booking?.dealer_id?.phone);
               }}>
@@ -216,7 +254,7 @@ console.log('====================================');
             </TouchableOpacity>
           </View>
           {/* Bike Details */}
-          <Text style={[styles.sectionTitle, {marginTop: 20}]}>
+          <Text style={[styles.sectionTitle, { marginTop: 20 }]}>
             Bike Details
           </Text>
           <View style={styles.row}>
@@ -227,7 +265,7 @@ console.log('====================================');
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Bike Model & Variant</Text>
-            <View style={{width: '35%'}}>
+            <View style={{ width: '35%' }}>
               <Text style={styles.value}>
                 {booking?.userBike_id?.name}-{booking?.userBike_id?.model} &{' '}
                 {booking?.userBike_id?.bike_cc}
@@ -254,10 +292,10 @@ console.log('====================================');
                     booking?.status === 'pending'
                       ? '#d1a908'
                       : booking?.status === 'user_cancelled'
-                      ? 'red'
-                      : booking?.status === 'rejected'
-                      ? 'red'
-                      : 'green',
+                        ? 'red'
+                        : booking?.status === 'rejected'
+                          ? 'red'
+                          : 'green',
                 },
               ]}>
               {booking.status === 'user_cancelled'
@@ -267,15 +305,15 @@ console.log('====================================');
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Pickup Status</Text>
-            <Text style={[styles.totalPrice, {color: '#d1a908'}]}>
+            <Text style={[styles.totalPrice, { color: '#d1a908' }]}>
               {booking?.pickupStatus}
             </Text>
           </View>
           {booking?.pickupAndDropId != null && (
             <View style={styles.row}>
               <Text style={styles.label}>Pickup Address</Text>
-              <View style={{width: '60%'}}>
-                <Text style={[styles.value, {fontSize: 12, color: '#fff'}]}>
+              <View style={{ width: '60%' }}>
+                <Text style={[styles.value, { fontSize: 12, color: '#fff' }]}>
                   {getAddressFromLatLng(
                     booking?.pickupAndDropId?.user_lat,
                     booking?.pickupAndDropId?.user_lng,
@@ -289,14 +327,14 @@ console.log('====================================');
           <View style={styles.summaryContainer}>
             <Text style={styles.summaryTitle}>Service Summary</Text>
 
-            {booking?.services?.map((service, index) => (
-              <View key={index} style={styles.serviceRow}>
-                <Text style={styles.serviceName}>{service.name}</Text>
+          
+              <View style={styles.serviceRow}>
+                <Text style={styles.serviceName}>{servicesName}</Text>
                 <Text style={styles.servicePrice}>
-                  ₹{service?.bikes[0]?.price}
+                  ₹{Price}
                 </Text>
               </View>
-            ))}
+        
             {addiservices?.map((service, index) => (
               <View
                 key={service.id || index} // Ensure each child has a unique key
@@ -331,12 +369,12 @@ console.log('====================================');
             <View style={styles.serviceRow}>
               <View>
                 <Text style={styles.totalText}>Bill </Text>
-                <Text style={[{color: '#d1a908', fontSize: 12}]}>
+                <Text style={[{ color: '#d1a908', fontSize: 12 }]}>
                   {booking?.billStatus}
                 </Text>
               </View>
 
-              <Text style={[styles.totalPrice, {color: '#d1a908'}]}>
+              <Text style={[styles.totalPrice, { color: '#d1a908' }]}>
                 ₹{booking?.totalBill}
               </Text>
             </View>
@@ -354,30 +392,30 @@ console.log('====================================');
             </View>
           )}
 
-        {booking?.status === 'completed' && booking?.billStatus === 'pending' && (
-          <View
-            style={{
-              marginTop: 30,
-              width: '100%',
-              paddingHorizontal: 30,
-              marginBottom: 30,
-            }}>
-            <CustomButton
-              title="Pay Now"
-              onPress={() => {
-                navigation.navigate(ScreenNameEnum.PaymentScreen, {
-                
-                  User: booking,
-                  totalPrice: booking?.totalBill,
-                  response: booking,
+          {booking?.status === 'completed' && booking?.billStatus === 'pending' && (
+            <View
+              style={{
+                marginTop: 30,
+                width: '100%',
+                paddingHorizontal: 30,
+                marginBottom: 30,
+              }}>
+              <CustomButton
+                title="Pay Now"
+                onPress={() => {
+                  navigation.navigate(ScreenNameEnum.PaymentScreen, {
 
-                });
-               
-              }}
-            />
-          </View>
-        )
-        }
+                    User: booking,
+                    totalPrice: booking?.totalBill,
+                    response: booking,
+
+                  });
+
+                }}
+              />
+            </View>
+          )
+          }
 
           {/* Footer */}
           <Text style={styles.footerText}>
@@ -397,7 +435,7 @@ console.log('====================================');
               borderWidth: 1,
               borderColor: color.baground,
             }}>
-            <Text style={{fontSize: 18, color: 'red', fontWeight: '800'}}>
+            <Text style={{ fontSize: 18, color: 'red', fontWeight: '800' }}>
               Your Booking Rejected By Service Center
             </Text>
           </View>
@@ -529,8 +567,8 @@ const serviceData = {
   lastservicekm: '10000',
   serviceDate: 'January 31, 2025',
   services: [
-    {name: 'General Service', price: 'Rs. 2,00'},
-    {name: 'Tax', price: 'Rs. 250'},
+    { name: 'General Service', price: 'Rs. 2,00' },
+    { name: 'Tax', price: 'Rs. 250' },
   ],
   Additional: [
     {

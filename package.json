@@ -79,7 +79,6 @@
     "react-native-webview": "^13.10.2",
     "react-redux": "^9.2.0",
     "redux-persist": "^6.0.0",
-    "rn-scratch-card": "^1.2.3",
     "styled-components": "^6.1.13",
     "uuid": "^8.3.2"
   },

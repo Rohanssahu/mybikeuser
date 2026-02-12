@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,14 +12,14 @@ import {
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import CustomHeader from '../../component/CustomHeaderProps';
-import {color} from '../../constant';
-import images, {icon} from '../../component/Image';
-import {hp} from '../../component/utils/Constant';
+import { color } from '../../constant';
+import images, { icon } from '../../component/Image';
+import { hp } from '../../component/utils/Constant';
 import Icon from '../../component/Icon';
 import CustomButton from '../../component/CustomButton';
 import ScreenNameEnum from '../../routes/screenName.enum';
-import {useRoute} from '@react-navigation/native';
-import {useDispatch} from 'react-redux';
+import { useRoute } from '@react-navigation/native';
+import { useDispatch } from 'react-redux';
 import {
   addPickupAddress,
   create_booking,
@@ -28,10 +28,10 @@ import {
 import Geolocation from '@react-native-community/geolocation';
 import MapPickerModal from './MapPicker';
 import Loading from '../../configs/Loader';
-import {errorToast} from '../../configs/customToast';
+import { errorToast } from '../../configs/customToast';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {showBookingNotification} from '../../component/Notification';
+import { showBookingNotification } from '../../component/Notification';
 import { Dropdown } from 'react-native-element-dropdown';
 
 interface ServiceItem {
@@ -39,10 +39,10 @@ interface ServiceItem {
   description: string;
 }
 
-const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
+const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
   const route = useRoute();
   const [GarageDetails, setGarageDetails] = useState([]);
-  const {bike, id} = route.params;
+  const { bike, id } = route.params;
   const [distance, setDistance] = useState(null);
   const [pickupModalVisible, setpickupModalVisible] = useState(false);
   // Example shop location (latitude & longitude)
@@ -95,7 +95,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
         setDistance(calculatedDistance);
       },
       error => console.error('Error getting location:', error),
-      {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
     );
   };
 
@@ -162,11 +162,11 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
 
 
   const createBooking = async () => {
-  
+
     if (!selectedService) return errorToast('Please Choose Service');
 
 
-    
+
     if (!choosePickupOption)
       return errorToast('Please Choose Picup_up & Drop Option');
     setLoading(true);
@@ -181,7 +181,8 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
     if (res?.success) {
       showBookingNotification(
         GarageDetails?.services?.find(s => s.base_service_id._id === selectedService)?.name ||
-          'Service',
+       
+        'Service',
         GarageDetails?.shopName,
         formatDateTime(BookingDate),
       );
@@ -249,10 +250,10 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
           onPress={() => {
             navigation.goBack();
           }}
-          style={{position: 'absolute', top: 40, left: 10}}>
+          style={{ position: 'absolute', top: 40, left: 10 }}>
           <Icon source={icon.back} size={30} />
         </TouchableOpacity>
-        <View style={{position: 'absolute', top: hp(18), left: 10}}>
+        <View style={{ position: 'absolute', top: hp(18), left: 10 }}>
           <Text style={styles.title}>{GarageDetails?.shopName}</Text>
           <Text style={styles.subtitle}>{GarageDetails?.address}</Text>
 
@@ -281,9 +282,9 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
               </Text>
             </View>
           </View>
-          <View style={[styles.featureRow, {justifyContent: 'space-between'}]}>
+          <View style={[styles.featureRow, { justifyContent: 'space-between' }]}>
             <Icon source={icon.pickups} size={30} />
-            <View style={{width: '88%'}}>
+            <View style={{ width: '88%' }}>
               <Text style={styles.featureText}>
                 Pick-Up & Drop ({Number(PickupDistance)?.toFixed(2)}km)
               </Text>
@@ -331,7 +332,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
                     <Text
                       style={[
                         styles.featureText,
-                        {marginLeft: 0, fontSize: 14, color: '#000'},
+                        { marginLeft: 0, fontSize: 14, color: '#000' },
                       ]}>
                       Self
                     </Text>
@@ -376,7 +377,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
               disabled
               style={{}}>
               {choosePickup ? (
-                <Image source={icon.check} style={{height: 22, width: 22}} />
+                <Image source={icon.check} style={{ height: 22, width: 22 }} />
               ) : (
                 <View
                   style={{
@@ -435,66 +436,66 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
 
           {/* Services */}
 
-{/* Services */}
-<Text style={styles.sectionTitle}>Select Service</Text>
+          {/* Services */}
+          <Text style={styles.sectionTitle}>Select Service</Text>
 
-{GarageDetails?.services?.length > 0 ? (
-  <>
-    <Dropdown
-      style={styles.dropdown}
-      containerStyle={styles.dropdownContainer}
-      placeholderStyle={styles.placeholderStyle}
-      selectedTextStyle={styles.selectedTextStyle}
-      data={
-        GarageDetails?.services?.map(service => ({
-          label: `${service.base_service_id.name?.toUpperCase()} ₹${service?.bikes?.[0]?.price || 0}`,
-          value: service.base_service_id?._id,
-        })) || []
-      }
-      maxHeight={300}
-      labelField="label"
-      valueField="value"
-      placeholder="Choose a service"
-      value={selectedService}
-      onChange={item => setselectedService(item.value)}
-      itemTextStyle={{ color: '#000' }}
-    />
-
-    {GarageDetails?.services?.find(s => s._id === selectedService) && (
-      <View style={styles.serviceCard}>
-        {(() => {
-          const selected = GarageDetails?.services?.find(
-            s => s._id === selectedService
-          );
-          return (
+          {GarageDetails?.services?.length > 0 ? (
             <>
-            <View style={{marginTop:20}}>
+              <Dropdown
+                style={styles.dropdown}
+                containerStyle={styles.dropdownContainer}
+                placeholderStyle={styles.placeholderStyle}
+                selectedTextStyle={styles.selectedTextStyle}
+                data={
+                  GarageDetails?.services?.map(service => ({
+                    label: `${service.base_service_id.name?.toUpperCase()} ₹${service?.bikes?.[0]?.price || 0}`,
+                    value: service?._id,
+                  })) || []
+                }
+                maxHeight={300}
+                labelField="label"
+                valueField="value"
+                placeholder="Choose a service"
+                value={selectedService}
+                onChange={item => setselectedService(item.value)}
+                itemTextStyle={{ color: '#000' }}
+              />
 
-         
-              <Text style={[styles.serviceTitle,{color:'#000'}]}>{selected.base_service_id?.name?.toUpperCase()}</Text>
-              <Text style={styles.servicePrice}>Price :  ₹{selected?.bikes?.[0]?.price}</Text>
-              
-              </View>
-              <Text style={[styles.serviceDescription,{color:'#000'}]}>
-               Description:
-              </Text>
-              <Text style={[styles.serviceDescription,{color:'#000'}]}>
-                {selected.description || 'No description available'}
-              </Text>
-              <View style={styles.checkContainer}>
-                <Image source={icon.check} style={{ height: 30, width: 30 }} />
-              </View>
+              {GarageDetails?.services?.find(s => s._id == selectedService) && (
+                <View style={styles.serviceCard}>
+                  {(() => {
+                    const selected = GarageDetails?.services?.find(
+                      s => s._id == selectedService
+                    );
+                    return (
+                      <>
+                        <View style={{ marginTop: 20 }}>
+
+
+                          <Text style={[styles.serviceTitle, { color: '#000' }]}>{selected.base_service_id?.name?.toUpperCase()}</Text>
+                          <Text style={styles.servicePrice}>Price :  ₹{selected?.bikes?.[0]?.price}</Text>
+
+                        </View>
+                        <Text style={[styles.serviceDescription, { color: '#000', fontWeight: '600' }]}>
+                          What’s Included in the Service:
+                        </Text>
+                        <Text style={[styles.serviceDescription, { color: '#000' }]}>
+                          {selected.description || 'No description available'}
+                        </Text>
+                        <View style={styles.checkContainer}>
+                          <Image source={icon.check} style={{ height: 30, width: 30 }} />
+                        </View>
+                      </>
+                    );
+                  })()}
+                </View>
+              )}
             </>
-          );
-        })()}
-      </View>
-    )}
-  </>
-) : (
-  <View style={styles.noServiceContainer}>
-    <Text style={styles.noServiceText}>No Service Added</Text>
-  </View>
-)}
+          ) : (
+            <View style={styles.noServiceContainer}>
+              <Text style={styles.noServiceText}>No Service Added</Text>
+            </View>
+          )}
 
 
         </View>
@@ -502,7 +503,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
           <View
             style={{
               marginVertical: 30,
-              paddingHorizontal:10,
+              paddingHorizontal: 10,
               marginBottom: 60,
             }}>
             <CustomButton
@@ -613,7 +614,7 @@ const styles = StyleSheet.create({
 
   checkContainer: {
     marginTop: 10,
-    position:'absolute',top:0,right:5
+    position: 'absolute', top: 0, right: 5
   },
 
   noServiceContainer: {

@@ -16,11 +16,11 @@ interface ApiRequest {
     token?: string; // Optional Auth Token (per request)
 }
 
-const Login_witPhone = async (phoneNumber: string,device_token:string) => {
+const Login_witPhone = async (phoneNumber: string, device_token: string) => {
 
 
     // Prepare the request body for login API
-    const requestBody = { phone: phoneNumber ,device_token};
+    const requestBody = { phone: phoneNumber, device_token };
 
     const apiRequests: ApiRequest[] = [
         {
@@ -115,105 +115,105 @@ const updateBooking = async (
     id: any,
     setLoading: any,
     navigation: any,
-  ) => {
+) => {
     const requestBody = {
-      bookingId: dataUser?._id,
-      billGenerated: false,
-      lastServiceKm: lastServiceKm,
-      tax: dataUser?.tax,
-      totalBill: Price,
-      billStatus: 'pending',
-      services: id,
+        bookingId: dataUser?._id,
+        billGenerated: false,
+        lastServiceKm: lastServiceKm,
+        tax: dataUser?.tax,
+        totalBill: Price,
+        billStatus: 'pending',
+        services: id,
     };
-  
+
     setLoading(true); // Start loader
-  
+
     console.log('requestBody', requestBody);
-  
+
     const apiRequests: ApiRequest[] = [
-      {
-        endpoint: endpoint.updateBooking,
-        method: 'POST',
-        data: requestBody,
-        headers: {
-          'Content-Type': 'application/json',
-          token: token,
+        {
+            endpoint: endpoint.updateBooking,
+            method: 'POST',
+            data: requestBody,
+            headers: {
+                'Content-Type': 'application/json',
+                token: token,
+            },
         },
-      },
     ];
-  
+
     try {
-      const results = await callMultipleApis(apiRequests);
-      const response = results[0];
-      if (response.message) {
-        setLoading(false); // Stop loader
-  
-        if (save === 'save') {
-          // navigation.navigate(ScreenNameEnum.BOTTAM_TAB);
-          successToast(response.message);
-          navigation.goBack();
-          setLoading(false);
-          return {success: true, message: response.message, user: null};
-        } else {
-          setLoading(false);
-          return {success: true, message: response.message, user: null};
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+        if (response.message) {
+            setLoading(false); // Stop loader
+
+            if (save === 'save') {
+                // navigation.navigate(ScreenNameEnum.BOTTAM_TAB);
+                successToast(response.message);
+                navigation.goBack();
+                setLoading(false);
+                return { success: true, message: response.message, user: null };
+            } else {
+                setLoading(false);
+                return { success: true, message: response.message, user: null };
+            }
         }
-      }
-      setLoading(false);
-      return {success: false, message: 'Unexpected response', user: null};
+        setLoading(false);
+        return { success: false, message: 'Unexpected response', user: null };
     } catch (error: any) {
-      errorToast(error.message);
-      setLoading(false); // Stop loader
-      return {success: false, message: error.message, user: null};
+        errorToast(error.message);
+        setLoading(false); // Stop loader
+        return { success: false, message: error.message, user: null };
     }
-  };
-  
-  const payment_Cash = async (
+};
+
+const payment_Cash = async (
     token: string,
     totalPrice: number,
     setLoading: any,
     User: any,
     navigation: any,
-  ) => {
+) => {
     const requestBody = {
-      booking_id: User?._id,
-      customer_id: User?.user_id?._id,
-      dealer_id: User?.dealer_id?._id,
-      order_amount: totalPrice,
-      pay_type: 'cash',
+        booking_id: User?._id,
+        customer_id: User?.user_id?._id,
+        dealer_id: User?.dealer_id?._id,
+        order_amount: totalPrice,
+        pay_type: 'cash',
     };
-  
+
     setLoading(true); // Start loader
     const apiRequests: ApiRequest[] = [
-      {
-        endpoint: endpoint.paymentCash,
-        method: 'POST',
-        data: requestBody,
-        headers: {
-          'Content-Type': 'application/json',
+        {
+            endpoint: endpoint.paymentCash,
+            method: 'POST',
+            data: requestBody,
+            headers: {
+                'Content-Type': 'application/json',
+            },
         },
-      },
     ];
-  
+
     try {
-      const results = await callMultipleApis(apiRequests);
-      const response = results[0];
-  
-      console.log('response cadsh payment ', response);
-  
-      if (response.status == 200) {
-        setLoading(false); // Stop loader
-        successToast(response.message);
-        return {success: true, message: response.message, user: null};
-      }
-      setLoading(false);
-      return {success: false, message: 'Unexpected response', user: null};
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+
+        console.log('response cadsh payment ', response);
+
+        if (response.status == 200) {
+            setLoading(false); // Stop loader
+            successToast(response.message);
+            return { success: true, message: response.message, user: null };
+        }
+        setLoading(false);
+        return { success: false, message: 'Unexpected response', user: null };
     } catch (error: any) {
-      errorToast(error.message);
-      setLoading(false); // Stop loader
-      return {success: false, message: error.message, user: null};
+        errorToast(error.message);
+        setLoading(false); // Stop loader
+        return { success: false, message: error.message, user: null };
     }
-  };
+};
 const otp_Verify = async (phoneNumber: string, otp: string,) => {
     // Prepare the request body for login API
     const requestBody = { phone: phoneNumber, otp: otp, };
@@ -245,7 +245,7 @@ const otp_Verify = async (phoneNumber: string, otp: string,) => {
                 await AsyncStorage.setItem('user_id', response.user_id)
                 successToast(response.message)
 
-                return { success: true, message: "OTP verified successfully", user: response  };
+                return { success: true, message: "OTP verified successfully", user: response };
             } else if (response.message === "User not found") {
                 successToast(response.message)
 
@@ -415,7 +415,7 @@ const get_nearyBydeler = async (lat: string, long: string) => {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-              
+
             },
         },
     ];
@@ -439,7 +439,7 @@ const get_nearyBydeler = async (lat: string, long: string) => {
 const get_bannerlist = async () => {
 
     const token = await AsyncStorage.getItem('token')
-  
+
     const apiRequests: ApiRequest[] = [
         {
             endpoint: endpoint.bannerlist,
@@ -467,15 +467,15 @@ const get_bannerlist = async () => {
         return { success: false, message: error.message, data: [] };
     }
 };
-const get_userbooking = async (_id:string) => {
-    console.log('===============get_userbooking=====================',  endpoint.userbooking+`/${_id}?user_type=4`);
+const get_userbooking = async (_id: string) => {
+    console.log('===============get_userbooking=====================', endpoint.userbooking + `/${_id}?user_type=4`);
     const token = await AsyncStorage.getItem('token')
 
     console.log(token);
 
     const apiRequests: ApiRequest[] = [
         {
-            endpoint: endpoint.userbooking+`/${_id}?user_type=4`,
+            endpoint: endpoint.userbooking + `/${_id}?user_type=4`,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -565,7 +565,6 @@ const get_BikeModel = async (id: string) => {
     try {
         // Call the multiple APIs and await the result
         const results = await callMultipleApis(apiRequests);
-        console.log('API Response=>>>>>>>>>>:', results);
 
 
         const response = results[0];
@@ -606,8 +605,6 @@ const get_BikeVariant = async (id: string) => {
     try {
         // Call the multiple APIs and await the result
         const results = await callMultipleApis(apiRequests);
-        console.log('API Response=>>>>>>>>>>:', results);
-
 
         const response = results[0];
 
@@ -628,7 +625,7 @@ const get_BikeVariant = async (id: string) => {
 const add_Bikes = async (name: string, model: string, bike_cc: string, plate_number: string, variant_id: string) => {
     // Prepare the request body for login API
     const requestBody = { name, model, bike_cc, plate_number, variant_id };
-    
+
     const token = await AsyncStorage.getItem('token')
     const apiRequests: ApiRequest[] = [
         {
@@ -727,7 +724,6 @@ const remove_bike = async (id: string) => {
     try {
         // Call the multiple APIs and await the result
         const results = await callMultipleApis(apiRequests);
-        console.log('API Response=>>>>>>>>>>:', results);
         const response = results[0];
 
         if (response?.status == '200') {
@@ -746,7 +742,7 @@ const remove_bike = async (id: string) => {
 };
 const garage_details = async (id: string, digitsOnly: string) => {
     const token = await AsyncStorage.getItem('token');
-   
+
     const apiRequests: ApiRequest[] = [
         {
             endpoint: `${endpoint.garagedetails}/${id}?cc=${digitsOnly}`,
@@ -786,7 +782,7 @@ const get_FilterBydeler = async (lat: string, long: string, variant_id: string,)
                 'Content-Type': 'application/json',
                 "token": token
             },
-            
+
         },
     ];
     try {
@@ -806,13 +802,13 @@ const get_FilterBydeler = async (lat: string, long: string, variant_id: string,)
         return { success: false, message: error.message, data: [] };
     }
 };
-const addPickupAddress = async (user_lat: string, user_lng: string, dealer_id: string,user_id:string) => {
-    const requestBody = { user_lat, user_lng, dealer_id,user_id };
+const addPickupAddress = async (user_lat: string, user_lng: string, dealer_id: string, user_id: string) => {
+    const requestBody = { user_lat, user_lng, dealer_id, user_id };
     const token = await AsyncStorage.getItem('token')
 
-console.log('============requestBody========================');
-console.log(requestBody);
-console.log('====================================');
+    console.log('============requestBody========================');
+    console.log(requestBody);
+    console.log('====================================');
     const apiRequests: ApiRequest[] = [
         {
             endpoint: endpoint.addpickndrop,
@@ -843,32 +839,32 @@ console.log('====================================');
 };
 const additionalservices = async (id: string, token: string, cc: string) => {
     const apiRequests: ApiRequest[] = [
-      {
-        endpoint: `${endpoint.additionalservices}/${id}?cc=${cc}`,
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          token: token,
+        {
+            endpoint: `${endpoint.additionalservices}/${id}?cc=${cc}`,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                token: token,
+            },
         },
-      },
     ];
-  
+
     try {
-      // Call the multiple APIs and await the result
-      const results = await callMultipleApis(apiRequests);
-      const response = results[0];
-  
-      if (response?.status == '200') {
-        // successToast('Bike Remove Successfully')
-        return {success: true, message: 'Success', data: response.data};
-      } else {
-        return {success: false, message: 'Unexpected response', data: []};
-      }
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+
+        if (response?.status == '200') {
+            // successToast('Bike Remove Successfully')
+            return { success: true, message: 'Success', data: response.data };
+        } else {
+            return { success: false, message: 'Unexpected response', data: [] };
+        }
     } catch (error) {
-      console.error('Error fetching data:', error);
-      return {success: false, message: error.message, state: []};
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, state: [] };
     }
-  };
+};
 const create_booking = async (dealer_id: string, services: string, pickupAndDropId: string, userBike_id: string, pickupDate: string) => {
     // Prepare the request body for login API
     const requestBody = { dealer_id, services, pickupAndDropId, userBike_id, pickupDate };
@@ -911,8 +907,8 @@ const create_booking = async (dealer_id: string, services: string, pickupAndDrop
     }
 };
 
-const get_profile = async (user_id:string) => {
-  
+const get_profile = async (user_id: string) => {
+
     const token = await AsyncStorage.getItem('token')
 
     console.log(token);
@@ -1064,7 +1060,6 @@ const bookingdetails = async (id: string) => {
     try {
         // Call the multiple APIs and await the result
         const results = await callMultipleApis(apiRequests);
-        console.log('API Response=>>>>>>>>>>:', results);
         const response = results[0];
 
         if (response?.success) {
@@ -1082,19 +1077,19 @@ const bookingdetails = async (id: string) => {
     }
 };
 const cancel_booking = async (bookingId: string, status: string) => {
-    const user_id = await  AsyncStorage.getItem('user_id')
+    const user_id = await AsyncStorage.getItem('user_id')
 
     const requestBody = { user_id, status }
 
     const apiRequests: ApiRequest[] = [
         {
-            endpoint: endpoint.cancelbooking+`/${bookingId}/status`,
+            endpoint: endpoint.cancelbooking + `/${bookingId}/status`,
             method: 'POST',
             data: requestBody,
 
             headers: {
                 'Content-Type': 'application/json',
-          
+
             },
         },
     ];
@@ -1132,7 +1127,7 @@ const get_tikit = async (user_id) => {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-              
+
             },
         },
     ];
@@ -1156,12 +1151,12 @@ const get_tikit = async (user_id) => {
         return { success: false, message: error.message, data: [] };
     }
 };
-const get_tikitdetails = async (id:string) => {
+const get_tikitdetails = async (id: string) => {
     console.log('===============get_tikit===details==================',);
     const token = await AsyncStorage.getItem('token')
 
     console.log(token);
-    
+
     const apiRequests: ApiRequest[] = [
         {
             endpoint: endpoint.gettikitdetails?.replace(':ticket_id', id),
@@ -1197,79 +1192,79 @@ const create_tikit = async (
     subject: string,
     message: string,
     user_id: string,
-  ) => {
+) => {
     const requestBody = {
-      sender_id: user_id,
-      subject,
-      message,
-      user_type: 'user',
-      sender_type: 'user',
-      attachments: [],
+        sender_id: user_id,
+        subject,
+        message,
+        user_type: 'user',
+        sender_type: 'user',
+        attachments: [],
     };
-  
+
     const apiRequests: ApiRequest[] = [
-      {
-        endpoint: `${endpoint.createTikit}/${user_id}`,
-        method: 'POST',
-        data: requestBody,
-        headers: {
-          'Content-Type': 'application/json',
+        {
+            endpoint: `${endpoint.createTikit}/${user_id}`,
+            method: 'POST',
+            data: requestBody,
+            headers: {
+                'Content-Type': 'application/json',
+            },
         },
-      },
     ];
-  
+
     try {
-      // Call the multiple APIs and await the result
-      const results = await callMultipleApis(apiRequests);
-      const response = results[0];
-      console.log('response', response);
-  
-      if (response?.success) {
-        // successToast('Bike Remove Successfully')
-        return {success: true, message: 'Success', data: response.data};
-      } else {
-        return {success: false, message: 'Unexpected response', data: []};
-      }
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+        console.log('response', response);
+
+        if (response?.success) {
+            // successToast('Bike Remove Successfully')
+            return { success: true, message: 'Success', data: response.data };
+        } else {
+            return { success: false, message: 'Unexpected response', data: [] };
+        }
     } catch (error) {
-      console.error('Error fetching data:', error);
-      return {success: false, message: error.message, state: []};
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, state: [] };
     }
-  };
-  const replay_tikit = async (id: string, message: string, sender_id: string) => {
+};
+const replay_tikit = async (id: string, message: string, sender_id: string) => {
     const requestBody = {
-      sender_id: sender_id,
-      sender_type: 'user',
-      message,
+        sender_id: sender_id,
+        sender_type: 'user',
+        message,
     };
-  
+
     const apiRequests: ApiRequest[] = [
-      {
-        endpoint: endpoint.replytikit?.replace(':ticket_id', id),
-        method: 'POST',
-        data: requestBody,
-  
-        headers: {
-          'Content-Type': 'application/json',
+        {
+            endpoint: endpoint.replytikit?.replace(':ticket_id', id),
+            method: 'POST',
+            data: requestBody,
+
+            headers: {
+                'Content-Type': 'application/json',
+            },
         },
-      },
     ];
-  
+
     try {
-      // Call the multiple APIs and await the result
-      const results = await callMultipleApis(apiRequests);
-      const response = results[0];
-  
-      if (response?.success) {
-        // successToast('Bike Remove Successfully')
-        return {success: true, message: 'Success', data: response.data};
-      } else {
-        return {success: false, message: 'Unexpected response', data: []};
-      }
+        // Call the multiple APIs and await the result
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+
+        if (response?.success) {
+            // successToast('Bike Remove Successfully')
+            return { success: true, message: 'Success', data: response.data };
+        } else {
+            return { success: false, message: 'Unexpected response', data: [] };
+        }
     } catch (error) {
-      console.error('Error fetching data:', error);
-      return {success: false, message: error.message, state: []};
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, state: [] };
     }
-  };
+};
 const tikitstatus = async (id: string, status: string) => {
     const requestBody = { status }
     const token = await AsyncStorage.getItem('token')
@@ -1295,7 +1290,7 @@ const tikitstatus = async (id: string, status: string) => {
         const response = results[0];
 
 
-        
+
         if (response?.success) {
             // successToast('Bike Remove Successfully')
             return { success: true, message: "Success", data: response.data, };
@@ -1313,4 +1308,4 @@ const tikitstatus = async (id: string, status: string) => {
 
 
 
-export {additionalservices,updateBooking,payment_Cash, tikitstatus,replay_tikit,get_tikitdetails,create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  
+export { additionalservices, updateBooking, payment_Cash, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  
