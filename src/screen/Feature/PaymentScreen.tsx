@@ -1,36 +1,32 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
   Alert,
-  ActivityIndicator,
-  BackHandler,
+  Linking,
 } from 'react-native';
-import {useRoute} from '@react-navigation/native';
-import {useSelector} from 'react-redux';
-import {WebView} from 'react-native-webview';
+import { useRoute } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
 
-import {icon} from '../../component/Image';
+import { icon } from '../../component/Image';
 import CustomHeader from '../../component/CustomHeaderProps';
 import CustomButton from '../../component/CustomButton';
 import PaymentOption from './PaymentOption';
 import BookingComplete from './BookingComplete';
-import {payment_Cash, updateBooking} from '../../redux/Api/apiRequests';
-import {color} from '../../constant';
-import {wp} from '../../component/utils/Constant';
-import {base_url} from '../../redux/Api';
+import { payment_Cash, updateBooking } from '../../redux/Api/apiRequests';
+import { color } from '../../constant';
+import { wp } from '../../component/utils/Constant';
 
-const PaymentScreen = ({navigation}: any) => {
+const PaymentScreen = ({ navigation }: any) => {
   const [selectedMethod, setSelectedMethod] = useState<string>('Online');
   const [loading, setLoading] = useState(false);
-  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [CompleteModal, setCompleteModal] = useState(false);
 
   const route: any = useRoute();
-  const {User, totalPrice, response} = route.params;
+  const { User, totalPrice, response } = route.params;
   const isLogOut: any = useSelector((state: any) => state.auth);
 
-  // 🟢 Cash Payment (COD)
+  // ✅ CASH PAYMENT
   const Cashpay = async () => {
     const state = await payment_Cash(
       isLogOut.token,
@@ -39,16 +35,16 @@ const PaymentScreen = ({navigation}: any) => {
       User,
       navigation,
     );
+
     if (state.success) {
       await CompleteApi();
     }
   };
 
-  // 🟢 Complete booking after payment
+  // ✅ COMPLETE BOOKING
   const CompleteApi = async () => {
     try {
-      const res = awai123456
-      teBooking(
+      const res = await updateBooking(
         response?.save,
         response?.totalEstimatedCost,
         response?.useData,
@@ -58,124 +54,66 @@ const PaymentScreen = ({navigation}: any) => {
         setLoading,
         navigation,
       );
-      if (res.success) {
+
+      if (res?.success) {
         setCompleteModal(true);
-        setCheckoutUrl(null);
       }
     } catch (err) {
       console.log('updateBooking error:', err);
     }
   };
 
-  // 🟢 Start WebView Checkout
-  const startWebviewPayment = async () => {
+  // ✅ UPI PAYMENT (OPEN ONLY ON CLICK)
+  const startUpiPayment = async () => {
     try {
-
-     
-      
       setLoading(true);
-      const res = await fetch(`${base_url}/bikedoctor/payment/link`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${isLogOut.token}`,
-        },
-        body: JSON.stringify({
-          orderAmount: totalPrice,
-          orderCurrency:"INR",
-          user_id:User?.user_id?._id,
-          dealer_id:User?.dealer_id?._id,
-          booking_id: response?._id,
-          customer_email: User?.user_id.email,
-          customer_phone: User?.user_id.phone?.toString(),
-          customer_name: `${User?.user_id.first_name || ''} ${User?.user_id.last_name || ''}`,
-        }),
-      });
 
-      const data = await res.json();
-      console.log('✅ Create Order Response:', data);
+      const upiId = "merchant@upi"; // 🔥 Replace with your real UPI ID
+      const name = "BikeDoctor";
+      const note = "Bike Service Payment";
+      const transactionRef = `BD${Date.now()}`;
 
-      if (data?.success && data?.data?.payment_link) {
-        setCheckoutUrl(data.data.payment_link);
-      } else {
-        Alert.alert('Payment Error', data?.message || 'Failed to create order.');
+      const upiUrl =
+        `upi://pay?pa=${upiId}` +
+        `&pn=${encodeURIComponent(name)}` +
+        `&tn=${encodeURIComponent(note)}` +
+        `&am=${totalPrice}` +
+        `&cu=INR` +
+        `&tr=${transactionRef}`;
+
+      const supported = await Linking.canOpenURL("upi://pay");
+
+      if (!supported) {
+        Alert.alert(
+          "No UPI App Found",
+          "Please install Google Pay, PhonePe or any UPI app."
+        );
+        return;
       }
-    } catch (err) {
-      console.log('Payment Error:', err);
-      Alert.alert('Something went wrong. Try again later.');
+
+      await Linking.openURL(upiUrl);
+
+    } catch (error) {
+      console.log("UPI Error:", error);
+      Alert.alert("Payment Error", "Unable to open UPI app.");
     } finally {
       setLoading(false);
     }
   };
 
-  // 🟢 Handle WebView navigation
-  const handleNavigationChange = async (navState: any) => {
-    const url = navState.url;
-    // ✅ Detect success or failure redirect URLs
-    if (url.includes('payment/success')) {
-      console.log('Payment Success URL detected');
-      await CompleteApi();
-    } else if (url.includes('payment/failure')) {
-      console.log('Payment Failed URL detected');
-      Alert.alert('Payment Failed', 'Please try again.');
-      setCheckoutUrl(null);
-    }
-  };
-
-  // 🟢 Handle back press inside WebView
-  React.useEffect(() => {
-    const backAction = () => {
-      if (checkoutUrl) {
-        setCheckoutUrl(null);
-        return true;
-      }
-      return false;
-    };
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction,
-    );
-    return () => backHandler.remove();
-  }, [checkoutUrl]);
-
-  // 🟢 Render WebView if checkout started
-  if (checkoutUrl) {
-    return (
-      <View style={{flex: 1}}>
-        <CustomHeader navigation={navigation} title="Checkout" />
-        <WebView
-          source={{uri: checkoutUrl}}
-          onNavigationStateChange={handleNavigationChange}
-          startInLoadingState={true}
-          renderLoading={() => (
-            <ActivityIndicator
-              size="large"
-              color={color.primary}
-              style={{marginTop: 20}}
-            />
-          
-          )}
-          originWhitelist={['*']}
-          
-          javaScriptEnabled
-          domStorageEnabled
-        />
-      </View>
-    );
-  }
-
-  // 🟢 Default Payment Screen UI
   return (
     <View style={styles.container}>
       <CustomHeader navigation={navigation} title="Payment" />
-      <View style={{padding: 15}}>
+
+      <View style={{ padding: 15 }}>
         <PaymentOption
-          title="Online"
-          description="Pay securely using UPI, card, or net banking."
+          title="Online (UPI)"
+          description="Pay securely using any UPI app installed on your phone."
           iconName={icon.online}
           isSelected={selectedMethod === 'Online'}
           onSelect={() => setSelectedMethod('Online')}
         />
+
         <PaymentOption
           title="Cash"
           description="Pay in cash directly to our partner when your service is completed."
@@ -189,7 +127,7 @@ const PaymentScreen = ({navigation}: any) => {
         <CustomButton
           onPress={async () => {
             if (selectedMethod === 'Online') {
-              await startWebviewPayment();
+              await startUpiPayment();   // 🔥 ONLY OPEN WHEN USER PRESSES
             } else {
               await Cashpay();
             }

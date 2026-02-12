@@ -190,8 +190,25 @@ const servicesName =  services?.base_service_id?.name
 const Price =  services?.bikes[0]?.price
 
 
+  const calculateTotal = () => {
+    // Service prices
+    const serviceTotal =
+      booking?.services?.reduce((sum, s) => {
+        return sum + (s?.bikes?.[0]?.price || 0);
+      }, 0) || 0;
 
+    // Additional service prices
+    const addiTotal =
+      addiservices?.reduce((sum, s) => {
+        return sum + (s?.bikes?.[0]?.price || 0);
+      }, 0) || 0;
 
+    // Tax/Fees
+    const tax = booking?.tax || 0;
+
+    // ✅ Grand total
+    return serviceTotal + addiTotal + tax;
+  };
   return (
     <View style={styles.container}>
       <CustomHeader title="Booking Details" navigation={navigation} />
@@ -348,8 +365,8 @@ const Price =  services?.bikes[0]?.price
                   padding: 12,
                 }}>
                 <Text style={[styles.linkText]}>
-                  {service.name?.charAt(0).toUpperCase() +
-                    service.name?.slice(1)}{' '}
+                  {service.base_additional_service_id.name?.charAt(0).toUpperCase() +
+                    service.base_additional_service_id.name?.slice(1)}{' '}
                   (Additional Service){' '}
                 </Text>
                 <Text style={[styles.linkText]}>
@@ -375,7 +392,7 @@ const Price =  services?.bikes[0]?.price
               </View>
 
               <Text style={[styles.totalPrice, { color: '#d1a908' }]}>
-                ₹{booking?.totalBill}
+                ₹{calculateTotal()}
               </Text>
             </View>
           </View>
@@ -401,7 +418,7 @@ const Price =  services?.bikes[0]?.price
                 marginBottom: 30,
               }}>
               <CustomButton
-                title="Pay Now"
+                title= {`Pay Now ${calculateTotal()}`}
                 onPress={() => {
                   navigation.navigate(ScreenNameEnum.PaymentScreen, {
 
