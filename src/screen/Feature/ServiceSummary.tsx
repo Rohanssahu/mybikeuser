@@ -226,7 +226,7 @@ const Price =  services?.bikes[0]?.price
         <View style={[styles.card, { marginTop: 10 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Image
-              source={{ uri: image_url + booking?.dealer_id?.shopImages[0] }}
+              source={{ uri:booking?.dealer_id?.shopImages[0] ? image_url + booking?.dealer_id?.shopImages[0]:'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png' }}
               style={{ height: 50, width: 50, borderRadius: 25 }}
             />
             <View style={{ width: '60%', marginLeft: 10 }}>

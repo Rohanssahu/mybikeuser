@@ -51,6 +51,8 @@ const BookingList: React.FC<BookingListProps> = ({ data, navigation, onCancelPre
     return `${day}-${month}-${year} ${hours}:${minutes} ${amPm}`;
   };
 
+console.log('data',data[0]);
+
 
   return (
     <FlatList
@@ -61,8 +63,8 @@ const BookingList: React.FC<BookingListProps> = ({ data, navigation, onCancelPre
         <View style={styles.card}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Image
-             // source={{ uri: image_url + item?.dealer_id?.shopImages[0] }}
-              source={{uri:'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png'}}
+             source={{ uri: item?.dealer_id?.shopImages[0] ? image_url + item?.dealer_id?.shopImages[0]: 'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png' }}
+            
   
               style={{ height: 40, width: 40, borderRadius: 20, borderWidth: 1, backgroundColor: '#ccc', marginVertical: 10 }}
             />
@@ -79,7 +81,7 @@ const BookingList: React.FC<BookingListProps> = ({ data, navigation, onCancelPre
             <Text style={styles.label}>Pickup Status: {item.status !== 'completed'?item?.pickupStatus:'Delivered'}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.value}>{item.__v}</Text>
+            <Text style={styles.value}>{item._id?.slice(-4)?.toLocaleUpperCase()}</Text>
             <Text style={styles.value}>Booking: {item.status === 'user_cancelled'?'Cancelled By User':item.status}</Text>
           </View>
 
