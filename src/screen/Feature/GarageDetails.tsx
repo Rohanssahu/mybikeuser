@@ -173,7 +173,7 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
     const res = await create_booking(
       GarageDetails?._id,
       selectedService,
-      choosePickupOption === 'Self' ? '' : PickupLocationId,
+      choosePickupOption === 'Visit' ? '' : PickupLocationId,
       bike?._id,
       BookingDate?.toString(),
     );
@@ -227,6 +227,7 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
   };
 
 
+console.log('GarageDetails',GarageDetails);
 
   return (
     <View style={styles.container}>
@@ -299,7 +300,7 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
               {choosePickupOption === 'PickDrop' && (
                 <Text style={styles.featureText2}>{PickupLocationName}</Text>
               )}
-              {choosePickupOption === 'Self' && (
+              {choosePickupOption === 'Visit' && (
                 <Text style={styles.featureText2}>
                   "Self Pickup" or "Drop by Shop"
                 </Text>
@@ -315,15 +316,15 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
                   }}>
                   <TouchableOpacity
                     onPress={() => {
-                      setPickupLocationId('Self');
-                      setchoosePickupOption('Self');
+                      setPickupLocationId('Visit');
+                      setchoosePickupOption('Visit');
                     }}
                     style={{
                       width: '35%',
                       alignItems: 'center',
                       justifyContent: 'center',
                       backgroundColor:
-                        choosePickupOption === 'Self'
+                        choosePickupOption === 'Visit'
                           ? color.buttonColor
                           : '#ccc',
                       padding: 10,
@@ -334,7 +335,7 @@ const GarageDetails: React.FC<{ navigation: any }> = ({ navigation }) => {
                         styles.featureText,
                         { marginLeft: 0, fontSize: 14, color: '#000' },
                       ]}>
-                      Self
+                      Visit
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity

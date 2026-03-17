@@ -63,7 +63,7 @@ const Profile: React.FC<Props> = ({navigation}) => {
         activeOpacity={0.9}
         onPress={() => navigation.navigate(ScreenNameEnum.EDIT_PROFILE)}
         style={styles.header}>
-        <Image source= {user?.image?{uri:`${image_url}${user?.image}`}:icon.profileIcon} style={styles.avatar} />
+        <Image source= {user?.image?{uri:user?.image}:icon.profileIcon} style={styles.avatar} />
 
         <View style={{flex: 1}}>
           <Text style={styles.userName}>
@@ -71,7 +71,7 @@ const Profile: React.FC<Props> = ({navigation}) => {
           </Text>
 
           <Text style={styles.userSubText}>
-            {user?.phone ? `+${user.phone}` : 'View / Edit Profile'}
+            {user?.phone ? `${user.phone}` : 'View / Edit Profile'}
           </Text>
           <Text style={styles.userSubText}>View / Edit Profile</Text>
         </View>

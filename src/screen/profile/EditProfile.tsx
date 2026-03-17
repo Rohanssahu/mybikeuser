@@ -47,17 +47,11 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
         if (User) {
             setFirstName(User?.first_name || '');
             setLastName(User?.last_name || '');
-              
-
-
-
-
-                  
             setCity(User?.city || '');
             setAddress(User?.address || '');
             setPinCode(User?.pincode ? User.pincode.toString() : '');
             setEmail(User?.email || '');
-            setImage({ path: image_url + User?.image } || '');
+            setImage({ path: User?.image } || '');
             setPhone(User?.phone ? User.phone.toString() : '');
         }
     }, [User]);  // Make sure to include User as a dependency
@@ -65,7 +59,7 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
 
     const getUser = async () => {
         setLoading(true)
-        const user_id = await  AsyncStorage.getItem('user_id')
+        const user_id = await AsyncStorage.getItem('user_id')
 
         const res = await get_profile(user_id);
         if (res.success) {
@@ -125,7 +119,7 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
             console.log('Captured Image:', image);
             // Handle the captured image (e.g., upload, display, save, etc.)
             setImage(image)
-            await   update_image(image?.path)
+            await update_image(image?.path)
             setIsModalVisible(false)
         } else {
             console.log('Image capture canceled or failed.');
@@ -137,7 +131,7 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
         if (image) {
             console.log('Captured Image:', image);
             setImage(image)
-            await   update_image(image?.path)
+            await update_image(image?.path)
             setIsModalVisible(false)
         } else {
             console.log('Image capture canceled or failed.');
@@ -153,18 +147,18 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
         setLoading(true)
         const res = await updateProfile(User?._id, phone, firstName, lastName, state, city, address, pinCode, image, email)
         if (res?.success) {
-            const user_id = await  AsyncStorage.getItem('user_id')
+            const user_id = await AsyncStorage.getItem('user_id')
 
             get_profile(user_id)
         }
         setLoading(false)
     }
-    const update_image = async (uri:string) => {
+    const update_image = async (uri: string) => {
         setLoading(true)
-        const res = await updateProfileImage({uri:uri})
+        const res = await updateProfileImage({ uri: uri })
         if (res?.success) {
             setImage(res?.image_base_url)
-      
+
         }
         setLoading(false)
     }
@@ -181,11 +175,11 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                         setIsModalVisible(true)
                     }}
                     style={styles.profileImageContainer}>
-                    <Image 
-                  //  source={image?.path ? { uri: image?.path } : images.profileUpdate} 
-                    
-                    source={{uri:'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png'}}
-                    style={styles.profileImage} />
+                    <Image
+                        source={image?.path ? { uri: image?.path } : images.profileUpdate}
+
+                        // source={{ uri: 'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png' }}
+                        style={styles.profileImage} />
                     <View style={styles.addIcon}>
                         <Icon source={icon.add} size={20} />
                     </View>
@@ -193,58 +187,58 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
 
                 <View style={styles.formContainer}>
 
-{/* First Name */}
-<Text style={styles.label}>First Name</Text>
-<CustomTextInput
-    placeholder='Enter first name'
-    onChangeText={setFirstName}
-    value={firstName}
-    inputStyle={[styles.input, errors.firstName && styles.errorInput]}
-/>
-{errors.firstName ? <Text style={styles.errorText}>{errors.firstName}</Text> : null}
+                    {/* First Name */}
+                    <Text style={styles.label}>First Name</Text>
+                    <CustomTextInput
+                        placeholder='Enter first name'
+                        onChangeText={setFirstName}
+                        value={firstName}
+                        inputStyle={[styles.input, errors.firstName && styles.errorInput]}
+                    />
+                    {errors.firstName ? <Text style={styles.errorText}>{errors.firstName}</Text> : null}
 
-{/* Last Name */}
-<Text style={styles.label}>Last Name</Text>
-<CustomTextInput
-    placeholder='Enter last name'
-    onChangeText={setLastName}
-    value={lastName}
-    inputStyle={[styles.input, errors.lastName && styles.errorInput, { marginTop: 8 }]}
-/>
-{errors.lastName ? <Text style={styles.errorText}>{errors.lastName}</Text> : null}
+                    {/* Last Name */}
+                    <Text style={styles.label}>Last Name</Text>
+                    <CustomTextInput
+                        placeholder='Enter last name'
+                        onChangeText={setLastName}
+                        value={lastName}
+                        inputStyle={[styles.input, errors.lastName && styles.errorInput, { marginTop: 8 }]}
+                    />
+                    {errors.lastName ? <Text style={styles.errorText}>{errors.lastName}</Text> : null}
 
-{/* Email */}
-<Text style={styles.label}>Email</Text>
-<CustomTextInput
-    placeholder='Enter email'
-    onChangeText={setEmail}
-    value={email}
-    inputStyle={[styles.input, errors.email && styles.errorInput, { marginTop: 8 }]}
-/>
-{errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
+                    {/* Email */}
+                    <Text style={styles.label}>Email</Text>
+                    <CustomTextInput
+                        placeholder='Enter email'
+                        onChangeText={setEmail}
+                        value={email}
+                        inputStyle={[styles.input, errors.email && styles.errorInput, { marginTop: 8 }]}
+                    />
+                    {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
 
-{/* Phone Number */}
-<Text style={styles.label}>Phone Number</Text>
-<CustomTextInput
-    placeholder='Enter phone number'
-    onChangeText={setPhone}
-    value={phone}
-    inputStyle={[styles.input, errors.phone && styles.errorInput, { marginTop: 8 }]}
-/>
-{errors.phone ? <Text style={styles.errorText}>{errors.phone}</Text> : null}
+                    {/* Phone Number */}
+                    <Text style={styles.label}>Phone Number</Text>
+                    <CustomTextInput
+                        placeholder='Enter phone number'
+                        onChangeText={setPhone}
+                        value={phone}
+                        inputStyle={[styles.input, errors.phone && styles.errorInput, { marginTop: 8 }]}
+                    />
+                    {errors.phone ? <Text style={styles.errorText}>{errors.phone}</Text> : null}
 
-{/* Address */}
-<Text style={styles.label}>Address</Text>
-<CustomTextInput
-    placeholder='Enter address'
-    onChangeText={setAddress}
-    value={address}
-    inputStyle={[styles.input, errors.address && styles.errorInput, { marginTop: 8 }]}
-/>
-{errors.address ? <Text style={styles.errorText}>{errors.address}</Text> : null}
+                    {/* Address */}
+                    <Text style={styles.label}>Address</Text>
+                    <CustomTextInput
+                        placeholder='Enter address'
+                        onChangeText={setAddress}
+                        value={address}
+                        inputStyle={[styles.input, errors.address && styles.errorInput, { marginTop: 8 }]}
+                    />
+                    {errors.address ? <Text style={styles.errorText}>{errors.address}</Text> : null}
 
 
-</View>
+                </View>
 
 
                 {/* Submit Button */}
@@ -256,7 +250,7 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                     />
                 </View>
 
-<View  style={{height:hp(10)}} />
+                <View style={{ height: hp(10) }} />
             </ScrollView>
             <UploadImageModal
                 shown={isModalVisible}
@@ -277,7 +271,7 @@ const styles = StyleSheet.create({
         marginBottom: 5,
         marginTop: 15,
     },
-    
+
     profileImageContainer: {
         marginTop: 20,
         alignItems: 'center',
