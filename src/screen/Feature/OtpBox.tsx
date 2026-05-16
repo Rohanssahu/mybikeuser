@@ -1,21 +1,28 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-const OtpBox = ({ otp , label }) => {
-  const otpDigits = otp ? otp.toString().split('') : ['-', '-', '-', '-'];
+interface OtpBoxProps {
+  otp: string | number;
+  label: string;
+}
+
+const OtpBox: React.FC<OtpBoxProps> = ({ otp, label }) => {
+  const digits = otp ? otp.toString().split('') : ['-', '-', '-', '-'];
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>
-        {label} : 
-      </Text>
-      <View style={styles.otpContainer}>
-        {otpDigits.map((digit, index) => (
-          <View key={index} style={styles.otpBox}>
-            <Text style={styles.otpText}>{digit}</Text>
+      <View style={styles.labelRow}>
+        <Text style={styles.lockIcon}>🔓</Text>
+        <Text style={styles.label}>  {label}</Text>
+      </View>
+      <View style={styles.boxRow}>
+        {digits.map((digit, index) => (
+          <View key={index} style={styles.box}>
+            <Text style={styles.digit}>{digit}</Text>
           </View>
         ))}
       </View>
+      <Text style={styles.hint}>Share this OTP with the service agent</Text>
     </View>
   );
 };
@@ -24,34 +31,53 @@ export default OtpBox;
 
 const styles = StyleSheet.create({
   card: {
-    padding: 15,
-    borderRadius: 10,
-    marginVertical: 10,
+    backgroundColor: '#0D1952',
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(254,212,40,0.25)',
+    marginHorizontal: 14,
+    marginTop: 12,
   },
-  title: {
-    color: '#FFD700',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 10,
-  },
-  otpContainer: {
+  labelRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '60%', // Adjust based on screen
+    alignItems: 'center',
+    marginBottom: 14,
   },
-  otpBox: {
-    backgroundColor: '#333',
-    paddingVertical: 15,
-    paddingHorizontal: 15,
-    borderRadius: 8,
+  lockIcon: { fontSize: 16 },
+  label: {
+    color: '#FED428',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  boxRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  box: {
+    width: 52,
+    height: 58,
+    borderRadius: 12,
+    backgroundColor: '#1A2566',
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 5,
+    borderWidth: 1.5,
+    borderColor: 'rgba(254,212,40,0.4)',
   },
-  otpText: {
-    color: '#FFD700',
-    fontSize: 18,
-    fontWeight: '700',
+  digit: {
+    color: '#FED428',
+    fontSize: 24,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  hint: {
+    fontSize: 12,
+    color: '#3D4F80',
+    textAlign: 'center',
   },
 });

@@ -1,224 +1,245 @@
 import React, { useState } from 'react';
-import { View, FlatList, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import {
+  View,
+  FlatList,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+} from 'react-native';
 import Icon from './Icon';
 import { icon } from './Image';
-import { wp } from './utils/Constant';
 import ScreenNameEnum from '../routes/screenName.enum';
 import { image_url } from '../redux/Api';
-import { cancel_booking } from '../redux/Api/apiRequests';
-import { successToast } from '../configs/customToast';
 
-
-// Define the data type for each booking item
 interface BookingItem {
   _id: string;
-  bookingId: string;
   status: string;
+  pickupStatus?: string;
   create_date: string;
-
+  dealer_id?: {
+    shopName?: string;
+    address?: string;
+    shopImages?: string[];
+  };
 }
 
-// Define props for the component
 interface BookingListProps {
   data: BookingItem[];
-  loading:boolean,
-  onCallPress: any;
-  cancelbooking: any;
-  onViewBillPress: () => void;
+  loading: boolean;
+  navigation: any;
+  onCancelPress: (id: string) => void;
+  onCallPress?: (no: string) => void;
 }
 
-const BookingList: React.FC<BookingListProps> = ({ data, navigation, onCancelPress,onCallPress ,loading}) => {
+const STATUS_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
+  pending:        { color: '#F59E0B', bg: 'rgba(245,158,11,0.18)',  label: 'Pending' },
+  confirmed:      { color: '#10B981', bg: 'rgba(16,185,129,0.18)',  label: 'Confirmed' },
+  completed:      { color: '#3B82F6', bg: 'rgba(59,130,246,0.18)',  label: 'Completed' },
+  user_cancelled: { color: '#EF4444', bg: 'rgba(239,68,68,0.18)',   label: 'Cancelled' },
+  rejected:       { color: '#EF4444', bg: 'rgba(239,68,68,0.18)',   label: 'Rejected' },
+};
 
-  const [Index,setindex] = useState(null)
-  const formatDateTime = (isoDate) => {
-    const date = new Date(isoDate);
+const FALLBACK_IMG =
+  'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png';
 
-    // Extract date components
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
-    const year = date.getFullYear();
+const BookingList: React.FC<BookingListProps> = ({
+  data,
+  navigation,
+  onCancelPress,
+  loading,
+}) => {
+  const [cancelIndex, setCancelIndex] = useState<number | null>(null);
 
-    // Extract time components
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const amPm = hours >= 12 ? 'PM' : 'AM';
-
-    // Convert to 12-hour format
-    hours = hours % 12 || 12;
-
-    // Format final string
-    return `${day}-${month}-${year} ${hours}:${minutes} ${amPm}`;
+  const formatDate = (iso: string) => {
+    const d = new Date(iso);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = d.toLocaleString('en', { month: 'short' });
+    const year = d.getFullYear();
+    let h = d.getHours();
+    const min = String(d.getMinutes()).padStart(2, '0');
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return `${day} ${month} ${year}  ·  ${h}:${min} ${ampm}`;
   };
-
-console.log('data',data[0]);
-
 
   return (
     <FlatList
       data={data}
-      keyExtractor={(item) => item._id}
-      contentContainerStyle={styles.listContainer}
-      renderItem={({ item ,index}) => (
-        <View style={styles.card}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Image
-             source={{ uri: item?.dealer_id?.shopImages[0] ? image_url + item?.dealer_id?.shopImages[0]: 'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png' }}
-            
-  
-              style={{ height: 40, width: 40, borderRadius: 20, borderWidth: 1, backgroundColor: '#ccc', marginVertical: 10 }}
-            />
+      keyExtractor={item => item._id}
+      contentContainerStyle={styles.list}
+      showsVerticalScrollIndicator={false}
+      renderItem={({ item, index }) => {
+        const s = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.pending;
+        const imgSrc = item?.dealer_id?.shopImages?.[0]
+          ? { uri: image_url + item.dealer_id.shopImages[0] }
+          : { uri: FALLBACK_IMG };
 
-
-          <View style={{ marginLeft: 10 }}>
-
-              <Text style={styles.label}>{item?.dealer_id?.shopName}</Text>
-              <Text style={[styles.label, { fontSize: 12, fontWeight: '400' }]}>{item?.dealer_id?.address}</Text>
+        return (
+          <TouchableOpacity
+            activeOpacity={0.85}
+            style={styles.card}
+            onPress={() =>
+              navigation.navigate(ScreenNameEnum.SERVICE_SUMMERY, { id: item._id })
+            }>
+            {/* Shop header */}
+            <View style={styles.shopRow}>
+              <Image source={imgSrc} style={styles.shopImg} />
+              <View style={styles.shopText}>
+                <Text style={styles.shopName} numberOfLines={1}>
+                  {item?.dealer_id?.shopName || 'Service Center'}
+                </Text>
+                <View style={styles.addrRow}>
+                  <Icon source={icon.pin} size={12} tintColor="#6B7DBE" />
+                  <Text style={styles.shopAddr} numberOfLines={1}>
+                    {'  '}{item?.dealer_id?.address || '—'}
+                  </Text>
+                </View>
+              </View>
+              <View style={[styles.badge, { backgroundColor: s.bg }]}>
+                <View style={[styles.badgeDot, { backgroundColor: s.color }]} />
+                <Text style={[styles.badgeTxt, { color: s.color }]}>{s.label}</Text>
+              </View>
             </View>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Booking ID</Text>
-            <Text style={styles.label}>Pickup Status: {item.status !== 'completed'?item?.pickupStatus:'Delivered'}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.value}>{item._id?.slice(-4)?.toLocaleUpperCase()}</Text>
-            <Text style={styles.value}>Booking: {item.status === 'user_cancelled'?'Cancelled By User':item.status}</Text>
-          </View>
 
-          <View style={styles.row}>
-            <Text style={styles.label}>Date</Text>
-          </View>
-          <Text style={styles.value}>{formatDateTime(item.create_date)}</Text>
+            <View style={styles.sep} />
 
-          <View style={styles.footer}>
+            {/* Meta */}
+            <View style={styles.metaRow}>
+              <View style={styles.metaItem}>
+                <Icon source={icon.booking} size={14} tintColor="#6B7DBE" />
+                <Text style={styles.metaLbl}> ID</Text>
+                <Text style={styles.metaVal}>  #{item._id.slice(-6).toUpperCase()}</Text>
+              </View>
+              <View style={styles.metaItem}>
+                <Icon source={icon.pickups} size={14} tintColor="#6B7DBE" />
+                <Text style={styles.metaLbl}> Pickup</Text>
+                <Text style={styles.metaVal}>
+                  {'  '}
+                  {item.status === 'completed'
+                    ? 'Delivered'
+                    : item?.pickupStatus || '—'}
+                </Text>
+              </View>
+            </View>
 
-            <TouchableOpacity
-              onPress={() => {
-                navigation.navigate(ScreenNameEnum.SERVICE_SUMMERY, { id: item?._id })
-              }}
-              style={styles.billButton} >
-              <Text style={styles.billText}>Booking Details</Text>
-            </TouchableOpacity>
-            {item.status === 'pending' &&
+            <View style={styles.dateRow}>
+              <Icon source={icon.calendar} size={13} tintColor="#3D4F80" />
+              <Text style={styles.dateTxt}> {formatDate(item.create_date)}</Text>
+            </View>
+
+            {/* Actions */}
+            <View style={styles.btnRow}>
               <TouchableOpacity
-                onPress={() => {
-                  onCancelPress(item?._id)
-                  setindex(index)
-                }}
-                style={[styles.billButton, { marginTop: 5, backgroundColor: 'red' }]} >
-                {loading && Index == index  ?<ActivityIndicator  size={20} color={'#fff'} />: <Text style={[styles.billText, { color: '#fff' }]}>Cancel Booking</Text>}
-              </TouchableOpacity>}
-          </View>
-        </View>
-      )}
+                style={styles.detailBtn}
+                activeOpacity={0.8}
+                onPress={() =>
+                  navigation.navigate(ScreenNameEnum.SERVICE_SUMMERY, { id: item._id })
+                }>
+                <Text style={styles.detailBtnTxt}>View Details</Text>
+                <Icon source={icon.rightarrow} size={16} tintColor="#081041" />
+              </TouchableOpacity>
+
+              {item.status === 'pending' && (
+                <TouchableOpacity
+                  style={styles.cancelBtn}
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    onCancelPress(item._id);
+                    setCancelIndex(index);
+                  }}>
+                  {loading && cancelIndex === index ? (
+                    <ActivityIndicator size={16} color="#fff" />
+                  ) : (
+                    <Text style={styles.cancelBtnTxt}>Cancel</Text>
+                  )}
+                </TouchableOpacity>
+              )}
+            </View>
+          </TouchableOpacity>
+        );
+      }}
     />
   );
 };
 
+export default BookingList;
+
 const styles = StyleSheet.create({
-  listContainer: {
-    paddingHorizontal: 12,
-    paddingBottom: 20,
+  list: {
+    paddingHorizontal: 14,
+    paddingBottom: 24,
+    paddingTop: 4,
   },
   card: {
-    backgroundColor: '#1E293B', // Dark navy background
+    backgroundColor: '#0D1952',
     borderRadius: 16,
-    padding: 16,
-    marginBottom: 15,
-    width: '100%',
-    alignSelf: 'center',
+    padding: 14,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(254,212,40,0.08)',
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4, // For Android shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
   },
-
-  // Header section with shop image + name
-  header: {
+  shopRow: { flexDirection: 'row', alignItems: 'center' },
+  shopImg: {
+    height: 46,
+    width: 46,
+    borderRadius: 23,
+    backgroundColor: '#1A2566',
+  },
+  shopText: { flex: 1, marginLeft: 10 },
+  shopName: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  addrRow: { flexDirection: 'row', alignItems: 'center', marginTop: 3 },
+  shopAddr: { fontSize: 12, color: '#6B7DBE', flex: 1 },
+  badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    marginLeft: 8,
   },
-  shopImage: {
-    height: 50,
-    width: 50,
-    borderRadius: 25,
-    backgroundColor: '#ccc',
+  badgeDot: { width: 6, height: 6, borderRadius: 3, marginRight: 5 },
+  badgeTxt: { fontSize: 11, fontWeight: '700' },
+  sep: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    marginVertical: 12,
   },
-  shopInfo: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  shopName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFD700', // Highlight shop name in gold
-  },
-  shopAddress: {
-    fontSize: 12,
-    color: '#A0A3BD',
-    marginTop: 2,
-  },
-
-  // Booking details rows
-  row: {
+  metaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: 4,
+    marginBottom: 8,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#FFFFFF',
-  },
-  value: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#E0E0E0',
-  },
-  statusValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#4ADE80', // Green for active
-  },
-  cancelledStatus: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#F87171', // Red for cancelled
-  },
-
-  // Footer buttons
-  footer: {
-    marginTop: 16,
+  metaItem: { flexDirection: 'row', alignItems: 'center' },
+  metaLbl: { fontSize: 12, color: '#6B7DBE' },
+  metaVal: { fontSize: 12, color: '#A0AFCE', fontWeight: '600' },
+  dateRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+  dateTxt: { fontSize: 12, color: '#3D4F80' },
+  btnRow: { flexDirection: 'row', gap: 8 },
+  detailBtn: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  billButton: {
-    backgroundColor: '#FFD700',
+    justifyContent: 'center',
+    backgroundColor: '#FED428',
     paddingVertical: 12,
     borderRadius: 10,
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 10,
+    gap: 6,
   },
-  cancelButton: {
+  detailBtnTxt: { fontSize: 13, fontWeight: '700', color: '#081041' },
+  cancelBtn: {
+    flex: 0.45,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#EF4444',
     paddingVertical: 12,
     borderRadius: 10,
-    width: '100%',
-    alignItems: 'center',
   },
-  billText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1E1E2E',
-  },
-  cancelText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-  },
+  cancelBtnTxt: { fontSize: 13, fontWeight: '700', color: '#fff' },
 });
-
-
-export default BookingList;

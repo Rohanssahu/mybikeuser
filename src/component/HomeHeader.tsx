@@ -1,57 +1,120 @@
-import React from 'react';
-import {View, Text, TouchableOpacity, StyleSheet, Image} from 'react-native';
-import {StackNavigationProp} from '@react-navigation/stack';
+import React, {useEffect, useRef} from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  Animated,
+  Platform,
+} from 'react-native';
 import {icon} from './Image';
 import {color} from '../constant';
 
 interface HomeHeaderProps {
-  navigation: StackNavigationProp<any, any>;
+  navigation: any;
   location: string;
   hasNotifications?: boolean;
   onLocationPress?: () => void;
   onNotificationPress?: () => void;
-  User: {};
+  User: any;
 }
 
 const HomeHeader: React.FC<HomeHeaderProps> = ({
-  navigation,
   location,
   hasNotifications = false,
   onLocationPress,
   onNotificationPress,
   User,
 }) => {
+  const locationAnim = useRef(new Animated.Value(0)).current;
+  const pillScale = useRef(new Animated.Value(1)).current;
+  const prevLocation = useRef('');
+
+  const getGreeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  // Animate location text when it changes
+  useEffect(() => {
+    if (location && location !== prevLocation.current) {
+      prevLocation.current = location;
+      locationAnim.setValue(0);
+      Animated.spring(locationAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 100,
+        friction: 8,
+      }).start();
+    }
+  }, [location]);
+
+  const handleLocationPress = () => {
+    Animated.sequence([
+      Animated.timing(pillScale, {toValue: 0.93, duration: 80, useNativeDriver: true}),
+      Animated.spring(pillScale, {toValue: 1, useNativeDriver: true, tension: 200, friction: 8}),
+    ]).start();
+    onLocationPress?.();
+  };
+
+  const firstName = User?.first_name || '';
+
+  // Shorten address to locality (2 parts max)
+  const displayLocation = location
+    ? location.split(',').slice(0, 2).join(',').trim()
+    : 'Set location';
+
+  const locationTextOpacity = locationAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.3, 1],
+  });
+  const locationTextSlide = locationAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [8, 0],
+  });
+
   return (
     <View style={styles.container}>
-      {/* Location Section */}
-      <View>
-        <Text
-          style={{
-            fontWeight: '600',
-            fontSize: 20,
-            color: '#fff',
-            marginLeft: 5,
-            marginVertical: 5,
-          }}>
-          {'Welcome'} {User?.first_name}
+      <View style={styles.leftSection}>
+        {/* Greeting */}
+        <Text style={styles.greeting} numberOfLines={1}>
+          {getGreeting()}{firstName ? `, ${firstName}` : ''} 👋
         </Text>
-        <TouchableOpacity
-          onPress={onLocationPress}
-          style={styles.locationContainer}>
-          <Image source={icon.pin} style={styles.locationIcon} />
-          <Text style={styles.locationText}>{location}</Text>
-        </TouchableOpacity>
+
+        {/* Location pill */}
+        <Animated.View style={{transform: [{scale: pillScale}]}}>
+          <TouchableOpacity
+            onPress={handleLocationPress}
+            style={styles.locationPill}
+            activeOpacity={1}>
+            <View style={styles.locationDot} />
+            <Animated.Text
+              style={[
+                styles.locationText,
+                {
+                  opacity: locationTextOpacity,
+                  transform: [{translateX: locationTextSlide}],
+                },
+              ]}
+              numberOfLines={1}>
+              {displayLocation}
+            </Animated.Text>
+            <Image source={icon.downwhite} style={styles.chevron} />
+          </TouchableOpacity>
+        </Animated.View>
       </View>
-      {/* Divider */}
-      <View style={{flexDirection: 'row', alignItems: 'center'}}>
-        {/* Notification Icon */}
-        <TouchableOpacity
-          onPress={onNotificationPress}
-          style={styles.notificationContainer}>
-          <Image source={icon.notification} style={styles.notificationIcon} />
-          {hasNotifications && <View style={styles.badge} />}
-        </TouchableOpacity>
-      </View>
+
+      {/* Notification bell */}
+      <TouchableOpacity
+        onPress={onNotificationPress}
+        style={styles.bellBtn}
+        activeOpacity={0.75}>
+        <Image source={icon.notification} style={styles.bellIcon} />
+        {hasNotifications && <View style={styles.badge} />}
+      </TouchableOpacity>
     </View>
   );
 };
@@ -62,48 +125,61 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingTop: Platform.OS === 'ios' ? 54 : 18,
+    paddingBottom: 16,
     backgroundColor: color.baground,
   },
-  locationContainer: {
-    flexDirection: 'row',
+  leftSection: {flex: 1, marginRight: 12},
+  greeting: {
+    fontSize: 19,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 9,
+    letterSpacing: 0.15,
   },
-  locationIcon: {
-    width: 25,
-    height: 25,
-    tintColor: '#FFC107',
-    marginRight: 5,
+  locationPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.11)',
+    borderRadius: 22,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: 'rgba(254,212,40,0.28)',
+  },
+  locationDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: color.buttonColor,
+    marginRight: 7,
   },
   locationText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: '500',
-    width: '70%',
+    fontSize: 13,
+    color: '#E8ECF4',
+    fontWeight: '600',
+    maxWidth: 185,
+    flexShrink: 1,
   },
-  divider: {
-    height: 15,
-    width: 15,
-    borderRadius: 7.5,
-    borderWidth: 1,
-    borderColor: color.borderColor,
-    marginHorizontal: 15,
+  chevron: {
+    width: 10,
+    height: 10,
+    tintColor: 'rgba(255,255,255,0.5)',
+    marginLeft: 6,
   },
-  notificationContainer: {
-    position: 'relative',
-  },
-  notificationIcon: {
-    width: 40,
-    height: 40,
-    tintColor: '#fff',
-  },
+  bellBtn: {position: 'relative', padding: 4},
+  bellIcon: {width: 40, height: 40, tintColor: '#FFFFFF'},
   badge: {
     position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 8,
-    height: 8,
-    backgroundColor: 'red',
-    borderRadius: 4,
+    top: 4,
+    right: 4,
+    width: 9,
+    height: 9,
+    backgroundColor: '#EF4444',
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: color.baground,
   },
 });
 

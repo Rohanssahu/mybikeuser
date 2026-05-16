@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   StatusBar,
+  StyleSheet,
+  TouchableOpacity,
 } from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -14,7 +16,6 @@ import {color} from '../../constant';
 import BannerSlider from '../../component/BannerSlider';
 import HomeHeader from '../../component/HomeHeader';
 import HorizontalList from '../../component/HorizontalList';
-import SeeallHeader from '../../component/SeeallHeader';
 import GarageList from '../../component/GarageList';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import {
@@ -24,36 +25,61 @@ import {
   get_servicelist,
 } from '../../redux/Api/apiRequests';
 import {useLocation} from '../../component/LocationContext';
-import Skeleton from 'react-native-reanimated-skeleton';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {getCurrentLocation} from '../../component/helperFunction';
-// Define navigation type
+
 type RootStackParamList = {
   SELECT_LOCATION: undefined;
   ALL_SERVICES: undefined;
+  Notification: undefined;
 };
 
 type NavigationProps = NativeStackNavigationProp<RootStackParamList>;
 
-// Define data types
 interface Service {
-  id: string;
+  _id: string;
   name: string;
-  image: string;
+  image?: string;
 }
 
 interface Banner {
-  id: string;
-  image: string;
+  _id: string;
+  name: string;
+  banner_image: string;
 }
 
 interface Dealer {
-  id: string;
-  name: string;
-  location: string;
-  distance: string;
-  logo: string;
+  _id: string;
+  shopName: string;
+  fullAddress?: string;
+  address?: string;
+  latitude: string | number;
+  longitude: string | number;
+  shopImages?: any[];
+  averageRating?: number;
 }
+
+interface UserCoords {
+  latitude: number;
+  longitude: number;
+}
+
+const SectionHeader = ({
+  title,
+  onSeeAll,
+}: {
+  title: string;
+  onSeeAll?: () => void;
+}) => (
+  <View style={styles.sectionHeader}>
+    <Text style={styles.sectionTitle}>{title}</Text>
+    {onSeeAll && (
+      <TouchableOpacity onPress={onSeeAll} activeOpacity={0.7}>
+        <Text style={styles.seeAllText}>See All</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+);
 
 const Home: React.FC = () => {
   const navigation = useNavigation<NavigationProps>();
@@ -62,100 +88,72 @@ const Home: React.FC = () => {
   const [dealerList, setDealerList] = useState<Dealer[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [locationNames, setLocationNames] = useState<string>('');
+  const [userCoords, setUserCoords] = useState<UserCoords | null>(null);
+  const [User, setUser] = useState<any>(null);
   const {locationName} = useLocation();
-
-  const [User, setUser] = useState('');
 
   useFocusEffect(
     useCallback(() => {
-      console.log('Home focused → API call');
-  
-      fetchServiceData();
-      getUser();
-  
-    }, [])
+      loadAll();
+    }, []),
   );
-  
 
-  const getUser = async () => {
-    setLoading(true);
-    const user_id = await AsyncStorage.getItem('user_id');
-
-    const res = await get_profile(user_id);
-    if (res.success) {
-      setUser(res.data);
-    }
-    setLoading(false);
-  };
-  const fetchServiceData = async () => {
-    const { latitude, longitude } = await getCurrentLocation();
-
- 
-    
-
+  const loadAll = async () => {
     setLoading(true);
     try {
-      const [res, banner, dealer] = await Promise.all([
+      const [coords, user_id] = await Promise.all([
+        getCurrentLocation(),
+        AsyncStorage.getItem('user_id'),
+      ]);
+
+      setUserCoords(coords);
+
+      const [services, banners, dealers, profile] = await Promise.all([
         get_servicelist(),
         get_bannerlist(),
-        get_nearyBydeler(latitude, longitude),
+        get_nearyBydeler(coords.latitude, coords.longitude),
+        user_id ? get_profile(user_id) : Promise.resolve(null),
       ]);
-      if (dealer.data) setDealerList(dealer.data);
-      if (res.data) setServiceList(res.data);
 
-      if (banner.data) setBannerList(banner.data);
+      if (services?.data) { setServiceList(services.data); }
+      if (banners?.data) { setBannerList(banners.data); }
+      if (dealers?.data) { setDealerList(dealers.data); }
+      if (profile?.success) { setUser(profile.data); }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Home loadAll error:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Pull to Refresh Function
   const onRefresh = async () => {
     setRefreshing(true);
-    const { latitude, longitude } = await getCurrentLocation();
-
- 
-    try {
-      const [res, banner, dealer] = await Promise.all([
-        get_servicelist(),
-
-        get_bannerlist(),
-        get_nearyBydeler(latitude, longitude)
-      ]);
-      fetchServiceData();
-      getUser();
-      if (dealer.data) setDealerList(dealer.data);
-      if (res.data) setServiceList(res.data);
-      if (banner.data) setBannerList(banner.data);
-    } catch (error) {
-      console.error('Error refreshing data:', error);
-    } finally {
-      setRefreshing(false);
-    }
+    await loadAll();
+    setRefreshing(false);
   };
 
   return (
-    <View style={{flex: 1, backgroundColor: color.baground}}>
-      <StatusBar backgroundColor={color.baground} />
+    <View style={styles.container}>
+      <StatusBar backgroundColor={color.baground} barStyle="light-content" />
 
       {loading ? (
-        // Show loader while fetching data initially
-        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          <ActivityIndicator size="large" color="#fff" />
-          <Text style={{color: '#fff'}}>Loading data...</Text>
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={color.buttonColor} />
         </View>
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={color.buttonColor}
+              colors={[color.buttonColor]}
+            />
           }>
           <HomeHeader
             navigation={navigation}
-            location={locationName || locationNames || 'Fetching'}
+            location={locationName || 'Set your location'}
             hasNotifications={true}
             User={User}
             onLocationPress={() =>
@@ -166,61 +164,82 @@ const Home: React.FC = () => {
             }
           />
 
-          {/* Banner Section */}
-          <BannerSlider navigation={navigation} data={bannerList} />
-          {bannerList.length === 0 && (
-            <Text
-              style={{textAlign: 'center', marginVertical: 10, color: '#fff'}}>
-              No Banners Found
+          {/* Banner */}
+          {bannerList.length > 0 && (
+            <BannerSlider navigation={navigation} data={bannerList} />
+          )}
+
+          {/* Services */}
+          <SectionHeader
+            title="Our Services"
+            onSeeAll={() => navigation.navigate(ScreenNameEnum.ALL_SERVICES)}
+          />
+          {serviceList.length > 0 ? (
+            <HorizontalList data={serviceList} />
+          ) : (
+            <Text style={styles.emptyText}>No services available</Text>
+          )}
+
+          {/* Nearby Garages */}
+          <SectionHeader title="Nearby Garages" />
+          {dealerList.length > 0 ? (
+            <View style={styles.garageSection}>
+              <GarageList data={dealerList} userLocation={userCoords} />
+            </View>
+          ) : (
+            <Text style={styles.emptyText}>
+              No garages found near your location
             </Text>
           )}
 
-          {/* Services Section */}
-          <View>
-            <SeeallHeader
-              title="Our Services"
-              onSeeAllPress={() =>
-                navigation.navigate(ScreenNameEnum.ALL_SERVICES)
-              }
-            />
-            {serviceList.length > 0 ? (
-              <HorizontalList data={serviceList} />
-            ) : (
-              <Text
-                style={{
-                  textAlign: 'center',
-                  marginVertical: 10,
-                  color: '#fff',
-                }}>
-                No Services Found This Location
-              </Text>
-            )}
-          </View>
-
-          {/* Nearby Dealers Section */}
-          <SeeallHeader
-            title="Near By You"
-            onSeeAllPress={() => console.log('See All Pressed')}
-          />
-
-          <View style={{flex: 1, marginTop: 20}}>
-            {dealerList.length > 0 ? (
-              <GarageList data={dealerList} />
-            ) : (
-              <Text
-                style={{
-                  textAlign: 'center',
-                  marginVertical: 10,
-                  color: '#fff',
-                }}>
-                No Dealers Found This Location
-              </Text>
-            )}
-          </View>
+          <View style={styles.bottomPad} />
         </ScrollView>
       )}
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: color.baground,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginTop: 22,
+    marginBottom: 2,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
+  },
+  seeAllText: {
+    fontSize: 13,
+    color: color.buttonColor,
+    fontWeight: '600',
+  },
+  garageSection: {
+    marginTop: 12,
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginVertical: 16,
+    color: '#606880',
+    fontSize: 13,
+  },
+  bottomPad: {
+    height: 20,
+  },
+});
 
 export default Home;

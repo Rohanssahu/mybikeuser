@@ -1,4 +1,4 @@
-import React, {useState, useRef, useEffect} from 'react';
+import React, {useState, useRef, useEffect, useMemo} from 'react';
 import {
   View,
   Text,
@@ -43,23 +43,25 @@ const BannerSlider: React.FC<BannerSliderProps> = ({navigation, data}) => {
     }
   };
 
+  const updatedData = useMemo(
+    () =>
+      data.map(item => ({
+        id: item._id,
+        name: item.name,
+        description: item.description || '',
+        banner_image: item.banner_image,
+      })),
+    [data],
+  );
+
   useEffect(() => {
-    if (!updatedData || updatedData.length === 0) return;
+    if (!updatedData || updatedData.length === 0) {return;}
 
     const interval = setInterval(() => {
-      let nextIndex = currentIndex + 1;
-
-      if (nextIndex >= updatedData.length) {
-        nextIndex = 0;
-      }
-
-      flatListRef.current?.scrollToIndex({
-        index: nextIndex,
-        animated: true,
-      });
-
+      const nextIndex = (currentIndex + 1) % updatedData.length;
+      flatListRef.current?.scrollToIndex({index: nextIndex, animated: true});
       setCurrentIndex(nextIndex);
-    }, 8000); // ⏱️ 4 seconds
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [currentIndex, updatedData]);
@@ -93,14 +95,6 @@ const BannerSlider: React.FC<BannerSliderProps> = ({navigation, data}) => {
       </View>
     );
   };
-
-  // Mapping the data to match the expected structure
-  const updatedData = data.map(item => ({
-    id: item._id, // Map _id to id
-    name: item.name,
-    description: item.description || '', // Default to empty string if description is missing
-    banner_image: item.banner_image,
-  }));
 
   return (
     <View style={styles.container}>
@@ -137,7 +131,8 @@ const BannerSlider: React.FC<BannerSliderProps> = ({navigation, data}) => {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 16,
+    marginBottom: 4,
   },
   bannerContainer: {
     width: width * 0.9,
@@ -190,20 +185,20 @@ const styles = StyleSheet.create({
   },
   pagination: {
     flexDirection: 'row',
-    position: 'absolute',
-    bottom: 10,
-    right: 40,
+    alignSelf: 'center',
+    marginTop: 10,
   },
   dot: {
-    width: 8,
-    height: 8,
+    width: 7,
+    height: 7,
     borderRadius: 4,
-    backgroundColor: '#888',
-    marginHorizontal: 2,
+    backgroundColor: 'rgba(255,255,255,0.35)',
+    marginHorizontal: 3,
   },
   activeDot: {
-    backgroundColor: '#fff',
-    width: 15,
+    backgroundColor: '#FED428',
+    width: 18,
+    borderRadius: 4,
   },
 });
 

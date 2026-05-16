@@ -2,16 +2,13 @@ import React, {useEffect, useState} from 'react';
 import {
   View,
   StyleSheet,
-  ScrollView,
   Text,
   StatusBar,
   Linking,
+  TouchableOpacity,
+  Image,
 } from 'react-native';
-import CustomHeader from '../../component/CustomHeaderProps';
 import {color} from '../../constant';
-import VerticalshopList from '../../component/VerticalshopList';
-import images from '../../component/Image';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import BookingList from '../../component/BookingList';
 import SearchBar from '../../component/SearchBar';
 import {
@@ -22,119 +19,117 @@ import {
 import {useIsFocused} from '@react-navigation/native';
 import {successToast} from '../../configs/customToast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { showBookingNotificationCancel, showLocalNotificationcancel } from '../../component/Notification';
+import {
+  showLocalNotificationcancel,
+} from '../../component/Notification';
+import {icon} from '../../component/Image';
 
-// Define navigation type
-type RootStackParamList = {
-  NearByShops: undefined;
-};
-
-type Props = NativeStackScreenProps<RootStackParamList, 'NearByShops'>;
-
-// Define Shop Item type
 interface ShopItem {
-  bookingId: string;
-  amount: string;
-  date: string;
+  _id: string;
+  dealer_id?: {shopName?: string};
+  status?: string;
 }
 
-const Booking: React.FC<Props> = ({navigation}) => {
-  const [searchQuery, setSearchQuery] = useState<string>('');
+const Booking: React.FC<{navigation: any}> = ({navigation}) => {
+  const [searchQuery, setSearchQuery] = useState('');
   const [booking, setBooking] = useState<ShopItem[]>([]);
   const isFocus = useIsFocused();
   const [loading, setLoading] = useState(false);
-  const [User, setUser] = useState('');
+
   useEffect(() => {
-    getUser();
+    if (isFocus) {fetchBookings();}
   }, [isFocus]);
 
-  const getUser = async () => {
-    const user_id = await  AsyncStorage.getItem('user_id')
-
-
-    const res = await get_profile(user_id);
-    if (res.success) {
-      setUser(res.data);
-      booking_list();
-    } else {
-      setUser('');
-    }
-  };
-
-  const booking_list = async () => {
+  const fetchBookings = async () => {
     try {
-      const user_id = await  AsyncStorage.getItem('user_id')
-
+      const user_id = await AsyncStorage.getItem('user_id');
+      if (!user_id) {return;}
       const response = await get_userbooking(user_id);
-      if (response?.data?.length > 0) {
-        setBooking(response.data);
-      } else {
-        setBooking([]);
-      }
+      setBooking(response?.data?.length > 0 ? response.data : []);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       setBooking([]);
     }
   };
-  const makeCall = no => {
-    Linking.openURL(`tel:${no}`); // Replace with the actual phone number
-  };
 
-  const cancelbooking = async id => {
+  const makeCall = (no: string) => Linking.openURL(`tel:${no}`);
+
+  const cancelBooking = async (id: string) => {
     setLoading(true);
     const res = await cancel_booking(id, 'user_cancelled');
-
-    if (res.success) {
-      booking_list();
-      successToast('Your booking has been cancelled successfully.');
+    if (res?.success) {
+      fetchBookings();
+      successToast('Booking cancelled successfully.');
       showLocalNotificationcancel(
         'Booking Cancelled',
-        'Your booking has been cancelled successfully.'
+        'Your booking has been cancelled successfully.',
       );
     }
     setLoading(false);
   };
-  const filteredBookings = booking?.filter(
+
+  const filteredBookings = booking.filter(
     item =>
       item?.dealer_id?.shopName
         ?.toLowerCase()
         .includes(searchQuery.toLowerCase()) || !item?.dealer_id,
   );
 
- 
+  const pendingCount = booking.filter(b => b.status === 'pending').length;
 
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor={color.baground} />
-      <Text style={styles.headerText}>Booking</Text>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}>
-        <View style={styles.searchContainer}>
-          <SearchBar
-            value={searchQuery}
-            onChangeText={text => setSearchQuery(text)}
-          />
+      <StatusBar backgroundColor={color.baground} barStyle="light-content" />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.headerTitle}>My Bookings</Text>
+          {pendingCount > 0 && (
+            <Text style={styles.pendingBadge}>
+              {pendingCount} active
+            </Text>
+          )}
         </View>
-        <Text style={styles.subHeaderText}>Today</Text>
-        {filteredBookings?.length > 0 ? (
-          <BookingList
-            data={filteredBookings}
-            loading={loading}
-            navigation={navigation}
-            onCallPress={no => {
-              makeCall(no);
-            }}
-            onCancelPress={id => {
-              cancelbooking(id);
-            }}
-          />
-        ) : (
-          <View style={styles.noBookingContainer}>
-            <Text style={styles.noBookingText}>No Booking Found</Text>
-          </View>
-        )}
-      </ScrollView>
+      </View>
+
+      {/* Search */}
+      <View style={styles.searchWrapper}>
+        <SearchBar
+          value={searchQuery}
+          onChangeText={text => setSearchQuery(text)}
+        />
+      </View>
+
+      {filteredBookings.length > 0
+        ? React.createElement(BookingList as any, {
+            data: filteredBookings,
+            loading,
+            navigation,
+            onCallPress: (no: string) => makeCall(no),
+            onCancelPress: (id: string) => cancelBooking(id),
+          })
+        : (
+        <View style={styles.emptyState}>
+          <Image source={icon.booking} style={styles.emptyIcon} />
+          <Text style={styles.emptyTitle}>
+            {searchQuery ? 'No matching bookings' : 'No bookings yet'}
+          </Text>
+          <Text style={styles.emptySubtitle}>
+            {searchQuery
+              ? 'Try a different search term'
+              : 'Book a bike service to see it here'}
+          </Text>
+          {!searchQuery && (
+            <TouchableOpacity
+              style={styles.bookNowBtn}
+              onPress={() => navigation.navigate('Home')}
+              activeOpacity={0.8}>
+              <Text style={styles.bookNowText}>Book Now</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
     </View>
   );
 };
@@ -142,37 +137,65 @@ const Booking: React.FC<Props> = ({navigation}) => {
 export default Booking;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: color.baground,
-  },
-  headerText: {
-    fontWeight: '600',
-    fontSize: 18,
-    color: '#fff',
-    paddingHorizontal: 20,
-    marginTop: 20,
-  },
-  scrollContent: {
-    marginTop: 30,
-  },
-  searchContainer: {
-    marginHorizontal: 15,
-  },
-  subHeaderText: {
-    fontWeight: '600',
-    fontSize: 18,
-    color: '#fff',
-    marginVertical: 15,
-    paddingHorizontal: 20,
-    marginTop: 20,
-  },
-  noBookingContainer: {
-    justifyContent: 'center',
+  container: {flex: 1, backgroundColor: color.baground},
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 8,
   },
-  noBookingText: {
-    fontWeight: '400',
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '700',
     color: '#fff',
+  },
+  pendingBadge: {
+    fontSize: 12,
+    color: color.buttonColor,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  searchWrapper: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
+  },
+  emptyIcon: {
+    width: 72,
+    height: 72,
+    tintColor: 'rgba(255,255,255,0.15)',
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#606880',
+    textAlign: 'center',
+    marginTop: 8,
+    lineHeight: 20,
+  },
+  bookNowBtn: {
+    marginTop: 24,
+    backgroundColor: color.buttonColor,
+    paddingHorizontal: 32,
+    paddingVertical: 13,
+    borderRadius: 28,
+  },
+  bookNowText: {
+    color: '#000',
+    fontWeight: '700',
+    fontSize: 15,
   },
 });

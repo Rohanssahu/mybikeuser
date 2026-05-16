@@ -1,62 +1,157 @@
-import React from 'react';
-import { View, FlatList, Text, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import Icon from './Icon';
-import { icon } from './Image';
-import { image_url } from '../redux/Api';
+import React, {useState} from 'react';
+import {
+  View,
+  FlatList,
+  Text,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import {icon} from './Image';
+import {image_url} from '../redux/Api';
 import ScreenNameEnum from '../routes/screenName.enum';
 
-// Define the data type for each garage item
 interface GarageItem {
-  id: string;
+  _id: string;
+  id?: string;
   shopName: string;
-  fullAddress: string;
-  latitude: string;
-  longitude: string;
-  shopImages: any;
+  fullAddress?: string;
+  address?: string;
+  latitude: string | number;
+  longitude: string | number;
+  shopImages?: any[];
+  averageRating?: number;
+  isOpen?: boolean;
 }
 
-// Define props for the component
+interface UserLocation {
+  latitude: number;
+  longitude: number;
+}
+
 interface GarageListProps {
   data: GarageItem[];
+  userLocation?: UserLocation | null;
 }
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-const GarageList: React.FC<GarageListProps> = ({ data }) => {
-  const navigation = useNavigation();
+const toRad = (deg: number) => (deg * Math.PI) / 180;
 
+const calcDistance = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number => {
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
+const GarageCard = ({
+  item,
+  userLocation,
+}: {
+  item: GarageItem;
+  userLocation?: UserLocation | null;
+}) => {
+  const navigation = useNavigation();
+  const [imgError, setImgError] = useState(false);
+
+  const distanceKm =
+    userLocation && item.latitude && item.longitude
+      ? calcDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          parseFloat(String(item.latitude)),
+          parseFloat(String(item.longitude)),
+        )
+      : null;
+
+  const distanceLabel =
+    distanceKm !== null
+      ? distanceKm < 1
+        ? `${Math.round(distanceKm * 1000)} m`
+        : `${distanceKm.toFixed(1)} km`
+      : '—';
+
+  const shopImage =
+    !imgError && item.shopImages && item.shopImages.length > 0
+      ? {uri: `${image_url}${item.shopImages[0]}`}
+      : require('../assets/images/gragd.png');
+
+  const rating = item.averageRating
+    ? parseFloat(String(item.averageRating)).toFixed(1)
+    : null;
+  const address = item.fullAddress || item.address || '';
+
+  return (
+    <TouchableOpacity
+      onPress={() =>
+        (navigation as any).navigate(ScreenNameEnum.MY_BIKES, {
+          profile: false,
+          Grageid: item._id,
+        })
+      }
+      style={styles.card}
+      activeOpacity={0.82}>
+      <Image
+        source={shopImage}
+        style={styles.image}
+        resizeMode="cover"
+        onError={() => setImgError(true)}
+      />
+      <View style={styles.textContainer}>
+        <Text style={styles.title} numberOfLines={1}>
+          {item.shopName}
+        </Text>
+
+        {address.length > 0 && (
+          <View style={styles.row}>
+            <Image source={icon.pin} style={styles.rowIcon} />
+            <Text style={styles.subText} numberOfLines={2}>
+              {address}
+            </Text>
+          </View>
+        )}
+
+        <View style={styles.metaRow}>
+          <View style={styles.pill}>
+            <Image source={icon.pickups} style={styles.pillIcon} />
+            <Text style={styles.pillText}>{distanceLabel}</Text>
+          </View>
+
+          {rating && (
+            <View style={[styles.pill, styles.ratingPill]}>
+              <Image source={icon.star} style={[styles.pillIcon, {tintColor: '#FED428'}]} />
+              <Text style={[styles.pillText, {color: '#FED428'}]}>{rating}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+const GarageList: React.FC<GarageListProps> = ({data, userLocation}) => {
   return (
     <FlatList
       data={data}
-      keyExtractor={(item) => item.id}
+      keyExtractor={item => item._id || item.id || item.shopName}
       contentContainerStyle={styles.listContainer}
-      renderItem={({ item }) => (
-        <TouchableOpacity
-        onPress={() =>   navigation.navigate(ScreenNameEnum.MY_BIKES,
-          {profile:false,Grageid:item?._id})}
-          
-        style={styles.card}>
-          <Image source={require('../assets/images/gragd.png')}
-           style={styles.image}  />
-        
-          {/* <Image source={{uri: `${image_url}${item.shopImages[0]}`}} style={styles.image} resizeMode="contain" />
-         */}
-        
-          <View style={styles.textContainer}>
-            <Text style={styles.title}>{item.shopName}</Text>
-            <View style={[styles.row,{width:'90%'}]}>
-              <Icon size={20} source={icon.pin} />
-              <Text style={styles.subText}>{item.fullAddress}</Text>
-            </View>
-            <View style={styles.row}>
-              <Icon size={20} source={icon.pickups} />
-              <Text style={[styles.subText,{fontSize:14}]}>3 km away</Text>
-            </View>
-          
-          </View>
-        </TouchableOpacity>
+      scrollEnabled={false}
+      renderItem={({item}) => (
+        <GarageCard item={item} userLocation={userLocation} />
       )}
     />
   );
@@ -64,62 +159,87 @@ const GarageList: React.FC<GarageListProps> = ({ data }) => {
 
 const styles = StyleSheet.create({
   listContainer: {
-    paddingHorizontal: 10,
-    paddingBottom: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 24,
   },
   card: {
     flexDirection: 'row',
-    backgroundColor: '#1E293B', 
-    borderRadius: 15,
-    padding: 15,
+    backgroundColor: '#0F1D3A',
+    borderRadius: 16,
+    padding: 12,
     alignItems: 'center',
-    marginBottom: 15,
-    width: SCREEN_WIDTH * 0.9,
+    marginBottom: 14,
+    width: SCREEN_WIDTH - 32,
     alignSelf: 'center',
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 5,
-    elevation: 5, // Android shadow
+    shadowOpacity: 0.25,
+    shadowOffset: {width: 0, height: 3},
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.07)',
   },
   image: {
-    width:120,
-    height: 120,
-    borderRadius: 20,
-    marginRight: 15,
+    width: 90,
+    height: 90,
+    borderRadius: 12,
+    marginRight: 12,
+    backgroundColor: '#1B2A4A',
   },
   textContainer: {
-    width:'60%',
-    height:'100%'
+    flex: 1,
   },
   title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 5,
+    alignItems: 'flex-start',
+    marginBottom: 6,
+  },
+  rowIcon: {
+    width: 12,
+    height: 12,
+    tintColor: '#FED428',
+    marginRight: 4,
+    marginTop: 2,
   },
   subText: {
-    fontSize: 12,
-    color: '#fff',
-    marginLeft: 5,
-    fontWeight:'500'
+    fontSize: 11,
+    color: '#A0A3BD',
+    flex: 1,
+    lineHeight: 16,
   },
-  button: {
-    backgroundColor: '#081041',
-    paddingVertical: 8,
-    paddingHorizontal: 70,
-    borderRadius: 30,
-    marginTop: 10,
-    alignSelf: 'flex-start',
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 2,
   },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(254,212,40,0.1)',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  ratingPill: {
+    backgroundColor: 'rgba(254,212,40,0.08)',
+  },
+  pillIcon: {
+    width: 12,
+    height: 12,
+    tintColor: '#E0E0E0',
+    marginRight: 4,
+  },
+  pillText: {
+    fontSize: 11,
+    color: '#E0E0E0',
+    fontWeight: '600',
   },
 });
 

@@ -1,57 +1,114 @@
-import React from 'react';
-import { View, FlatList, Image, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import Icon from './Icon';
-import { icon } from './Image';
+import React, {useState} from 'react';
+import {
+  View,
+  FlatList,
+  Image,
+  Text,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+} from 'react-native';
+import {icon} from './Image';
 import ScreenNameEnum from '../routes/screenName.enum';
-import { image_url } from '../redux/Api';
-
-// Define the data type for list items
+import {image_url} from '../redux/Api';
 
 interface ListItem {
-  name: string;
-  shopDescription: string;
-  rating: string;
-  address: string;
-  shopImages: any;
-  _id:string
+  _id: string;
+  shopName: string;
+  shopDescription?: string;
+  address?: string;
+  rating?: string | number;
+  shopImages?: any[];
 }
 
-// Define props for the component
 interface VerticalListProps {
-  data: any;
-  navigation:any,
-  bike:any
+  data: ListItem[];
+  navigation: any;
+  bike: any;
 }
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-const VerticalshopList: React.FC<VerticalListProps> = ({ data,navigation,bike }) => {
+const ShopCard = ({
+  item,
+  navigation,
+  bike,
+}: {
+  item: ListItem;
+  navigation: any;
+  bike: any;
+}) => {
+  const [imgError, setImgError] = useState(false);
 
+  const imgSrc =
+    !imgError && item.shopImages && item.shopImages.length > 0
+      ? {uri: `${image_url}${item.shopImages[0]}`}
+      : require('../assets/images/gragd.png');
 
+  return (
+    <TouchableOpacity
+      onPress={() =>
+        navigation.navigate(ScreenNameEnum.GARAGE_DETAILS, {
+          bike,
+          id: item._id,
+        })
+      }
+      style={styles.card}
+      activeOpacity={0.82}>
+      <Image
+        source={imgSrc}
+        style={styles.image}
+        resizeMode="cover"
+        onError={() => setImgError(true)}
+      />
+      <View style={styles.textContainer}>
+        <Text style={styles.title} numberOfLines={1}>
+          {item.shopName}
+        </Text>
+        {item.shopDescription ? (
+          <Text style={styles.desc} numberOfLines={2}>
+            {item.shopDescription}
+          </Text>
+        ) : null}
+        <View style={styles.meta}>
+          {item.address ? (
+            <View style={styles.metaItem}>
+              <Image source={icon.pin} style={styles.metaIcon} />
+              <Text style={styles.metaText} numberOfLines={1}>
+                {item.address}
+              </Text>
+            </View>
+          ) : null}
+          {item.rating ? (
+            <View style={styles.metaItem}>
+              <Image
+                source={icon.star}
+                style={[styles.metaIcon, {tintColor: '#FED428'}]}
+              />
+              <Text style={[styles.metaText, {color: '#FED428'}]}>
+                {item.rating}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+const VerticalshopList: React.FC<VerticalListProps> = ({
+  data,
+  navigation,
+  bike,
+}) => {
   return (
     <FlatList
       data={data}
-      keyExtractor={(item) => item._id}
+      keyExtractor={item => item._id}
       contentContainerStyle={styles.listContainer}
-      renderItem={({ item }) => (
-        <TouchableOpacity
-        onPress={()=>{
-          navigation.navigate(ScreenNameEnum.GARAGE_DETAILS,{bike,id:item?._id})
-        }}
-        style={styles.card}>
-          <Image source={{uri:`${image_url}${item.shopImages[0]}`}} style={styles.image} resizeMode="cover" />
-          <View style={styles.textContainer}>
-            <Text style={styles.title}>{item.shopName}</Text>
-            <Text style={styles.address}>{item.shopDescription}</Text>
-            <View style={styles.infoContainer}>
-              <Icon size={16}source={icon.pin} />
-              <Text style={styles.infoText}>{item.address}</Text>
-              <Icon source={icon.star} size={16}  />
-              <Text style={styles.infoText}>{item.rating}</Text>
-            </View>
-          </View>
-        </TouchableOpacity>
+      scrollEnabled={false}
+      renderItem={({item}) => (
+        <ShopCard item={item} navigation={navigation} bike={bike} />
       )}
     />
   );
@@ -59,48 +116,65 @@ const VerticalshopList: React.FC<VerticalListProps> = ({ data,navigation,bike })
 
 const styles = StyleSheet.create({
   listContainer: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 16,
     paddingBottom: 20,
   },
   card: {
     flexDirection: 'row',
-    backgroundColor: '#2C2F5B', // Dark blue background
-    borderRadius: 15,
-    padding: 15,
+    backgroundColor: '#0F1D3A',
+    borderRadius: 16,
+    padding: 12,
     alignItems: 'center',
-    marginBottom: 15,
-    width: SCREEN_WIDTH * 0.9, // 90% of screen width
+    marginBottom: 14,
+    width: SCREEN_WIDTH - 32,
     alignSelf: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.07)',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowOffset: {width: 0, height: 3},
+    shadowRadius: 8,
+    elevation: 6,
   },
   image: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
-    marginRight: 15,
+    width: 90,
+    height: 90,
+    borderRadius: 12,
+    marginRight: 12,
+    backgroundColor: '#1B2A4A',
   },
   textContainer: {
     flex: 1,
   },
   title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF', // White text color
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
   },
-  address: {
-    fontSize: 14,
-    color: '#A0A3BD', // Light gray text
-    marginBottom: 5,
+  desc: {
+    fontSize: 12,
+    color: '#A0A3BD',
+    lineHeight: 17,
+    marginBottom: 6,
   },
-  infoContainer: {
+  meta: {
+    gap: 4,
+  },
+  metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  infoText: {
-    fontSize: 12,
-    color: '#FFFFFF',
-    marginLeft: 5,
-    marginRight: 10,
-    fontWeight:'500'
+  metaIcon: {
+    width: 12,
+    height: 12,
+    tintColor: '#FED428',
+    marginRight: 4,
+  },
+  metaText: {
+    fontSize: 11,
+    color: '#A0A3BD',
+    flex: 1,
   },
 });
 

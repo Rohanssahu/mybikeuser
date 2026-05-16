@@ -1,81 +1,117 @@
-import React from 'react';
-import { View, FlatList, Image, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
-import { hp } from './utils/Constant';
-import images from './Image';
-import { image_url } from '../redux/Api';
-import { useNavigation } from '@react-navigation/native';
+import React, {useState} from 'react';
+import {
+  View,
+  FlatList,
+  Image,
+  Text,
+  StyleSheet,
+  Dimensions,
+  TouchableOpacity,
+} from 'react-native';
+import {hp} from './utils/Constant';
+import {image_url} from '../redux/Api';
+import {useNavigation} from '@react-navigation/native';
 import ScreenNameEnum from '../routes/screenName.enum';
 
-// Define the data type for bike items
-interface BikeItem {
-  id: string;
+interface ServiceItem {
+  _id?: string;
+  id?: string;
   name: string;
-  image: any; // Can be a local or remote image
+  image?: string;
 }
 
-// Define props for the component
 interface HorizontalListProps {
-  data: BikeItem[];
+  data: ServiceItem[];
 }
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+const CARD_WIDTH = SCREEN_WIDTH * 0.28;
 
-const HorizontalList: React.FC<HorizontalListProps> = ({ data }) => {
+const ServiceCard = ({item}: {item: ServiceItem}) => {
+  const navigation = useNavigation();
+  const [imgError, setImgError] = useState(false);
 
-  const navigation = useNavigation()
+  const imageSource =
+    !imgError && item.image
+      ? {uri: `${image_url}${item.image}`}
+      : require('../assets/images/LOGO2x.png');
+
+  return (
+    <TouchableOpacity
+      onPress={() => {
+        (navigation as any).navigate(ScreenNameEnum.MY_BIKES, {profile: false});
+      }}
+      style={styles.card}
+      activeOpacity={0.75}>
+      <View style={styles.iconWrapper}>
+        <Image
+          source={imageSource}
+          style={styles.image}
+          resizeMode="contain"
+          onError={() => setImgError(true)}
+        />
+      </View>
+      <Text style={styles.text} numberOfLines={2}>
+        {item.name}
+      </Text>
+    </TouchableOpacity>
+  );
+};
+
+const HorizontalList: React.FC<HorizontalListProps> = ({data}) => {
   return (
     <FlatList
       data={data}
       horizontal
       showsHorizontalScrollIndicator={false}
-      keyExtractor={(item) => item.id}
+      keyExtractor={item => item._id || item.id || item.name}
       contentContainerStyle={styles.listContainer}
-      renderItem={({ item }) => (
-        <TouchableOpacity 
-        onPress={()=>{
-          navigation.navigate(ScreenNameEnum.MY_BIKES,{profile:false})
-        }}
-        style={styles.card}>
-        
-          
-           <Image source={require('../assets/images/LOGO2x.png')}
-                    style={styles.image} resizeMode="contain" /> 
-          <Text style={styles.text}>{item.name}</Text>
-        </TouchableOpacity>
-      )}
+      renderItem={({item}) => <ServiceCard item={item} />}
     />
   );
 };
 
 const styles = StyleSheet.create({
   listContainer: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 14,
+    paddingBottom: 4,
   },
   card: {
-    width: SCREEN_WIDTH * 0.3,
-    backgroundColor: '#1E293B',
-    borderRadius: 20,
-    marginTop: 20,
+    width: CARD_WIDTH,
+    backgroundColor: '#1B2A4A',
+    borderRadius: 16,
+    marginTop: 14,
     padding: 10,
-    height: hp(15),
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 10,
+    marginHorizontal: 6,
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 5,
-    elevation: 5, // Shadow for Android
+    shadowOpacity: 0.2,
+    shadowOffset: {width: 0, height: 3},
+    shadowRadius: 6,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(254,212,40,0.12)',
+  },
+  iconWrapper: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(254,212,40,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
   },
   image: {
-    width: '100%',
-    height: 70,
+    width: 36,
+    height: 36,
   },
   text: {
-    marginTop: 8,
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#E8E8E8',
+    textAlign: 'center',
+    lineHeight: 15,
   },
 });
 
