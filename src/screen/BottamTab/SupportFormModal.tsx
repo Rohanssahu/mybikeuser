@@ -1,168 +1,227 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, Alert, StyleSheet, Modal } from 'react-native';
-import { launchImageLibrary } from 'react-native-image-picker';
-import { create_tikit } from '../../redux/Api/apiRequests';
+import React, {useState} from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import {create_tikit} from '../../redux/Api/apiRequests';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {color} from '../../constant';
 
 interface SupportFormModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-const SupportFormModal: React.FC<SupportFormModalProps> = ({ visible, onClose }) => {
+const SupportFormModal: React.FC<SupportFormModalProps> = ({
+  visible,
+  onClose,
+}) => {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
-  const [image, setImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
-    if (!subject || !message) {
-      Alert.alert('Error', 'Please fill in all fields');
+    if (!subject.trim() || !message.trim()) {
+      Alert.alert('Missing Info', 'Please fill in both Subject and Message.');
       return;
     }
-
-    const formData = new FormData();
-    formData.append('subject', subject);
-    formData.append('message', message);
-    const user_id = await  AsyncStorage.getItem('user_id')
-
-
-    const res = await create_tikit(subject, message,user_id,'2')
-
-    if (res?.success) {
-      Alert.alert('Success', 'Tikit Submitted Successfully!');
-
-      setSubject('')
-      setMessage('')
-      onClose();
+    setLoading(true);
+    try {
+      const user_id = await AsyncStorage.getItem('user_id');
+      const res = await create_tikit(
+        subject.trim(),
+        message.trim(),
+        user_id,
+        '2',
+      );
+      if (res?.success) {
+        setSubject('');
+        setMessage('');
+        onClose();
+      } else {
+        Alert.alert(
+          'Error',
+          res?.message || 'Failed to submit ticket. Try again.',
+        );
+      }
+    } catch {
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
     }
+  };
 
+  const handleClose = () => {
+    setSubject('');
+    setMessage('');
+    onClose();
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.modalBackground}>
-        <View style={styles.modalContainer}>
-          <Text style={styles.header}>Support Ticket</Text>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      statusBarTranslucent>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.overlay}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={styles.kav}>
+            <View style={styles.sheet}>
+              {/* Drag handle */}
+              <View style={styles.handle} />
 
-          <Text style={styles.label}>Subject</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Subject"
-            value={subject}
-            onChangeText={setSubject}
-          />
+              {/* Title */}
+              <Text style={styles.title}>New Support Ticket</Text>
+              <Text style={styles.subtitle}>
+                Describe your issue and we'll respond shortly
+              </Text>
 
-          <Text style={styles.label}>Message</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Enter Message"
-            value={message}
-            onChangeText={setMessage}
-            multiline
-          />
+              {/* Subject */}
+              <Text style={styles.label}>Subject</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Brief title of your issue"
+                placeholderTextColor="#3D4F80"
+                value={subject}
+                onChangeText={setSubject}
+                maxLength={100}
+                returnKeyType="next"
+              />
 
-          {/* <Text style={styles.label}>Upload Image</Text>
-          <TouchableOpacity style={styles.uploadButton} onPress={handleChooseImage}>
-            <Text style={styles.uploadText}>Choose File</Text>
-          </TouchableOpacity> */}
+              {/* Message */}
+              <Text style={[styles.label, styles.labelGap]}>Message</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Describe your issue in detail…"
+                placeholderTextColor="#3D4F80"
+                value={message}
+                onChangeText={setMessage}
+                multiline
+                numberOfLines={5}
+                textAlignVertical="top"
+                maxLength={500}
+              />
+              <Text style={styles.charCount}>{message.length}/500</Text>
 
-          {image && <Image source={{ uri: image }} style={styles.preview} />}
-
-          <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.cancelButton} onPress={()=>{
-              setSubject('')
-              setMessage('')
-              onClose()
-            }}>
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-              <Text style={styles.buttonText}>Send</Text>
-            </TouchableOpacity>
-          </View>
+              {/* Buttons */}
+              <View style={styles.btnRow}>
+                <TouchableOpacity
+                  style={styles.cancelBtn}
+                  onPress={handleClose}
+                  activeOpacity={0.8}
+                  disabled={loading}>
+                  <Text style={styles.cancelBtnText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.submitBtn,
+                    loading && styles.submitBtnDisabled,
+                  ]}
+                  onPress={handleSubmit}
+                  activeOpacity={0.8}
+                  disabled={loading}>
+                  {loading ? (
+                    <ActivityIndicator size={18} color="#081041" />
+                  ) : (
+                    <Text style={styles.submitBtnText}>Submit Ticket</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  modalBackground: {
+  overlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    justifyContent: 'flex-end',
   },
-  modalContainer: {
-    width: '90%',
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
+  kav: {justifyContent: 'flex-end'},
+  sheet: {
+    backgroundColor: '#0D1952',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(254,212,40,0.15)',
   },
-  header: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignSelf: 'center',
+    marginBottom: 20,
   },
+  title: {fontSize: 18, fontWeight: '700', color: '#fff', marginBottom: 4},
+  subtitle: {fontSize: 13, color: '#6B7DBE', marginBottom: 20, lineHeight: 18},
   label: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginTop: 10,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#A0AFCE',
+    marginBottom: 7,
   },
+  labelGap: {marginTop: 16},
   input: {
+    backgroundColor: '#081041',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: '#fff',
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    marginTop: 5,
+    borderColor: 'rgba(254,212,40,0.1)',
   },
   textArea: {
-    height: 100,
+    height: 110,
     textAlignVertical: 'top',
+    paddingTop: 12,
   },
-  uploadButton: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
+  charCount: {
+    fontSize: 11,
+    color: '#3D4F80',
+    textAlign: 'right',
     marginTop: 5,
-    alignItems: 'center',
   },
-  uploadText: {
-    color: '#007bff',
-    fontWeight: 'bold',
-  },
-  preview: {
-    width: 100,
-    height: 100,
-    marginTop: 10,
-    borderRadius: 5,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 15,
-  },
-  cancelButton: {
-    backgroundColor: '#dc3545',
-    padding: 12,
-    borderRadius: 5,
+  btnRow: {flexDirection: 'row', gap: 10, marginTop: 20},
+  cancelBtn: {
     flex: 1,
-    marginRight: 5,
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  submitButton: {
-    backgroundColor: '#007bff',
-    padding: 12,
-    borderRadius: 5,
-    flex: 1,
-    marginLeft: 5,
+  cancelBtnText: {fontSize: 14, fontWeight: '700', color: '#A0AFCE'},
+  submitBtn: {
+    flex: 1.6,
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: 'center',
+    backgroundColor: color.buttonColor,
   },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
+  submitBtnDisabled: {opacity: 0.6},
+  submitBtnText: {fontSize: 14, fontWeight: '700', color: '#081041'},
 });
 
 export default SupportFormModal;

@@ -7,13 +7,13 @@ import {
   Linking,
   TouchableOpacity,
   Image,
+  Platform,
 } from 'react-native';
 import {color} from '../../constant';
 import BookingList from '../../component/BookingList';
 import SearchBar from '../../component/SearchBar';
 import {
   cancel_booking,
-  get_profile,
   get_userbooking,
 } from '../../redux/Api/apiRequests';
 import {useIsFocused} from '@react-navigation/native';
@@ -83,14 +83,14 @@ const Booking: React.FC<{navigation: any}> = ({navigation}) => {
 
       {/* Header */}
       <View style={styles.header}>
-        <View>
+        <View style={styles.headerLeft}>
           <Text style={styles.headerTitle}>My Bookings</Text>
-          {pendingCount > 0 && (
-            <Text style={styles.pendingBadge}>
-              {pendingCount} active
-            </Text>
-          )}
         </View>
+        {pendingCount > 0 && (
+          <View style={styles.pendingBadge}>
+            <Text style={styles.pendingBadgeText}>{pendingCount} active</Text>
+          </View>
+        )}
       </View>
 
       {/* Search */}
@@ -143,19 +143,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 8,
+    paddingTop: Platform.OS === 'ios' ? 54 : 20,
+    paddingBottom: 12,
   },
+  headerLeft: {flex: 1},
   headerTitle: {
     fontSize: 22,
     fontWeight: '700',
     color: '#fff',
   },
   pendingBadge: {
+    backgroundColor: 'rgba(254,212,40,0.15)',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(254,212,40,0.35)',
+  },
+  pendingBadgeText: {
     fontSize: 12,
     color: color.buttonColor,
-    fontWeight: '600',
-    marginTop: 2,
+    fontWeight: '700',
   },
   searchWrapper: {
     marginHorizontal: 16,

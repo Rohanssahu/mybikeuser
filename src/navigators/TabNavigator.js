@@ -1,32 +1,25 @@
-import { View, Text, Image, Keyboard, Platform } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import {View, Text, Image, Keyboard, Platform, StyleSheet} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import _routes from '../routes/routes';
-
-
 
 const Tab = createBottomTabNavigator();
 
 export default function TabNavigator() {
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
-      Platform.OS === 'android' ? 'keyboardDidShow' : 'keyboardWillShow',
-      () => {
-        setKeyboardVisible(true);
-      }
-    );
-    const keyboardDidHideListener = Keyboard.addListener(
-      Platform.OS === 'android' ? 'keyboardDidHide' : 'keyboardWillHide',
-      () => {
-        setKeyboardVisible(false);
-      }
-    );
 
-    // Clean up listeners
+  useEffect(() => {
+    const show = Keyboard.addListener(
+      Platform.OS === 'android' ? 'keyboardDidShow' : 'keyboardWillShow',
+      () => setKeyboardVisible(true),
+    );
+    const hide = Keyboard.addListener(
+      Platform.OS === 'android' ? 'keyboardDidHide' : 'keyboardWillHide',
+      () => setKeyboardVisible(false),
+    );
     return () => {
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
+      show.remove();
+      hide.remove();
     };
   }, []);
 
@@ -35,48 +28,138 @@ export default function TabNavigator() {
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
-
-
         tabBarStyle: {
           display: isKeyboardVisible ? 'none' : 'flex',
-
-          paddingTop: 10,
-          height: 70,
-
-
-        }
-
-      }}
-    >
-
-
+          backgroundColor: '#0A1340',
+          borderTopWidth: 1,
+          borderTopColor: 'rgba(254,212,40,0.12)',
+          height: Platform.OS === 'ios' ? 82 : 68,
+          paddingBottom: Platform.OS === 'ios' ? 22 : 10,
+          paddingTop: 8,
+          elevation: 20,
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: -4},
+          shadowOpacity: 0.35,
+          shadowRadius: 12,
+        },
+        tabBarActiveTintColor: '#FED428',
+        tabBarInactiveTintColor: '#4A5680',
+      }}>
       {_routes.BOTTOM_TAB.map(screen => (
         <Tab.Screen
           key={screen.name}
           name={screen.name}
           component={screen.Component}
           options={{
-            tabBarIcon: ({ focused, color, size }) => (
-              <>
-                {screen.lable !== 'Help' ?
-                  <>
+            tabBarIcon: ({focused}) =>
+              screen.lable === 'Help' ? (
+                /* Help / Support — raised pill button */
+                <View style={styles.helpWrap}>
+                  <View
+                    style={[
+                      styles.helpCircle,
+                      focused && styles.helpCircleActive,
+                    ]}>
                     <Image
-                      source={screen.logo} // Assuming you have imported icon for each screen
-                      style={{ width: 25, height: 25, tintColor: focused ? '#081041' : color }} // Adjust size and style as needed
+                      source={screen.logo}
+                      style={[
+                        styles.helpIcon,
+                        {tintColor: focused ? '#081041' : '#FED428'},
+                      ]}
                     />
-                    <Text style={{ fontWeight: '700', color: focused ?'#081041' : '#777777', fontSize: 14, marginTop: 5 }}>{screen.lable}</Text>
-                  </> :
-                  <Image source={screen.logo} style={{ height: 60, width:60,marginTop:-10,}} />
-                }
-              </>
-            ),
-            tabBarLabel: screen.lable // Assuming you have label for each screen
+                  </View>
+                  <Text
+                    style={[
+                      styles.tabLabel,
+                      focused ? styles.tabLabelActive : styles.tabLabelInactive,
+                    ]}>
+                    {screen.lable}
+                  </Text>
+                </View>
+              ) : (
+                /* Regular tabs */
+                <View style={styles.tabItem}>
+                  <Image
+                    source={screen.logo}
+                    style={[
+                      styles.tabIcon,
+                      {tintColor: focused ? '#FED428' : '#4A5680'},
+                    ]}
+                  />
+                  {focused ? (
+                    <View style={styles.activeDot} />
+                  ) : (
+                    <View style={styles.activeDotPlaceholder} />
+                  )}
+                  <Text
+                    style={[
+                      styles.tabLabel,
+                      focused ? styles.tabLabelActive : styles.tabLabelInactive,
+                    ]}>
+                    {screen.lable}
+                  </Text>
+                </View>
+              ),
           }}
         />
       ))}
-
-
-
     </Tab.Navigator>
-  )
+  );
 }
+
+const styles = StyleSheet.create({
+  tabItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 52,
+  },
+  tabIcon: {
+    width: 22,
+    height: 22,
+  },
+  activeDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#FED428',
+    marginTop: 3,
+  },
+  activeDotPlaceholder: {
+    width: 4,
+    height: 4,
+    marginTop: 3,
+  },
+  tabLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  tabLabelActive: {color: '#FED428'},
+  tabLabelInactive: {color: '#4A5680'},
+
+  // Help tab
+  helpWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  helpCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(254,212,40,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(254,212,40,0.4)',
+    marginBottom: 2,
+  },
+  helpCircleActive: {
+    backgroundColor: '#FED428',
+    borderColor: '#FED428',
+  },
+  helpIcon: {
+    width: 24,
+    height: 24,
+  },
+});
