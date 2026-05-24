@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 54 : 20,
+    paddingTop: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 24) + 8,
     paddingBottom: 16,
   },
   headerTitle: {fontSize: 22, fontWeight: '700', color: '#fff'},

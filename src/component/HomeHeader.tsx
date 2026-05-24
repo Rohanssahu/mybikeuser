@@ -7,6 +7,7 @@ import {
   Image,
   Animated,
   Platform,
+  StatusBar,
 } from 'react-native';
 import {icon} from './Image';
 import {color} from '../constant';
@@ -125,7 +126,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 54 : 18,
+    paddingTop: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 24) + 8,
     paddingBottom: 16,
     backgroundColor: color.baground,
   },

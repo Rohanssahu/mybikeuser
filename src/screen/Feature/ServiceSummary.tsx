@@ -27,11 +27,11 @@ import OtpBox from './OtpBox';
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_CFG: Record<string, { color: string; bg: string; label: string }> = {
-  pending:        { color: '#F59E0B', bg: 'rgba(245,158,11,0.15)',  label: 'Pending Confirmation' },
-  confirmed:      { color: '#10B981', bg: 'rgba(16,185,129,0.15)', label: 'Confirmed' },
-  completed:      { color: '#3B82F6', bg: 'rgba(59,130,246,0.15)', label: 'Service Completed' },
-  user_cancelled: { color: '#EF4444', bg: 'rgba(239,68,68,0.15)',  label: 'Cancelled by You' },
-  rejected:       { color: '#EF4444', bg: 'rgba(239,68,68,0.15)',  label: 'Rejected by Service Center' },
+  pending: { color: '#F59E0B', bg: 'rgba(245,158,11,0.15)', label: 'Pending Confirmation' },
+  confirmed: { color: '#10B981', bg: 'rgba(16,185,129,0.15)', label: 'Confirmed' },
+  completed: { color: '#3B82F6', bg: 'rgba(59,130,246,0.15)', label: 'Service Completed' },
+  user_cancelled: { color: '#EF4444', bg: 'rgba(239,68,68,0.15)', label: 'Cancelled by You' },
+  rejected: { color: '#EF4444', bg: 'rgba(239,68,68,0.15)', label: 'Rejected by Service Center' },
 };
 
 // ─── Timeline steps ───────────────────────────────────────────────────────────
@@ -128,8 +128,8 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
     if (!iso) { return '—'; }
     const d = new Date(iso);
     const months = [
-      'Jan','Feb','Mar','Apr','May','Jun',
-      'Jul','Aug','Sep','Oct','Nov','Dec',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     let h = d.getHours();
     const min = String(d.getMinutes()).padStart(2, '0');
@@ -164,6 +164,7 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
 
   const showPayNow = status === 'completed' && booking?.billStatus === 'pending';
   const total = calculateTotal();
+  console.log('booking', booking);
 
   return (
     <View style={styles.root}>
@@ -379,15 +380,25 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
               </View>
             );
           })}
+          {/* Pickup Charges*/}
+          {booking?.pickupAndDropId && 
+          <View style={styles.billRow}>
+            <View style={styles.billItemLeft}>
+              <View style={styles.billDotBlue} />
+              <Text style={styles.billItemName}> Pickup Charges</Text>
+            </View>
+            <Text style={styles.billItemPrice}>₹{booking?.dealer_id?.pickupCharges || 0}</Text>
+          </View>
+          }
 
-          {/* Tax */}
           <View style={styles.billRow}>
             <View style={styles.billItemLeft}>
               <View style={styles.billDotBlue} />
               <Text style={styles.billItemName}> Tax / Fees</Text>
             </View>
-            <Text style={styles.billItemPrice}>₹{booking?.tax || 0}</Text>
+            <Text style={styles.billItemPrice}>₹{booking?.dealer_id?.tax || 0}</Text>
           </View>
+
 
           {/* Dashed divider */}
           <View style={styles.billDivider} />
@@ -678,7 +689,7 @@ const styles = StyleSheet.create({
 
   // Bill row dots
   billDotGreen: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#10B981' },
-  billDotBlue:  { width: 8, height: 8, borderRadius: 4, backgroundColor: '#6B7DBE' },
+  billDotBlue: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#6B7DBE' },
 
   // Note bullet
   noteBullet: { fontSize: 16, color: '#FED428', lineHeight: 20 },

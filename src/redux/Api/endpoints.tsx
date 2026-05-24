@@ -20,6 +20,7 @@ export const endpoint = {
   deleteMyBike: '/bikedoctor/customers/deleteMyBike/:bike_id',
   dealerWithInRange: '/bikedoctor/dealer/dealerWithInRange2',
   garagedetails: '/bikedoctor/dealer/getShopDetails',
+  dealerServices: '/bikedoctor/dealer/services',
   createBooking: '/bikedoctor/bookings/createBooking',
   addpickndrop: '/bikedoctor/pickndrop/addpickndrop',
   getprofile: '/bikedoctor/customers/customersdata',

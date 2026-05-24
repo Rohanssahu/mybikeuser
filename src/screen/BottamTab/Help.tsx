@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 54 : 20,
+    paddingTop: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 24) + 8,
     paddingBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.06)',

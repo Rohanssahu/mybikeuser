@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, StatusBar } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import Icon from './Icon';
 import { icon } from './Image';
@@ -46,7 +46,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 15,
-        paddingVertical:0,
+        paddingTop: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 24) + 8,
+        paddingBottom: 8,
         backgroundColor: color.baground, // Adjust based on your theme
     },
     backButton: {

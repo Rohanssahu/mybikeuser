@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   StatusBar,
+  Platform,
 } from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useFocusEffect} from '@react-navigation/native';
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingTop: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 24) + 8,
     paddingBottom: 24,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.08)',
