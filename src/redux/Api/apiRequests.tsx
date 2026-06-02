@@ -827,12 +827,14 @@ const get_dealer_services = async (dealerId: string) => {
     }
 };
 
-const get_FilterBydeler = async (lat: string, long: string, variant_id: string,) => {
+const get_FilterBydeler = async (lat: string, long: string, variant_id: string, serviceId?: string) => {
 
     const token = await AsyncStorage.getItem('token')
+    let filterUrl = `${endpoint.nearbydeler}?userLat=${lat}&userLon=${long}&variant_id=${variant_id}`;
+    if (serviceId) {filterUrl += `&serviceId=${serviceId}`;}
     const apiRequests: ApiRequest[] = [
         {
-            endpoint: `${endpoint.nearbydeler}?userLat=${lat}&userLon=${long}&variant_id=${variant_id}`,
+            endpoint: filterUrl,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

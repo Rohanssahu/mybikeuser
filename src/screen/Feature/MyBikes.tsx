@@ -27,9 +27,10 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const MyBikes: React.FC<Props> = ({navigation}) => {
   const route = useRoute();
-  const {profile, Grageid} = route.params as {
+  const {profile, Grageid, serviceId} = route.params as {
     profile: boolean;
     Grageid?: string;
+    serviceId?: string;
   };
 
   const [bikes, setBikes] = useState<any[]>([]);
@@ -79,7 +80,7 @@ const MyBikes: React.FC<Props> = ({navigation}) => {
         id: Grageid,
       });
     } else {
-      (navigation as any).navigate(ScreenNameEnum.NEARBY_SHOPS, {item});
+      (navigation as any).navigate(ScreenNameEnum.NEARBY_SHOPS, {item, serviceId});
     }
   };
 

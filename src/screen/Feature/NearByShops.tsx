@@ -35,7 +35,7 @@ interface Dealer {
 const NearByShops: React.FC<Props> = ({ navigation }) => {
     const [dealerList, setDealerList] = useState<Dealer[]>([]);
     const route = useRoute()
-    const { item } = route.params
+    const { item, serviceId } = route.params as {item: any; serviceId?: string}
     const [loading, setLoading] = useState(false)
 
     useEffect(() => {
@@ -48,8 +48,7 @@ const NearByShops: React.FC<Props> = ({ navigation }) => {
                   const { latitude, longitude } = await getCurrentLocation();
         try {
             const [dealer] = await Promise.all([
-
-                get_FilterBydeler(latitude, longitude, item?.variant_id),
+                get_FilterBydeler(latitude, longitude, item?.variant_id, serviceId),
             ]);
 
             if (dealer.data) setDealerList(dealer.data);

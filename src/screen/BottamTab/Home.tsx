@@ -70,6 +70,7 @@ interface FeaturedCategory {
   categoryImage: string;
   locationName: string;
   radius: number;
+  serviceId?: {_id: string; name: string};
 }
 
 interface UserCoords {
@@ -96,7 +97,7 @@ const SectionHeader = ({
   </View>
 );
 
-const FeaturedCategoryCard: React.FC<{item: FeaturedCategory}> = ({item}) => {
+const FeaturedCategoryCard: React.FC<{item: FeaturedCategory; onPress: () => void}> = ({item, onPress}) => {
   const [imgError, setImgError] = useState(false);
   const imageSource =
     !imgError && item.categoryImage
@@ -104,7 +105,9 @@ const FeaturedCategoryCard: React.FC<{item: FeaturedCategory}> = ({item}) => {
       : require('../../assets/images/LOGO2x.png');
 
   return (
-    <View
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={onPress}
       style={{
         width: 100,
         height: 100,
@@ -143,7 +146,7 @@ const FeaturedCategoryCard: React.FC<{item: FeaturedCategory}> = ({item}) => {
           {item.categoryName}
         </Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -324,7 +327,17 @@ const Home: React.FC = () => {
               showsHorizontalScrollIndicator={false}
               keyExtractor={item => item._id}
               contentContainerStyle={featStyles.listContainer}
-              renderItem={({item}) => <FeaturedCategoryCard item={item} />}
+              renderItem={({item}) => (
+                <FeaturedCategoryCard
+                  item={item}
+                  onPress={() =>
+                    (navigation as any).navigate(ScreenNameEnum.MY_BIKES, {
+                      profile: false,
+                      serviceId: item.serviceId?._id,
+                    })
+                  }
+                />
+              )}
             />
           ) : null}
           {!featuredLoading &&
