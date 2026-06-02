@@ -1,18 +1,14 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  FlatList,
   Image,
-  Modal,
   StatusBar,
   TouchableOpacity,
-  TextInput,
   PermissionsAndroid,
   Platform,
-  Dimensions,
 } from 'react-native';
 import CustomButton from '../../component/CustomButton';
 import ScreenNameEnum from '../../routes/screenName.enum';
@@ -32,35 +28,59 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {showBookingNotification} from '../../component/Notification';
 import {color} from '../../constant';
 import {icon} from '../../component/Image';
-import {hp} from '../../component/utils/Constant';
 import Icon from '../../component/Icon';
 import GarageImage from './GarageBanner';
 
+const PICKUP_RATE_PER_KM = 15;
+const GST_RATE = 0.18;
+
+type Step = 0 | 1 | 2 | 3;
+
+const ReviewRow = ({label, value}: {label: string; value: string}) => (
+  <View style={styles.reviewRow}>
+    <Text style={styles.reviewLabel}>{label}</Text>
+    <Text style={styles.reviewValue} numberOfLines={2}>
+      {value}
+    </Text>
+  </View>
+);
+
 const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
   const route = useRoute();
+  const {bike, id, serviceId: incomingServiceId} = route.params as {
+    bike: any;
+    id: string;
+    serviceId?: string;
+  };
+
   const [garageData, setGarageData] = useState<any>(null);
-  const {bike, id} = route.params as {bike: any; id: string};
   const [distance, setDistance] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<Step>(0);
 
   const [pickupModalVisible, setPickupModalVisible] = useState(false);
   const [PickupLocation, setPickupLocation] = useState<any>('');
   const [PickupLocationName, setPickupLocationName] = useState('');
   const [PickupLocationId, setPickupLocationId] = useState('');
-  const [selectedService, setSelectedService] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [choosePickupOption, setChoosePickupOption] = useState('');
   const [PickupDistance, setPickupDistance] = useState<number | null>(null);
-  const [BookingDate, setBookingDate] = useState(new Date());
-  const [BookingDateModal, setBookingDateModal] = useState(false);
+  const [choosePickupOption, setChoosePickupOption] = useState('');
 
-  // service picker modal
-  const [serviceModal, setServiceModal] = useState(false);
-  const [serviceSearch, setServiceSearch] = useState('');
+  const [selectedService, setSelectedService] = useState('');
+
+  const [BookingDate, setBookingDate] = useState(new Date());
+  const [BookingTime, setBookingTime] = useState(() => {
+    const t = new Date();
+    t.setHours(10, 0, 0, 0);
+    return t;
+  });
+  const [BookingDateModal, setBookingDateModal] = useState(false);
+  const [BookingTimeModal, setBookingTimeModal] = useState(false);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     requestLocationPermission();
   }, [garageData]);
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchGarageDetails();
@@ -149,6 +169,14 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
         services = detailsRes.data.services || [];
       }
       setGarageData({...detailsRes.data, services});
+      if (incomingServiceId) {
+        const match = services.find(
+          (s: any) => (s.serviceId ?? s._id) === incomingServiceId,
+        );
+        if (match) {
+          setSelectedService(match.serviceId ?? match._id);
+        }
+      }
     } else {
       setGarageData(null);
     }
@@ -177,21 +205,43 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
 
   const formatDate = (date: Date) => {
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      'Jan','Feb','Mar','Apr','May','Jun',
+      'Jul','Aug','Sep','Oct','Nov','Dec',
     ];
     return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
   };
+
+  const formatTime = (date: Date) => {
+    const h = date.getHours();
+    const m = date.getMinutes();
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const hh = h % 12 || 12;
+    return `${hh}:${m.toString().padStart(2, '0')} ${ampm}`;
+  };
+
+  const selectedSvc = useMemo(
+    () =>
+      garageData?.services?.find(
+        (s: any) => (s.serviceId ?? s._id) === selectedService,
+      ),
+    [garageData, selectedService],
+  );
+
+  const servicePrice: number =
+    selectedSvc?.price ?? selectedSvc?.bikes?.[0]?.price ?? 0;
+  const pickupCharge: number =
+    choosePickupOption === 'PickDrop'
+      ? garageData?.pickupCharge ??
+        Math.round((PickupDistance ?? 0) * PICKUP_RATE_PER_KM)
+      : 0;
+  const gstAmount: number = Math.round(servicePrice * GST_RATE);
+  const totalPayable: number = servicePrice + pickupCharge + gstAmount;
+
+  const getServiceName = (svc: any) =>
+    (svc?.serviceName ?? svc?.base_service_id?.name ?? '').toUpperCase();
+
+  const getServicePrice = (svc: any): number =>
+    svc?.price ?? svc?.bikes?.[0]?.price ?? 0;
 
   const createBooking = async () => {
     if (!selectedService) {
@@ -209,92 +259,460 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
       BookingDate.toString(),
     );
     if (res?.success) {
-      const svc = garageData?.services?.find(
-        (s: any) => (s.serviceId ?? s._id) === selectedService,
-      );
       showBookingNotification(
-        svc?.serviceName ?? svc?.base_service_id?.name ?? 'Service',
+        getServiceName(selectedSvc),
         garageData?.shopName,
         formatDate(BookingDate),
       );
-      navigation.navigate(ScreenNameEnum.BOOKING_COMPLETE);
+      navigation.navigate(ScreenNameEnum.BOOKING_COMPLETE, {
+        bookingId: res?.data?._id ?? res?.data?.bookingId ?? '',
+        garageName: garageData?.shopName ?? '',
+        serviceName: getServiceName(selectedSvc),
+        date: `${formatDate(BookingDate)}, ${formatTime(BookingTime)}`,
+        amount: totalPayable,
+      });
     }
     setLoading(false);
   };
 
-  const selectedSvc = garageData?.services?.find(
-    (s: any) => (s.serviceId ?? s._id) === selectedService,
-  );
-
-  const filteredServices: any[] = useMemo(() => {
-    const all: any[] = garageData?.services ?? [];
-    const q = serviceSearch.trim().toLowerCase();
-    if (!q) {
-      return all;
+  const handleBack = () => {
+    if (step > 0) {
+      setStep((step - 1) as Step);
+    } else {
+      navigation.goBack();
     }
-    return all.filter((s: any) =>
-      (s.serviceName ?? s.base_service_id?.name ?? '')
-        .toLowerCase()
-        .includes(q),
-    );
-  }, [garageData?.services, serviceSearch]);
+  };
 
-  const openServiceModal = useCallback(() => {
-    setServiceSearch('');
-    setServiceModal(true);
-  }, []);
+  const stepTitles: string[] = [
+    'Select Service',
+    'Booking Details',
+    'Booking Summary',
+    'Review & Confirm',
+  ];
 
-  const renderServiceItem = useCallback(
-    ({item}: {item: any}) => {
-      const itemId = item.serviceId ?? item._id;
-      const name = (
-        item.serviceName ??
-        item.base_service_id?.name ??
-        ''
-      ).toUpperCase();
-      const price = item.price ?? item?.bikes?.[0]?.price ?? 0;
-      const active = selectedService === itemId;
+  // ─── Step Indicator ───────────────────────────────────────────
 
-      return (
-        <TouchableOpacity
-          activeOpacity={0.8}
-          style={[styles.gridCard, active && styles.gridCardActive]}
-          onPress={() => {
-            setSelectedService(itemId);
-            setServiceModal(false);
-          }}>
-          {/* image */}
-          {item.serviceImage ? (
-            <Image
-              source={{uri: item.serviceImage}}
-              style={styles.gridCardImg}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={styles.gridCardImgEmpty}>
-              <Text style={styles.gridCardEmoji}>🔧</Text>
-            </View>
-          )}
-
-          {/* name + price */}
-          <View style={styles.gridCardBody}>
-            <Text style={styles.gridCardName} numberOfLines={2}>
-              {name}
+  const renderStepIndicator = () => (
+    <View style={styles.stepRow}>
+      {([0, 1, 2, 3] as const).map(i => (
+        <React.Fragment key={i}>
+          <View style={[styles.stepDot, i <= step && styles.stepDotActive]}>
+            <Text
+              style={[
+                styles.stepDotText,
+                i <= step && styles.stepDotTextActive,
+              ]}>
+              {i + 1}
             </Text>
-            <Text style={styles.gridCardPrice}>₹{price}</Text>
           </View>
-
-          {/* selected checkmark badge */}
-          {active && (
-            <View style={styles.gridCardCheck}>
-              <Text style={styles.gridCardCheckText}>✓</Text>
-            </View>
+          {i < 3 && (
+            <View
+              style={[styles.stepLine, i < step && styles.stepLineActive]}
+            />
           )}
-        </TouchableOpacity>
-      );
-    },
-    [selectedService],
+        </React.Fragment>
+      ))}
+    </View>
   );
+
+  // ─── Step 0: Service Selection ────────────────────────────────
+
+  const renderStep0 = () => (
+    <View>
+      <Text style={styles.sectionTitle}>Available Services</Text>
+
+      {(garageData?.services?.length ?? 0) === 0 ? (
+        <View style={styles.noServiceBox}>
+          <Text style={styles.noServiceText}>No services available</Text>
+        </View>
+      ) : (
+        garageData.services.map((svc: any) => {
+          const itemId = svc.serviceId ?? svc._id;
+          const active = selectedService === itemId;
+          const description =
+            svc.description ?? svc.base_service_id?.description ?? '';
+          const includes: string[] =
+            svc.includes ??
+            svc.whatsIncluded ??
+            svc.base_service_id?.includes ??
+            [];
+
+          return (
+            <TouchableOpacity
+              key={itemId}
+              activeOpacity={0.85}
+              style={[styles.serviceCard, active && styles.serviceCardActive]}
+              onPress={() => setSelectedService(itemId)}>
+              {active && (
+                <View style={styles.serviceCardBadge}>
+                  <Text style={styles.serviceCardBadgeText}>✓</Text>
+                </View>
+              )}
+              <View style={styles.serviceCardContent}>
+                {svc.serviceImage ? (
+                  <Image
+                    source={{uri: svc.serviceImage}}
+                    style={styles.serviceCardImg}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View
+                    style={[
+                      styles.serviceCardImg,
+                      styles.serviceCardImgEmpty,
+                    ]}>
+                    <Text style={styles.serviceCardEmoji}>🔧</Text>
+                  </View>
+                )}
+                <View style={styles.serviceCardBody}>
+                  <View style={styles.serviceCardTopRow}>
+                    <Text
+                      style={styles.serviceCardName}
+                      numberOfLines={2}>
+                      {getServiceName(svc)}
+                    </Text>
+                    <Text style={styles.serviceCardPrice}>
+                      ₹{getServicePrice(svc)}
+                    </Text>
+                  </View>
+                  {!!description && (
+                    <Text
+                      style={styles.serviceCardDesc}
+                      numberOfLines={2}>
+                      {description}
+                    </Text>
+                  )}
+                  {includes.length > 0 && (
+                    <View style={styles.includesRow}>
+                      {includes.slice(0, 4).map((item: string, idx: number) => (
+                        <View key={idx} style={styles.includeTag}>
+                          <Text style={styles.includeTagText}>✓ {item}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        })
+      )}
+
+      {garageData?.shopDescription ? (
+        <>
+          <Text style={styles.sectionTitleSpaced}>About</Text>
+          <Text style={styles.descText}>{garageData.shopDescription}</Text>
+        </>
+      ) : null}
+
+      <View style={styles.featureRow}>
+        <Icon source={icon.Mobile} size={28} />
+        <View style={styles.featureInfo}>
+          <Text style={styles.featureTitle}>Go Digital</Text>
+          <Text style={styles.featureDesc}>
+            Convenient online payment options
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.featureRowLast}>
+        <Icon source={icon.Expert} size={28} />
+        <View style={styles.featureInfo}>
+          <Text style={styles.featureTitle}>Our Promise</Text>
+          <Text style={styles.featureDesc}>
+            {garageData?.ourPromise ||
+              'Fast, reliable and affordable bike service.'}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  // ─── Step 2 (renders at step=2): Booking Summary ─────────────
+
+  const renderStep1 = () => (
+    <View style={styles.stepContent}>
+      <Text style={styles.sectionTitle}>Selected Service</Text>
+      <View style={styles.selectedSvcCard}>
+        {selectedSvc?.serviceImage ? (
+          <Image
+            source={{uri: selectedSvc.serviceImage}}
+            style={styles.selectedSvcImg}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={[styles.selectedSvcImg, styles.selectedSvcImgEmpty]}>
+            <Text style={styles.emojiLg}>🔧</Text>
+          </View>
+        )}
+        <View style={styles.selectedSvcBody}>
+          <Text style={styles.selectedSvcName} numberOfLines={2}>
+            {getServiceName(selectedSvc)}
+          </Text>
+          <Text style={styles.selectedSvcPrice}>₹{servicePrice}</Text>
+        </View>
+        <TouchableOpacity style={styles.changeBtn} onPress={() => setStep(0)}>
+          <Text style={styles.changeBtnText}>Change</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.sectionTitle}>Charges Breakdown</Text>
+      <View style={styles.chargesCard}>
+        <View style={styles.chargeRow}>
+          <Text style={styles.chargeLabel}>Service Charge</Text>
+          <Text style={styles.chargeValue}>₹{servicePrice}</Text>
+        </View>
+        <View style={styles.chargeDivider} />
+        <View style={styles.chargeRow}>
+          <Text style={styles.chargeLabel}>Pickup & Drop</Text>
+          <Text style={styles.chargeValue}>
+            {choosePickupOption === 'PickDrop'
+              ? `₹${garageData?.pickupCharge ?? pickupCharge}`
+              : 'Not applicable'}
+          </Text>
+        </View>
+        <View style={styles.chargeDivider} />
+        <View style={styles.chargeRow}>
+          <Text style={styles.chargeLabel}>Tax / GST (18%)</Text>
+          <Text style={styles.chargeValue}>₹{gstAmount}</Text>
+        </View>
+        <View style={styles.chargeTotalDivider} />
+        <View style={styles.chargeRow}>
+          <Text style={styles.chargeTotalLabel}>Total Payable</Text>
+          <Text style={styles.chargeTotalValue}>₹{totalPayable}</Text>
+        </View>
+      </View>
+
+      <View style={styles.disclaimerBox}>
+        <Text style={styles.disclaimerIcon}>🛡️</Text>
+        <View style={styles.flex1}>
+          <Text style={styles.disclaimerTitle}>No Hidden Charges</Text>
+          <Text style={styles.disclaimerText}>
+            The displayed price covers only the selected service package. Any
+            additional repairs or maintenance identified during inspection will
+            only be performed after your approval and may incur extra charges.
+            The service center must inform you before proceeding.
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  // ─── Step 1 (renders at step=1): Booking Details ─────────────
+
+  const renderStep2 = () => (
+    <View style={styles.stepContent}>
+      <Text style={styles.sectionTitle}>Your Vehicle</Text>
+      <View style={styles.featureRow}>
+        <Icon source={icon.bikep} size={28} />
+        <View style={styles.featureInfo}>
+          <Text style={styles.featureTitle}>
+            {bike?.name ?? bike?.model ?? 'Your Bike'}
+          </Text>
+          {!!bike?.plate_number && (
+            <Text style={styles.featureDesc}>{bike.plate_number}</Text>
+          )}
+        </View>
+      </View>
+
+      <Text style={styles.sectionTitle}>Date & Time</Text>
+      <TouchableOpacity
+        onPress={() => setBookingDateModal(true)}
+        style={styles.featureRow}
+        activeOpacity={0.7}>
+        <Icon source={icon.calendar} size={26} tintColor={color.buttonColor} />
+        <View style={styles.featureInfo}>
+          <Text style={styles.featureTitle}>Booking Date</Text>
+          <Text style={styles.featureDescDate}>{formatDate(BookingDate)}</Text>
+          <Text style={styles.featureDesc}>Tap to change</Text>
+        </View>
+        <Icon source={icon.rightarrow} size={20} />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => setBookingTimeModal(true)}
+        style={styles.featureRowMt}
+        activeOpacity={0.7}>
+        <Icon source={icon.calendar} size={26} tintColor={color.buttonColor} />
+        <View style={styles.featureInfo}>
+          <Text style={styles.featureTitle}>Preferred Time</Text>
+          <Text style={styles.featureDescDate}>{formatTime(BookingTime)}</Text>
+          <Text style={styles.featureDesc}>Tap to change</Text>
+        </View>
+        <Icon source={icon.rightarrow} size={20} />
+      </TouchableOpacity>
+
+      <Text style={styles.sectionTitle}>Pickup & Drop</Text>
+      <View style={styles.featureRow}>
+        <Icon source={icon.pickups} size={28} />
+        <View style={styles.featureInfo}>
+          <Text style={styles.featureTitle}>How will you bring your bike?</Text>
+          {choosePickupOption === 'PickDrop' && PickupLocationName ? (
+            <Text style={styles.featureDesc}>{PickupLocationName}</Text>
+          ) : choosePickupOption === 'Visit' ? (
+            <Text style={styles.featureDesc}>Self visit / drop by shop</Text>
+          ) : (
+            <Text style={styles.featureDesc}>
+              {garageData?.pickupAndDrop
+                ? 'Pickup & Drop available'
+                : 'Choose an option below'}
+            </Text>
+          )}
+          <View style={styles.pickupOptions}>
+            <TouchableOpacity
+              onPress={() => {
+                setPickupLocationId('Visit');
+                setChoosePickupOption('Visit');
+              }}
+              style={[
+                styles.optionBtn,
+                choosePickupOption === 'Visit' && styles.optionBtnActive,
+              ]}>
+              <Text
+                style={[
+                  styles.optionBtnText,
+                  choosePickupOption === 'Visit' && styles.optionBtnTextActive,
+                ]}>
+                Visit
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                setPickupModalVisible(true);
+                setChoosePickupOption('PickDrop');
+              }}
+              style={[
+                styles.optionBtn,
+                choosePickupOption === 'PickDrop' && styles.optionBtnActive,
+              ]}>
+              <Text
+                style={[
+                  styles.optionBtnText,
+                  choosePickupOption === 'PickDrop' &&
+                    styles.optionBtnTextActive,
+                ]}>
+                {`Pickup & Drop${
+                  PickupDistance !== null
+                    ? ` (${PickupDistance.toFixed(1)} km)`
+                    : ''
+                }`}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+
+  // ─── Step 3: Review & Confirm ─────────────────────────────────
+
+  const renderStep3 = () => (
+    <View style={styles.stepContentLast}>
+      <Text style={styles.sectionTitle}>Booking Summary</Text>
+      <View style={styles.reviewCard}>
+        <ReviewRow label="Garage" value={garageData?.shopName ?? ''} />
+        <ReviewRow label="Service" value={getServiceName(selectedSvc)} />
+        <ReviewRow
+          label="Vehicle"
+          value={bike?.name ?? bike?.model ?? 'Your Bike'}
+        />
+        <ReviewRow
+          label="Date & Time"
+          value={`${formatDate(BookingDate)}, ${formatTime(BookingTime)}`}
+        />
+        <ReviewRow
+          label="Pickup"
+          value={
+            choosePickupOption === 'Visit'
+              ? 'Self Visit'
+              : PickupLocationName || 'Pickup & Drop'
+          }
+        />
+      </View>
+
+      <Text style={styles.sectionTitle}>Payment Breakdown</Text>
+      <View style={styles.chargesCard}>
+        <View style={styles.chargeRow}>
+          <Text style={styles.chargeLabel}>Service Charge</Text>
+          <Text style={styles.chargeValue}>₹{servicePrice}</Text>
+        </View>
+        {choosePickupOption === 'PickDrop' && (
+          <>
+            <View style={styles.chargeDivider} />
+            <View style={styles.chargeRow}>
+              <Text style={styles.chargeLabel}>Pickup & Drop</Text>
+              <Text style={styles.chargeValue}>₹{pickupCharge}</Text>
+            </View>
+          </>
+        )}
+        <View style={styles.chargeDivider} />
+        <View style={styles.chargeRow}>
+          <Text style={styles.chargeLabel}>Tax / GST (18%)</Text>
+          <Text style={styles.chargeValue}>₹{gstAmount}</Text>
+        </View>
+        <View style={styles.chargeTotalDivider} />
+        <View style={styles.chargeRow}>
+          <Text style={styles.chargeTotalLabel}>Total Payable</Text>
+          <Text style={styles.chargeTotalValue}>₹{totalPayable}</Text>
+        </View>
+      </View>
+
+      <View style={styles.disclaimerBox}>
+        <Text style={styles.disclaimerIcon}>🛡️</Text>
+        <View style={styles.flex1}>
+          <Text style={styles.disclaimerTitle}>No Hidden Charges</Text>
+          <Text style={styles.disclaimerText}>
+            No hidden charges. Any additional repairs or maintenance identified
+            during inspection will only be performed after customer approval.
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  // ─── Bottom Bar ───────────────────────────────────────────────
+
+  const renderBottomBar = () => {
+    if (step === 0) {
+      return (
+        <View style={styles.bottomBar}>
+          <CustomButton
+            title="Continue to Booking Details"
+            disable={!selectedService}
+            onPress={() => setStep(1)}
+          />
+        </View>
+      );
+    }
+    if (step === 1) {
+      return (
+        <View style={styles.bottomBar}>
+          <CustomButton
+            title="View Charges"
+            disable={!choosePickupOption}
+            onPress={() => setStep(2)}
+          />
+        </View>
+      );
+    }
+    if (step === 2) {
+      return (
+        <View style={styles.bottomBar}>
+          <CustomButton
+            title="Review & Confirm"
+            onPress={() => setStep(3)}
+          />
+        </View>
+      );
+    }
+    return (
+      <View style={styles.bottomBar}>
+        <CustomButton title="Confirm Booking" onPress={createBooking} />
+      </View>
+    );
+  };
+
+  // ─── Render ───────────────────────────────────────────────────
 
   return (
     <View style={styles.container}>
@@ -305,313 +723,85 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
       />
       {loading && <Loading />}
 
+      <TouchableOpacity
+        onPress={handleBack}
+        style={styles.backBtn}
+        activeOpacity={0.8}>
+        <Icon source={icon.back} size={30} />
+      </TouchableOpacity>
+
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Hero */}
         <GarageImage shopImages={garageData?.shopImages} />
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}>
-          <Icon source={icon.back} size={30} />
-        </TouchableOpacity>
-        <View style={styles.heroInfo}>
-          <Text style={styles.heroTitle}>{garageData?.shopName}</Text>
-          <Text style={styles.heroAddress}>{garageData?.address}</Text>
+
+        {/* Garage info below hero */}
+        <View style={styles.garageInfoBar}>
+          <Text style={styles.heroTitle} numberOfLines={1}>
+            {garageData?.shopName}
+          </Text>
+          <Text style={styles.heroAddress} numberOfLines={2}>
+            {garageData?.address}
+          </Text>
           <View style={styles.infoRow}>
-            <Icon source={icon.pin} size={14} />
-            <Text style={styles.infoText}>
-              {distance !== null ? `${distance.toFixed(1)} km` : '—'}
-            </Text>
-            <Icon source={icon.star} size={14} />
-            <Text style={styles.infoText}>
-              {garageData?.averageRating || '—'}
-            </Text>
+            <View style={styles.infoChip}>
+              <Icon source={icon.pin} size={12} />
+              <Text style={styles.infoChipText}>
+                {distance !== null ? `${distance.toFixed(1)} km` : '—'}
+              </Text>
+            </View>
+            <View style={styles.infoChip}>
+              <Icon source={icon.star} size={12} />
+              <Text style={styles.infoChipText}>
+                {garageData?.averageRating || '—'}
+              </Text>
+            </View>
           </View>
         </View>
 
+        {/* Step indicator */}
+        <View style={styles.stepWrapper}>
+          {renderStepIndicator()}
+          <Text style={styles.stepLabel}>{stepTitles[step]}</Text>
+        </View>
+
+        {/* Step content */}
         <View style={styles.body}>
-          {/* About */}
-          {garageData?.shopDescription ? (
-            <>
-              <Text style={styles.sectionTitle}>About</Text>
-              <Text style={styles.descText}>{garageData.shopDescription}</Text>
-            </>
-          ) : null}
-
-          {/* Go Digital */}
-          <View style={styles.featureRow}>
-            <Icon source={icon.Mobile} size={28} />
-            <View style={styles.featureInfo}>
-              <Text style={styles.featureTitle}>Go Digital</Text>
-              <Text style={styles.featureDesc}>
-                Convenient online payment options
-              </Text>
-            </View>
-          </View>
-
-          {/* Pickup & Drop */}
-          <View style={styles.featureRow}>
-            <Icon source={icon.pickups} size={28} />
-            <View style={styles.featureInfo}>
-              <Text style={styles.featureTitle}>
-                Pickup & Drop
-                {PickupDistance !== null
-                  ? ` (${PickupDistance.toFixed(1)} km)`
-                  : ''}
-              </Text>
-              {choosePickupOption === 'PickDrop' && PickupLocationName ? (
-                <Text style={styles.featureDesc}>{PickupLocationName}</Text>
-              ) : choosePickupOption === 'Visit' ? (
-                <Text style={styles.featureDesc}>
-                  Self visit / drop by shop
-                </Text>
-              ) : (
-                <Text style={styles.featureDesc}>
-                  {garageData?.pickupAndDrop
-                    ? 'We offer pickup & drop'
-                    : 'Pickup & drop not available'}
-                </Text>
-              )}
-              <View style={styles.pickupOptions}>
-                <TouchableOpacity
-                  onPress={() => {
-                    setPickupLocationId('Visit');
-                    setChoosePickupOption('Visit');
-                  }}
-                  style={[
-                    styles.optionBtn,
-                    choosePickupOption === 'Visit' && styles.optionBtnActive,
-                  ]}>
-                  <Text
-                    style={[
-                      styles.optionBtnText,
-                      choosePickupOption === 'Visit' &&
-                        styles.optionBtnTextActive,
-                    ]}>
-                    Visit
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => {
-                    setPickupModalVisible(true);
-                    setChoosePickupOption('PickDrop');
-                  }}
-                  style={[
-                    styles.optionBtn,
-                    choosePickupOption === 'PickDrop' && styles.optionBtnActive,
-                  ]}>
-                  <Text
-                    style={[
-                      styles.optionBtnText,
-                      choosePickupOption === 'PickDrop' &&
-                        styles.optionBtnTextActive,
-                    ]}>
-                    Pickup & Drop
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-
-          {/* Booking Date */}
-          <TouchableOpacity
-            onPress={() => setBookingDateModal(true)}
-            style={styles.featureRow}
-            activeOpacity={0.7}>
-            <Icon source={icon.calendar} size={26} tintColor="#FED428" />
-            <View style={styles.featureInfo}>
-              <Text style={styles.featureTitle}>Booking Date</Text>
-              <Text style={styles.featureDescDate}>
-                {formatDate(BookingDate)}
-              </Text>
-              <Text style={styles.featureDesc}>Tap to change date</Text>
-            </View>
-            <Icon source={icon.rightarrow} size={20} />
-          </TouchableOpacity>
-
-          {/* Our Promise */}
-          <View style={styles.featureRow}>
-            <Icon source={icon.Expert} size={28} />
-            <View style={styles.featureInfo}>
-              <Text style={styles.featureTitle}>Our Promise</Text>
-              <Text style={styles.featureDesc}>
-                {garageData?.ourPromise ||
-                  'Fast, reliable and affordable bike service.'}
-              </Text>
-            </View>
-          </View>
-
-          {/* ── Select Service ── */}
-          <Text style={styles.sectionTitle}>Select Service</Text>
-
-          {(garageData?.services?.length ?? 0) > 0 ? (
-            <TouchableOpacity
-              style={[
-                styles.servicePicker,
-                !!selectedSvc && styles.servicePickerSelected,
-              ]}
-              activeOpacity={0.8}
-              onPress={openServiceModal}>
-              <View style={styles.servicePickerLeft}>
-                {selectedSvc?.serviceImage ? (
-                  <Image
-                    source={{uri: selectedSvc.serviceImage}}
-                    style={styles.servicePickerThumb}
-                  />
-                ) : (
-                  <View style={styles.servicePickerIcon}>
-                    <Text style={styles.servicePickerEmoji}>🔧</Text>
-                  </View>
-                )}
-                <View style={styles.servicePickerMid}>
-                  {selectedSvc ? (
-                    <>
-                      <Text style={styles.servicePickerName} numberOfLines={1}>
-                        {(
-                          selectedSvc.serviceName ??
-                          selectedSvc.base_service_id?.name ??
-                          ''
-                        ).toUpperCase()}
-                      </Text>
-                      <Text style={styles.servicePickerPrice}>
-                        ₹
-                        {selectedSvc.price ??
-                          selectedSvc?.bikes?.[0]?.price ??
-                          0}
-                      </Text>
-                    </>
-                  ) : (
-                    <Text style={styles.servicePickerPlaceholder}>
-                      Tap to choose from {garageData?.services.length} services
-                    </Text>
-                  )}
-                </View>
-              </View>
-              <Icon source={icon.rightarrow} size={18} />
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.noServiceBox}>
-              <Text style={styles.noServiceText}>No services added yet</Text>
-            </View>
-          )}
+          {step === 0 && renderStep0()}
+          {step === 1 && renderStep2()}
+          {step === 2 && renderStep1()}
+          {step === 3 && renderStep3()}
         </View>
-
-        {/* Book Now */}
-        {(garageData?.services?.length ?? 0) > 0 && (
-          <View style={styles.bookBtnWrapper}>
-            <CustomButton
-              title="Book Now"
-              disable={!selectedService}
-              onPress={createBooking}
-            />
-          </View>
-        )}
-
-        {BookingDateModal && (
-          <DateTimePicker
-            value={BookingDate}
-            mode="date"
-            display="default"
-            minimumDate={new Date()}
-            onChange={(_event, selectedDate) => {
-              setBookingDateModal(Platform.OS === 'ios');
-              if (selectedDate) {
-                setBookingDate(selectedDate);
-              }
-            }}
-          />
-        )}
       </ScrollView>
 
-      {/* ── Service Picker — bottom-sheet Modal ── */}
-      <Modal
-        visible={serviceModal}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        hardwareAccelerated
-        onRequestClose={() => setServiceModal(false)}>
-        <View style={styles.modalRoot}>
-          {/* Backdrop */}
-          <TouchableOpacity
-            activeOpacity={1}
-            style={styles.modalBackdrop}
-            onPress={() => setServiceModal(false)}
-          />
+      {renderBottomBar()}
 
-          {/* Bottom Sheet */}
-          <View style={styles.sheet}>
-            {/* Drag handle */}
-            <View style={styles.sheetHandle} />
+      {BookingDateModal && (
+        <DateTimePicker
+          value={BookingDate}
+          mode="date"
+          display="default"
+          minimumDate={new Date()}
+          onChange={(_event, d) => {
+            setBookingDateModal(Platform.OS === 'ios');
+            if (d) {
+              setBookingDate(d);
+            }
+          }}
+        />
+      )}
 
-            {/* Header */}
-            <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>Choose a Service</Text>
-              <TouchableOpacity
-                onPress={() => setServiceModal(false)}
-                hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}>
-                <Text style={styles.sheetClose}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Search bar */}
-            <View style={styles.searchBar}>
-              <Text style={styles.searchIconText}>🔍</Text>
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search services..."
-                placeholderTextColor="#777"
-                value={serviceSearch}
-                onChangeText={setServiceSearch}
-                returnKeyType="search"
-                autoCorrect={false}
-              />
-              {serviceSearch.length > 0 && (
-                <TouchableOpacity
-                  onPress={() => setServiceSearch('')}
-                  hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-                  <Text style={styles.searchClear}>✕</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            <Text style={styles.resultCount}>
-              {serviceSearch.trim()
-                ? `${filteredServices.length} result${
-                    filteredServices.length !== 1 ? 's' : ''
-                  } for "${serviceSearch.trim()}"`
-                : `${filteredServices.length} service${
-                    filteredServices.length !== 1 ? 's' : ''
-                  } available`}
-            </Text>
-
-            {/* 2-column service grid */}
-            <FlatList
-              data={filteredServices}
-              keyExtractor={item => item.serviceId ?? item._id}
-              renderItem={renderServiceItem}
-              numColumns={2}
-              columnWrapperStyle={styles.gridRow}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-              style={styles.flatList}
-              ListEmptyComponent={
-                <View style={styles.emptyBox}>
-                  <Text style={styles.emptyEmoji}>🔍</Text>
-                  <Text style={styles.emptyText}>
-                    No services match "{serviceSearch}"
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => setServiceSearch('')}
-                    style={styles.clearBtn}>
-                    <Text style={styles.clearBtnText}>Clear Search</Text>
-                  </TouchableOpacity>
-                </View>
-              }
-              contentContainerStyle={styles.flatListPad}
-            />
-          </View>
-        </View>
-      </Modal>
+      {BookingTimeModal && (
+        <DateTimePicker
+          value={BookingTime}
+          mode="time"
+          display="default"
+          onChange={(_event, t) => {
+            setBookingTimeModal(Platform.OS === 'ios');
+            if (t) {
+              setBookingTime(t);
+            }
+          }}
+        />
+      )}
 
       <MapPickerModal
         setModalVisible={() => {
@@ -628,87 +818,185 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
 
 export default GarageDetails;
 
-
 const styles = StyleSheet.create({
-  /*
-   * Android transparent Modal mein flex:1 kaam nahi karta kyunki
-   * Android parent dimensions nahi deta flex children ko.
-   * Solution: position:'absolute' + explicit 0 insets — dono platform par 100% kaam karta hai.
-   */
-  modalRoot: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.55)',
-  },
-
-  modalBackdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-
-  sheet: {
-    width: '100%',
-    height: 500,
-
-    backgroundColor: '#1c1c1e',
-
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-
-    paddingTop: 12,
-    paddingHorizontal: 12,
-
-    zIndex: 999,
-    elevation: 20,
-  },
-
-  sheetHandle: {
-    width: 50,
-    height: 5,
-    borderRadius: 100,
-    backgroundColor: '#666',
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
   container: {flex: 1, backgroundColor: color.baground},
+
   backBtn: {
     position: 'absolute',
     top: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 24) + 8,
     left: 10,
-  },
-  heroInfo: {position: 'absolute', top: hp(18), left: 10, right: 10},
-  heroTitle: {fontSize: 22, fontWeight: '700', color: '#fff'},
-  heroAddress: {fontSize: 12, color: '#ddd', marginTop: 4},
-  infoRow: {flexDirection: 'row', alignItems: 'center', marginTop: 8},
-  infoText: {
-    fontSize: 12,
-    color: '#fff',
-    marginLeft: 4,
-    marginRight: 12,
-    fontWeight: '500',
+    zIndex: 10,
   },
 
-  body: {padding: 16},
+  // ── Garage info ──
+  garageInfoBar: {
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 6,
+  },
+  heroTitle: {fontSize: 20, fontWeight: '700', color: '#fff'},
+  heroAddress: {fontSize: 12, color: '#A0A3BD', marginTop: 3},
+  infoRow: {flexDirection: 'row', marginTop: 10, gap: 8},
+  infoChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  infoChipText: {fontSize: 12, color: '#fff', fontWeight: '600'},
+
+  // ── Step indicator ──
+  stepWrapper: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+  },
+  stepRow: {flexDirection: 'row', alignItems: 'center', marginBottom: 10},
+  stepDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepDotActive: {backgroundColor: color.buttonColor},
+  stepDotText: {fontSize: 12, fontWeight: '700', color: '#555'},
+  stepDotTextActive: {color: '#000'},
+  stepLine: {
+    flex: 1,
+    height: 2,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    marginHorizontal: 4,
+  },
+  stepLineActive: {backgroundColor: color.buttonColor},
+  stepLabel: {fontSize: 15, fontWeight: '700', color: '#fff'},
+
+  // ── Body ──
+  body: {paddingHorizontal: 16, paddingTop: 4},
   sectionTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
     color: '#fff',
-    marginTop: 20,
-    marginBottom: 8,
+    marginTop: 16,
+    marginBottom: 10,
   },
-  descText: {fontSize: 14, color: '#A0A3BD', lineHeight: 20},
+  sectionTitleSpaced: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
+    marginTop: 24,
+    marginBottom: 10,
+  },
+  stepContent: {paddingBottom: 100},
+  stepContentLast: {paddingBottom: 120},
+  featureRowLast: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 12,
+    marginBottom: 100,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    padding: 12,
+  },
+  featureRowMt: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 10,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    padding: 12,
+  },
+  emojiLg: {fontSize: 22},
+  chargeValueMuted: {fontSize: 12, color: '#888', fontWeight: '600'},
+  flex1: {flex: 1},
+  descText: {fontSize: 13, color: '#A0A3BD', lineHeight: 20},
 
+  // ── Service cards ──
+  serviceCard: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  serviceCardActive: {
+    borderColor: color.buttonColor,
+    backgroundColor: 'rgba(254,212,40,0.06)',
+  },
+  serviceCardBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: color.buttonColor,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  serviceCardBadgeText: {fontSize: 13, fontWeight: '800', color: '#000'},
+  serviceCardContent: {
+    flexDirection: 'row',
+    padding: 12,
+    alignItems: 'flex-start',
+  },
+  serviceCardImg: {width: 72, height: 72, borderRadius: 10},
+  serviceCardImgEmpty: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  serviceCardEmoji: {fontSize: 28},
+  serviceCardBody: {flex: 1, marginLeft: 12},
+  serviceCardTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingRight: 30,
+  },
+  serviceCardName: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#fff',
+    lineHeight: 18,
+  },
+  serviceCardPrice: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: color.buttonColor,
+    marginLeft: 8,
+  },
+  serviceCardDesc: {
+    fontSize: 12,
+    color: '#A0A3BD',
+    marginTop: 5,
+    lineHeight: 17,
+  },
+  includesRow: {flexDirection: 'row', flexWrap: 'wrap', marginTop: 8, gap: 6},
+  includeTag: {
+    backgroundColor: 'rgba(254,212,40,0.1)',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(254,212,40,0.22)',
+  },
+  includeTagText: {fontSize: 10, color: color.buttonColor, fontWeight: '600'},
+
+  // ── Garage feature rows ──
   featureRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginTop: 16,
+    marginTop: 12,
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 12,
     padding: 12,
@@ -718,17 +1006,130 @@ const styles = StyleSheet.create({
   featureDesc: {fontSize: 12, color: '#A1A1A1', marginTop: 3, lineHeight: 18},
   featureDescDate: {
     fontSize: 13,
-    color: '#FED428',
+    color: color.buttonColor,
     fontWeight: '600',
     marginTop: 3,
   },
 
-  pickupOptions: {flexDirection: 'row', marginTop: 10, gap: 10},
+  // ── Selected service card (Step 1) ──
+  selectedSvcCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(254,212,40,0.06)',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: 'rgba(254,212,40,0.28)',
+    padding: 12,
+    gap: 12,
+  },
+  selectedSvcImg: {width: 60, height: 60, borderRadius: 10},
+  selectedSvcImgEmpty: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedSvcBody: {flex: 1},
+  selectedSvcName: {fontSize: 13, fontWeight: '700', color: '#fff'},
+  selectedSvcPrice: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: color.buttonColor,
+    marginTop: 4,
+  },
+  changeBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: color.buttonColor,
+  },
+  changeBtnText: {fontSize: 12, color: color.buttonColor, fontWeight: '700'},
+
+  // ── Charges breakdown ──
+  chargesCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 14,
+    padding: 16,
+  },
+  chargeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  chargeLabel: {fontSize: 14, color: '#A0A3BD'},
+  chargeValue: {fontSize: 14, color: '#fff', fontWeight: '600'},
+  chargeDivider: {height: 1, backgroundColor: 'rgba(255,255,255,0.06)'},
+  chargeTotalDivider: {
+    height: 2,
+    backgroundColor: color.buttonColor,
+    opacity: 0.45,
+    marginVertical: 4,
+  },
+  chargeTotalLabel: {fontSize: 16, color: '#fff', fontWeight: '800'},
+  chargeTotalValue: {
+    fontSize: 18,
+    color: color.buttonColor,
+    fontWeight: '900',
+  },
+  chargeNote: {fontSize: 11, color: '#666', marginTop: 8, marginHorizontal: 2},
+
+  // ── Disclaimer ──
+  disclaimerBox: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(254,212,40,0.06)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(254,212,40,0.18)',
+    padding: 14,
+    marginTop: 16,
+    gap: 10,
+    alignItems: 'flex-start',
+  },
+  disclaimerIcon: {fontSize: 18},
+  disclaimerTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: color.buttonColor,
+    marginBottom: 4,
+  },
+  disclaimerText: {fontSize: 12, color: '#A0A3BD', lineHeight: 18},
+
+  // ── Review card (Step 3) ──
+  reviewCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  reviewRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+  },
+  reviewLabel: {fontSize: 13, color: '#A0A3BD', flex: 1},
+  reviewValue: {
+    fontSize: 13,
+    color: '#fff',
+    fontWeight: '600',
+    flex: 2,
+    textAlign: 'right',
+  },
+
+  // ── Pickup options ──
+  pickupOptions: {
+    flexDirection: 'row',
+    marginTop: 10,
+    gap: 10,
+    flexWrap: 'wrap',
+  },
   optionBtn: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
     borderWidth: 1,
     borderColor: 'transparent',
   },
@@ -739,220 +1140,21 @@ const styles = StyleSheet.create({
   optionBtnText: {fontSize: 13, color: '#fff', fontWeight: '600'},
   optionBtnTextActive: {color: '#000'},
 
-  /* ── service picker ── */
-  servicePicker: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: color.borderColor,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    minHeight: 52,
-  },
-  servicePickerSelected: {
-    borderColor: color.buttonColor,
-    backgroundColor: '#fffdf0',
-  },
-  servicePickerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: 10,
-  },
-  servicePickerThumb: {width: 38, height: 38, borderRadius: 8},
-  servicePickerIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  servicePickerEmoji: {fontSize: 18},
-  servicePickerMid: {flex: 1},
-  servicePickerName: {fontSize: 13, fontWeight: '700', color: '#111'},
-  servicePickerPrice: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#16a34a',
-    marginTop: 2,
-  },
-  servicePickerPlaceholder: {fontSize: 14, color: '#888'},
-
+  // ── No services ──
   noServiceBox: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 14,
-    padding: 20,
+    padding: 24,
     alignItems: 'center',
-    marginTop: 8,
   },
   noServiceText: {color: '#aaa', fontSize: 14},
-  bookBtnWrapper: {marginHorizontal: 16, marginVertical: 24},
 
-  sheetHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 18,
+  // ── Bottom bar ──
+  bottomBar: {
+    paddingHorizontal: 16,
     paddingVertical: 14,
+    backgroundColor: color.baground,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
   },
-  sheetTitle: {fontSize: 17, fontWeight: '800', color: '#fff'},
-  sheetClose: {fontSize: 16, color: '#888', paddingLeft: 12},
-
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 12,
-    marginHorizontal: 14,
-    paddingHorizontal: 12,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 6,
-    gap: 8,
-    marginBottom: 6,
-  },
-  searchIconText: {fontSize: 14},
-  searchInput: {flex: 1, fontSize: 14, color: '#fff'},
-  searchClear: {fontSize: 13, color: '#888'},
-  resultCount: {
-    fontSize: 11,
-    color: '#666',
-    marginHorizontal: 18,
-    marginBottom: 8,
-  },
-
-  modalRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
-  },
-  modalRowActive: {backgroundColor: 'rgba(254,212,40,0.07)'},
-  modalImg: {width: 56, height: 56, borderRadius: 10},
-  modalImgPlaceholder: {
-    width: 56,
-    height: 56,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalImgEmoji: {fontSize: 22},
-  modalBody: {flex: 1},
-  modalName: {fontSize: 13, fontWeight: '700', color: '#fff', lineHeight: 18},
-  modalPrice: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: color.buttonColor,
-    marginTop: 4,
-  },
-
-  radio: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    borderColor: '#444',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioActive: {borderColor: color.buttonColor},
-  radioDot: {
-    width: 11,
-    height: 11,
-    borderRadius: 6,
-    backgroundColor: color.buttonColor,
-  },
-
-  emptyBox: {paddingVertical: 40, alignItems: 'center', gap: 10},
-  emptyEmoji: {fontSize: 32},
-  emptyText: {fontSize: 14, color: '#888'},
-  clearBtn: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: 'rgba(254,212,40,0.15)',
-    borderWidth: 1,
-    borderColor: color.buttonColor,
-    marginTop: 4,
-  },
-  clearBtnText: {fontSize: 13, color: color.buttonColor, fontWeight: '700'},
-  // flex:1 lets FlatList grow into the remaining sheet height and scroll
-  // properly. Without this it tries to render all rows at once (no scrolling).
-  flatList: {flex: 1},
-  flatListPad: {paddingBottom: 32, paddingHorizontal: 10},
-
-  /* modal root + backdrop
-   *
-   * Layout model (column direction):
-   *   modalRoot   flex:1 — full-screen transparent wrapper
-   *     modalBackdrop  flex:1 — dark overlay that fills the space ABOVE the sheet
-   *     sheet          fixed height — sits at the bottom as a normal flex child
-   *
-   * Why not absoluteFillObject on the backdrop?
-   *   absoluteFillObject + no zIndex → Android does NOT guarantee the later-
-   *   rendered sheet paints on top, so the backdrop silently covered the sheet.
-   *   Using flex:1 here means backdrop and sheet are in separate, non-overlapping
-   *   regions — zero z-index conflict on either platform.
-   */
-
-  /* 2-col grid */
-  gridRow: {
-    justifyContent: 'space-between',
-    paddingHorizontal: 4,
-    marginBottom: 10,
-  },
-
-  /* grid card */
-  gridCard: {
-    width: '48%',
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    overflow: 'hidden',
-  },
-  gridCardActive: {
-    borderColor: color.buttonColor,
-    backgroundColor: 'rgba(254,212,40,0.08)',
-  },
-  gridCardImg: {width: '100%', height: 100},
-  gridCardImgEmpty: {
-    width: '100%',
-    height: 100,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gridCardEmoji: {fontSize: 30},
-  gridCardBody: {padding: 8},
-  gridCardName: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#fff',
-    lineHeight: 15,
-  },
-  gridCardPrice: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: color.buttonColor,
-    marginTop: 4,
-  },
-  gridCardCheck: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: color.buttonColor,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gridCardCheckText: {fontSize: 12, fontWeight: '800', color: '#000'},
 });

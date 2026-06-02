@@ -25,6 +25,7 @@ interface VerticalListProps {
   data: ListItem[];
   navigation: any;
   bike: any;
+  serviceId?: string;
 }
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -33,10 +34,12 @@ const ShopCard = ({
   item,
   navigation,
   bike,
+  serviceId,
 }: {
   item: ListItem;
   navigation: any;
   bike: any;
+  serviceId?: string;
 }) => {
   const [imgError, setImgError] = useState(false);
 
@@ -51,6 +54,7 @@ const ShopCard = ({
         navigation.navigate(ScreenNameEnum.GARAGE_DETAILS, {
           bike,
           id: item._id,
+          serviceId,
         })
       }
       style={styles.card}
@@ -100,6 +104,7 @@ const VerticalshopList: React.FC<VerticalListProps> = ({
   data,
   navigation,
   bike,
+  serviceId,
 }) => {
   return (
     <FlatList
@@ -108,7 +113,7 @@ const VerticalshopList: React.FC<VerticalListProps> = ({
       contentContainerStyle={styles.listContainer}
       scrollEnabled={false}
       renderItem={({item}) => (
-        <ShopCard item={item} navigation={navigation} bike={bike} />
+        <ShopCard item={item} navigation={navigation} bike={bike} serviceId={serviceId} />
       )}
     />
   );

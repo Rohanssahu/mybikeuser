@@ -78,6 +78,7 @@ const MyBikes: React.FC<Props> = ({navigation}) => {
       (navigation as any).navigate(ScreenNameEnum.GARAGE_DETAILS, {
         bike: item,
         id: Grageid,
+        serviceId,
       });
     } else {
       (navigation as any).navigate(ScreenNameEnum.NEARBY_SHOPS, {item, serviceId});

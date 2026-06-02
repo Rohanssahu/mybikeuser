@@ -66,7 +66,7 @@ const NearByShops: React.FC<Props> = ({ navigation }) => {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
             {dealerList.length > 0 ? (
-              <VerticalshopList data={dealerList} navigation={navigation} bike={item}/>
+              <VerticalshopList data={dealerList} navigation={navigation} bike={item} serviceId={serviceId}/>
             ) : (
               <Text style={{ textAlign: 'center', marginVertical: 10 ,color:'#fff'}}>No Dealers Found This Location</Text>
             )}
