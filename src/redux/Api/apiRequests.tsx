@@ -405,7 +405,7 @@ const get_servicelist = async () => {
         return { success: false, message: error.message, data: [] };
     }
 };
-const get_nearyBydeler = async (lat: string, long: string) => {
+const get_nearyBydeler = async (lat: number, long: number) => {
 
     console.log(`${endpoint.nearbydeler}?userLat=${lat}&userLon=${long}`);
     const token = await AsyncStorage.getItem('token')
@@ -436,6 +436,32 @@ const get_nearyBydeler = async (lat: string, long: string) => {
         return { success: false, message: error.message, data: [] };
     }
 };
+const get_featured_categories = async (lat: number, lon: number) => {
+    const token = await AsyncStorage.getItem('token');
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: `${endpoint.featuredCategories}?latitude=${lat}&longitude=${lon}`,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'token': token,
+            },
+        },
+    ];
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+        if (response?.data?.length > 0) {
+            return { success: true, data: response.data };
+        } else {
+            return { success: false, message: 'No data', data: [] };
+        }
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, data: [] };
+    }
+};
+
 const get_bannerlist = async () => {
 
     const token = await AsyncStorage.getItem('token')
@@ -1338,4 +1364,4 @@ const tikitstatus = async (id: string, status: string) => {
 
 
 
-export { additionalservices, updateBooking, payment_Cash, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  
+export { additionalservices, updateBooking, payment_Cash, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist, get_featured_categories }

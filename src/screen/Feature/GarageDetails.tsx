@@ -12,6 +12,7 @@ import {
   TextInput,
   PermissionsAndroid,
   Platform,
+  Dimensions,
 } from 'react-native';
 import CustomButton from '../../component/CustomButton';
 import ScreenNameEnum from '../../routes/screenName.enum';
@@ -524,27 +525,25 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
       {/* ── Service Picker — bottom-sheet Modal ── */}
       <Modal
         visible={serviceModal}
-        transparent={true}
-        animationType="slide"
-        hardwareAccelerated={true}
-        presentationStyle="overFullScreen"
-        statusBarTranslucent={true}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        hardwareAccelerated
         onRequestClose={() => setServiceModal(false)}>
-        {/* full-screen container with dark bg */}
         <View style={styles.modalRoot}>
-          {/* backdrop: tap to close */}
+          {/* Backdrop */}
           <TouchableOpacity
-            style={styles.modalBackdrop}
             activeOpacity={1}
+            style={styles.modalBackdrop}
             onPress={() => setServiceModal(false)}
           />
 
-          {/* sheet sits at bottom */}
+          {/* Bottom Sheet */}
           <View style={styles.sheet}>
-            {/* drag handle */}
+            {/* Drag handle */}
             <View style={styles.sheetHandle} />
 
-            {/* header */}
+            {/* Header */}
             <View style={styles.sheetHeader}>
               <Text style={styles.sheetTitle}>Choose a Service</Text>
               <TouchableOpacity
@@ -585,7 +584,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
                   } available`}
             </Text>
 
-            {/* 2-column grid */}
+            {/* 2-column service grid */}
             <FlatList
               data={filteredServices}
               keyExtractor={item => item.serviceId ?? item._id}
@@ -594,6 +593,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
               columnWrapperStyle={styles.gridRow}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
+              style={styles.flatList}
               ListEmptyComponent={
                 <View style={styles.emptyBox}>
                   <Text style={styles.emptyEmoji}>🔍</Text>
@@ -628,7 +628,55 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
 
 export default GarageDetails;
 
+
 const styles = StyleSheet.create({
+  /*
+   * Android transparent Modal mein flex:1 kaam nahi karta kyunki
+   * Android parent dimensions nahi deta flex children ko.
+   * Solution: position:'absolute' + explicit 0 insets — dono platform par 100% kaam karta hai.
+   */
+  modalRoot: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.55)',
+  },
+
+  modalBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+
+  sheet: {
+    width: '100%',
+    height: 500,
+
+    backgroundColor: '#1c1c1e',
+
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+
+    paddingTop: 12,
+    paddingHorizontal: 12,
+
+    zIndex: 999,
+    elevation: 20,
+  },
+
+  sheetHandle: {
+    width: 50,
+    height: 5,
+    borderRadius: 100,
+    backgroundColor: '#666',
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
   container: {flex: 1, backgroundColor: color.baground},
   backBtn: {
     position: 'absolute',
@@ -744,35 +792,6 @@ const styles = StyleSheet.create({
   noServiceText: {color: '#aaa', fontSize: 14},
   bookBtnWrapper: {marginHorizontal: 16, marginVertical: 24},
 
-  /* ── bottom-sheet modal ── */
-  overlay: {flex: 1, justifyContent: 'flex-end'},
-  overlayBg: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-  },
-  sheet: {
-    backgroundColor: '#1c1c1e',
-    borderTopLeftRadius: 24,
-    
-    borderTopRightRadius: 24,
-
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-
-    height: '88%',
-    paddingBottom: 20,
-  },
-  sheetHandle: {
-    width: 40,
-    height: 4,
-    backgroundColor: '#555',
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginTop: 10,
-    marginBottom: 4,
-  },
   sheetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -863,17 +882,25 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   clearBtnText: {fontSize: 13, color: color.buttonColor, fontWeight: '700'},
+  // flex:1 lets FlatList grow into the remaining sheet height and scroll
+  // properly. Without this it tries to render all rows at once (no scrolling).
+  flatList: {flex: 1},
   flatListPad: {paddingBottom: 32, paddingHorizontal: 10},
 
-  /* modal root + backdrop */
-  modalRoot: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-  },
+  /* modal root + backdrop
+   *
+   * Layout model (column direction):
+   *   modalRoot   flex:1 — full-screen transparent wrapper
+   *     modalBackdrop  flex:1 — dark overlay that fills the space ABOVE the sheet
+   *     sheet          fixed height — sits at the bottom as a normal flex child
+   *
+   * Why not absoluteFillObject on the backdrop?
+   *   absoluteFillObject + no zIndex → Android does NOT guarantee the later-
+   *   rendered sheet paints on top, so the backdrop silently covered the sheet.
+   *   Using flex:1 here means backdrop and sheet are in separate, non-overlapping
+   *   regions — zero z-index conflict on either platform.
+   */
 
-  modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-  },
   /* 2-col grid */
   gridRow: {
     justifyContent: 'space-between',

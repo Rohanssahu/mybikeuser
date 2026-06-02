@@ -9,8 +9,8 @@ export const endpoint = {
   servicelist: '/bikedoctor/service/servicelist',
   bannerlist: '/bikedoctor/banner/bannerlist',
   nearbydeler: '/bikedoctor/dealer/dealerWithInRange',
-  paymentCash:"/bikedoctor/payment/cash",
-  updateBooking:"/bikedoctor/bookings/updateBooking",
+  paymentCash: '/bikedoctor/payment/cash',
+  updateBooking: '/bikedoctor/bookings/updateBooking',
   userbooking: '/bikedoctor/bookings/getuserbookings',
   mybikes: '/bikedoctor/customers/getMyBikes',
   addUserBike: '/bikedoctor/customers/addUserBike',
@@ -27,13 +27,12 @@ export const endpoint = {
   updateprofile: '/bikedoctor/customers/editcustomer/:id',
   profileimage: '/bikedoctor/customers/editimage',
   bookingdetails: '/bikedoctor/bookings/getBookingDetails/:id',
-  cancelbooking:"/bikedoctor/bookings/updateBookingStatus",
-  gettickets:"/bikedoctor/ticket/my-tickets",
-  createTikit:"/bikedoctor/ticket/create",
-  gettikitdetails:"/bikedoctor/ticket/tickets/:ticket_id",
-  replytikit:"/bikedoctor/ticket/reply/:ticket_id",
-  tikitstatus:"/bikedoctor/ticket/status/:ticket_id",
-   additionalservices :'/bikedoctor/additional-service'
-
-
+  cancelbooking: '/bikedoctor/bookings/updateBookingStatus',
+  gettickets: '/bikedoctor/ticket/my-tickets',
+  createTikit: '/bikedoctor/ticket/create',
+  gettikitdetails: '/bikedoctor/ticket/tickets/:ticket_id',
+  replytikit: '/bikedoctor/ticket/reply/:ticket_id',
+  tikitstatus: '/bikedoctor/ticket/status/:ticket_id',
+  additionalservices: '/bikedoctor/additional-service',
+  featuredCategories: '/bikedoctor/location-featured-categories/nearby',
 };

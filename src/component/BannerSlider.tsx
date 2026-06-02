@@ -67,7 +67,9 @@ const BannerSlider: React.FC<BannerSliderProps> = ({navigation, data}) => {
   }, [currentIndex, updatedData]);
 
   const renderItem = ({item}: {item: Banner}) => {
-    const url = `${image_url}${item.banner_image}`;
+    const url = item.banner_image?.startsWith('http')
+      ? item.banner_image
+      : `${image_url}${item.banner_image}`;
 
     return (
       <View style={styles.bannerContainer}>
