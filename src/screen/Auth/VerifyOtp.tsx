@@ -14,7 +14,7 @@ import {
     useBlurOnFulfill,
     useClearByFocusCell,
 } from 'react-native-confirmation-code-field';
-import { StackNavigationProp } from '@react-navigation/stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useRoute } from '@react-navigation/native';
 import { hp, wp } from '../../component/utils/Constant';
 import { errorToast, successToast } from '../../configs/customToast';
@@ -26,7 +26,7 @@ const RESEND_DELAY = 30;
 const CELL_COUNT = 4;
 
 interface VerifyOtpProps {
-    navigation: StackNavigationProp<any, any>;
+    navigation: NativeStackNavigationProp<any, any>;
 }
 
 const VerifyOtp: React.FC<VerifyOtpProps> = ({ navigation }) => {

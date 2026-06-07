@@ -4,7 +4,7 @@ import axios, { AxiosRequestConfig } from 'axios';
 import { endpoint } from './endpoints';
 import { errorToast, successToast } from '../../configs/customToast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { callMultipleApis } from './index';
+import { base_url, callMultipleApis } from './index';
 import { string } from 'prop-types';
 
 // Interface for API request
@@ -797,19 +797,21 @@ const garage_details = async (id: string, digitsOnly: string) => {
 };
 
 const get_dealer_services = async (dealerId: string) => {
-    const token = await AsyncStorage.getItem('token');
-
+    
+   
     const apiRequests: ApiRequest[] = [
         {
             endpoint: `${endpoint.dealerServices}?dealerId=${dealerId}`,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                token: token,
+            
             },
         },
     ];
 
+
+   
     try {
         const results = await callMultipleApis(apiRequests);
         const response = results[0];

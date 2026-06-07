@@ -7,8 +7,9 @@ import {
   Image,
   StatusBar,
   TouchableOpacity,
-  PermissionsAndroid,
   Platform,
+  Modal,
+  Pressable,
 } from 'react-native';
 import CustomButton from '../../component/CustomButton';
 import ScreenNameEnum from '../../routes/screenName.enum';
@@ -19,7 +20,6 @@ import {
   garage_details,
   get_dealer_services,
 } from '../../redux/Api/apiRequests';
-import Geolocation from '@react-native-community/geolocation';
 import MapPickerModal from './MapPicker';
 import Loading from '../../configs/Loader';
 import {errorToast} from '../../configs/customToast';
@@ -30,11 +30,13 @@ import {color} from '../../constant';
 import {icon} from '../../component/Image';
 import Icon from '../../component/Icon';
 import GarageImage from './GarageBanner';
+import {useLocation} from '../../component/LocationContext';
+import {getCurrentLocation as getSavedOrCurrentLocation} from '../../component/helperFunction';
 
 const PICKUP_RATE_PER_KM = 15;
 const GST_RATE = 0.18;
 
-type Step = 0 | 1 | 2 | 3;
+type Step = 0 | 1 | 2;
 
 const ReviewRow = ({label, value}: {label: string; value: string}) => (
   <View style={styles.reviewRow}>
@@ -47,11 +49,16 @@ const ReviewRow = ({label, value}: {label: string; value: string}) => (
 
 const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
   const route = useRoute();
-  const {bike, id, serviceId: incomingServiceId} = route.params as {
+  const {
+    bike = null,
+    id = '',
+    serviceId: incomingServiceId,
+  } = (route.params ?? {}) as {
     bike: any;
     id: string;
     serviceId?: string;
   };
+  const {locationCoords} = useLocation();
 
   const [garageData, setGarageData] = useState<any>(null);
   const [distance, setDistance] = useState<number | null>(null);
@@ -66,6 +73,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
   const [choosePickupOption, setChoosePickupOption] = useState('');
 
   const [selectedService, setSelectedService] = useState('');
+  const [serviceModalVisible, setServiceModalVisible] = useState(false);
 
   const [BookingDate, setBookingDate] = useState(new Date());
   const [BookingTime, setBookingTime] = useState(() => {
@@ -78,45 +86,48 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    requestLocationPermission();
-  }, [garageData]);
+    calculateDistanceFromSelectedLocation();
+  }, [garageData, locationCoords]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchGarageDetails();
   }, [id]);
 
-  const requestLocationPermission = async () => {
-    if (Platform.OS === 'android') {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      );
-      if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-        return;
-      }
-    }
-    getCurrentLocation();
-  };
-
-  const getCurrentLocation = () => {
+  const calculateDistanceFromSelectedLocation = async () => {
     if (!garageData?.latitude || !garageData?.longitude) {
       return;
     }
-    Geolocation.getCurrentPosition(
-      position => {
+
+    try {
+      let selectedCoords = locationCoords;
+
+      if (!selectedCoords?.latitude || !selectedCoords?.longitude) {
+        const saved = await AsyncStorage.getItem('LocationsLat');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          selectedCoords = {
+            latitude: parsed.latitude ?? parsed.lat,
+            longitude: parsed.longitude ?? parsed.lng,
+          };
+        }
+      }
+
+      if (!selectedCoords?.latitude || !selectedCoords?.longitude) {
+        selectedCoords = await getSavedOrCurrentLocation();
+      }
+
+      if (selectedCoords?.latitude && selectedCoords?.longitude) {
         setDistance(
-          haversine(
-            {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-            },
-            {latitude: garageData.latitude, longitude: garageData.longitude},
-          ),
+          haversine(selectedCoords, {
+            latitude: Number(garageData.latitude),
+            longitude: Number(garageData.longitude),
+          }),
         );
-      },
-      error => console.error('Location error:', error),
-      {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
-    );
+      }
+    } catch (error) {
+      console.error('Selected location distance error:', error);
+    }
   };
 
   const haversine = (start: any, end: any) => {
@@ -146,6 +157,12 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
   };
 
   const fetchGarageDetails = async () => {
+    if (!id) {
+      errorToast('Garage details not found');
+      navigation.goBack();
+      return;
+    }
+
     const digitsOnly = bike?.bike_cc?.toString().replace(/\D/g, '') || '';
     const [detailsRes, servicesRes] = await Promise.all([
       garage_details(id, digitsOnly),
@@ -182,10 +199,10 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
     }
   };
 
-  const addPickupDrop = async () => {
-    if (PickupLocation?.latitude && PickupLocation?.longitude) {
+  const addPickupDrop = async (location = PickupLocation) => {
+    if (location?.latitude && location?.longitude) {
       setPickupDistance(
-        haversine(PickupLocation, {
+        haversine(location, {
           latitude: garageData?.latitude,
           longitude: garageData?.longitude,
         }),
@@ -193,8 +210,8 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
     }
     const user_id = (await AsyncStorage.getItem('user_id')) ?? '';
     const res = await addPickupAddress(
-      PickupLocation?.latitude,
-      PickupLocation?.longitude,
+      location?.latitude,
+      location?.longitude,
       garageData?._id,
       user_id,
     );
@@ -205,8 +222,18 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
 
   const formatDate = (date: Date) => {
     const months = [
-      'Jan','Feb','Mar','Apr','May','Jun',
-      'Jul','Aug','Sep','Oct','Nov','Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
   };
@@ -242,6 +269,12 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
 
   const getServicePrice = (svc: any): number =>
     svc?.price ?? svc?.bikes?.[0]?.price ?? 0;
+
+  const getServiceDescription = (svc: any) =>
+    svc?.description ?? svc?.base_service_id?.description ?? '';
+
+  const getServiceIncludes = (svc: any): string[] =>
+    svc?.includes ?? svc?.whatsIncluded ?? svc?.base_service_id?.includes ?? [];
 
   const createBooking = async () => {
     if (!selectedService) {
@@ -283,18 +316,44 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
     }
   };
 
-  const stepTitles: string[] = [
-    'Select Service',
-    'Booking Details',
-    'Booking Summary',
-    'Review & Confirm',
-  ];
+  const stepTitles: string[] = ['Choose Service', 'Schedule', 'Bill Details'];
 
   // ─── Step Indicator ───────────────────────────────────────────
+  const parseDescription = (desc: string) => {
+    const lines = desc
+      .split('\n')
+      .map(l => l.trim())
+      .filter(Boolean);
+    const includes: string[] = [];
+    let duration = '';
+
+    for (const line of lines) {
+      if (
+        line.startsWith('Service Includes:') ||
+        line.startsWith('Estimated Duration:')
+      )
+        continue;
+      if (
+        line.includes('Estimated Duration:') ||
+        line.includes('Minutes') ||
+        line.includes('minutes')
+      ) {
+        duration = line.replace('Estimated Duration:', '').trim();
+      } else {
+        includes.push(line);
+      }
+    }
+    return {includes, duration};
+  };
+
+  // In your component:
+  const {includes, duration} = parseDescription(
+    getServiceDescription(selectedSvc) || '',
+  );
 
   const renderStepIndicator = () => (
     <View style={styles.stepRow}>
-      {([0, 1, 2, 3] as const).map(i => (
+      {([0, 1, 2] as const).map(i => (
         <React.Fragment key={i}>
           <View style={[styles.stepDot, i <= step && styles.stepDotActive]}>
             <Text
@@ -305,7 +364,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
               {i + 1}
             </Text>
           </View>
-          {i < 3 && (
+          {i < 2 && (
             <View
               style={[styles.stepLine, i < step && styles.stepLineActive]}
             />
@@ -318,85 +377,44 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
   // ─── Step 0: Service Selection ────────────────────────────────
 
   const renderStep0 = () => (
-    <View>
-      <Text style={styles.sectionTitle}>Available Services</Text>
 
-      {(garageData?.services?.length ?? 0) === 0 ? (
-        <View style={styles.noServiceBox}>
-          <Text style={styles.noServiceText}>No services available</Text>
+
+
+    <View style={styles.stepContent}>
+      <Text style={styles.sectionTitle}>Garage Details</Text>
+      <View style={styles.detailCard}>
+        <View style={styles.detailCardHeader}>
+          <Icon source={icon.Expert} size={28} />
+          <View style={styles.featureInfo}>
+            <Text style={styles.featureTitle}>Our Promise</Text>
+            <Text style={styles.featureDesc}>
+              {garageData?.ourPromise ||
+                'Fast, reliable and affordable bike service.'}
+            </Text>
+          </View>
         </View>
-      ) : (
-        garageData.services.map((svc: any) => {
-          const itemId = svc.serviceId ?? svc._id;
-          const active = selectedService === itemId;
-          const description =
-            svc.description ?? svc.base_service_id?.description ?? '';
-          const includes: string[] =
-            svc.includes ??
-            svc.whatsIncluded ??
-            svc.base_service_id?.includes ??
-            [];
 
-          return (
-            <TouchableOpacity
-              key={itemId}
-              activeOpacity={0.85}
-              style={[styles.serviceCard, active && styles.serviceCardActive]}
-              onPress={() => setSelectedService(itemId)}>
-              {active && (
-                <View style={styles.serviceCardBadge}>
-                  <Text style={styles.serviceCardBadgeText}>✓</Text>
-                </View>
-              )}
-              <View style={styles.serviceCardContent}>
-                {svc.serviceImage ? (
-                  <Image
-                    source={{uri: svc.serviceImage}}
-                    style={styles.serviceCardImg}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View
-                    style={[
-                      styles.serviceCardImg,
-                      styles.serviceCardImgEmpty,
-                    ]}>
-                    <Text style={styles.serviceCardEmoji}>🔧</Text>
-                  </View>
-                )}
-                <View style={styles.serviceCardBody}>
-                  <View style={styles.serviceCardTopRow}>
-                    <Text
-                      style={styles.serviceCardName}
-                      numberOfLines={2}>
-                      {getServiceName(svc)}
-                    </Text>
-                    <Text style={styles.serviceCardPrice}>
-                      ₹{getServicePrice(svc)}
-                    </Text>
-                  </View>
-                  {!!description && (
-                    <Text
-                      style={styles.serviceCardDesc}
-                      numberOfLines={2}>
-                      {description}
-                    </Text>
-                  )}
-                  {includes.length > 0 && (
-                    <View style={styles.includesRow}>
-                      {includes.slice(0, 4).map((item: string, idx: number) => (
-                        <View key={idx} style={styles.includeTag}>
-                          <Text style={styles.includeTagText}>✓ {item}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-                </View>
-              </View>
-            </TouchableOpacity>
-          );
-        })
-      )}
+        <View style={styles.detailDivider} />
+
+        <View style={styles.detailMetaRow}>
+          <View style={styles.detailMetaItem}>
+            <Text style={styles.detailMetaLabel}>Distance</Text>
+            <Text style={styles.detailMetaValue}>
+              {distance !== null ? `${distance.toFixed(1)} km` : 'Nearby'}
+            </Text>
+          </View>
+          <View style={styles.detailMetaItem}>
+            <Text style={styles.detailMetaLabel}>Rating</Text>
+            <Text style={styles.detailMetaValue}>
+              {garageData?.averageRating || 'New'}
+            </Text>
+          </View>
+          <View style={styles.detailMetaItemLast}>
+            <Text style={styles.detailMetaLabel}>Payment</Text>
+            <Text style={styles.detailMetaValue}>Online</Text>
+          </View>
+        </View>
+      </View>
 
       {garageData?.shopDescription ? (
         <>
@@ -405,97 +423,89 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
         </>
       ) : null}
 
-      <View style={styles.featureRow}>
-        <Icon source={icon.Mobile} size={28} />
+      <Text style={styles.sectionTitleSpaced}>Service</Text>
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={() => setServiceModalVisible(true)}
+        style={styles.addServiceCard}>
+        <View style={styles.addServiceIcon}>
+          <Text style={styles.addServiceIconText}>+</Text>
+        </View>
         <View style={styles.featureInfo}>
-          <Text style={styles.featureTitle}>Go Digital</Text>
+          <Text style={styles.featureTitle}>
+            {selectedSvc ? 'Change selected service' : 'Choose a service'}
+          </Text>
           <Text style={styles.featureDesc}>
-            Convenient online payment options
+            {selectedSvc
+              ? 'Only one service can be added at a time'
+              : 'Open list and add one service for this booking'}
           </Text>
         </View>
-      </View>
+        <Icon source={icon.rightarrow} size={20} />
+      </TouchableOpacity>
 
-      <View style={styles.featureRowLast}>
-        <Icon source={icon.Expert} size={28} />
-        <View style={styles.featureInfo}>
-          <Text style={styles.featureTitle}>Our Promise</Text>
-          <Text style={styles.featureDesc}>
-            {garageData?.ourPromise ||
-              'Fast, reliable and affordable bike service.'}
-          </Text>
-        </View>
-      </View>
-    </View>
-  );
-
-  // ─── Step 2 (renders at step=2): Booking Summary ─────────────
-
-  const renderStep1 = () => (
-    <View style={styles.stepContent}>
-      <Text style={styles.sectionTitle}>Selected Service</Text>
-      <View style={styles.selectedSvcCard}>
-        {selectedSvc?.serviceImage ? (
-          <Image
-            source={{uri: selectedSvc.serviceImage}}
-            style={styles.selectedSvcImg}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={[styles.selectedSvcImg, styles.selectedSvcImgEmpty]}>
-            <Text style={styles.emojiLg}>🔧</Text>
+      {selectedSvc ? (
+        <View style={styles.svcCard}>
+          {/* Top row: image + name/price/bike */}
+    
+          <View style={styles.svcCardTop}>
+            {selectedSvc.serviceImage ? (
+              <Image
+                source={{uri: selectedSvc.serviceImage}}
+                style={styles.svcThumb}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={[styles.svcThumb, styles.svcThumbEmpty]}>
+                <Text style={styles.svcFallbackIcon}>⚙</Text>
+              </View>
+            )}
+            <View style={styles.svcMeta}>
+              <View style={styles.svcNameRow}>
+                <Text style={styles.svcName} numberOfLines={2}>
+                  {getServiceName(selectedSvc)}
+                </Text>
+                {selectedSvc.type === 'base' && (
+                  <View style={styles.typeBadge}>
+                    <Text style={styles.typeBadgeText}>Base</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={styles.svcPrice}>₹{servicePrice}</Text>
+              <Text style={styles.svcBikeLabel} numberOfLines={1}>
+                {selectedSvc.bikeName} • {selectedSvc.cc}cc
+              </Text>
+            </View>
           </View>
-        )}
-        <View style={styles.selectedSvcBody}>
-          <Text style={styles.selectedSvcName} numberOfLines={2}>
-            {getServiceName(selectedSvc)}
-          </Text>
-          <Text style={styles.selectedSvcPrice}>₹{servicePrice}</Text>
-        </View>
-        <TouchableOpacity style={styles.changeBtn} onPress={() => setStep(0)}>
-          <Text style={styles.changeBtnText}>Change</Text>
-        </TouchableOpacity>
-      </View>
 
-      <Text style={styles.sectionTitle}>Charges Breakdown</Text>
-      <View style={styles.chargesCard}>
-        <View style={styles.chargeRow}>
-          <Text style={styles.chargeLabel}>Service Charge</Text>
-          <Text style={styles.chargeValue}>₹{servicePrice}</Text>
-        </View>
-        <View style={styles.chargeDivider} />
-        <View style={styles.chargeRow}>
-          <Text style={styles.chargeLabel}>Pickup & Drop</Text>
-          <Text style={styles.chargeValue}>
-            {choosePickupOption === 'PickDrop'
-              ? `₹${garageData?.pickupCharge ?? pickupCharge}`
-              : 'Not applicable'}
-          </Text>
-        </View>
-        <View style={styles.chargeDivider} />
-        <View style={styles.chargeRow}>
-          <Text style={styles.chargeLabel}>Tax / GST (18%)</Text>
-          <Text style={styles.chargeValue}>₹{gstAmount}</Text>
-        </View>
-        <View style={styles.chargeTotalDivider} />
-        <View style={styles.chargeRow}>
-          <Text style={styles.chargeTotalLabel}>Total Payable</Text>
-          <Text style={styles.chargeTotalValue}>₹{totalPayable}</Text>
-        </View>
-      </View>
+          {/* Description: checklist + duration */}
+          {includes.length > 0 && (
+            <View style={styles.descBox}>
+              <Text style={styles.descBoxTitle}>What's included</Text>
+              {includes.map((item, i) => (
+                <View key={i} style={styles.descItem}>
+                  <Text style={styles.checkIcon}>✓</Text>
+                  <Text style={styles.descItemText}>{item}</Text>
+                </View>
+              ))}
+              {!!duration && (
+                <View style={styles.durationRow}>
+                  <Text style={styles.durationText}>⏱ {duration}</Text>
+                </View>
+              )}
+            </View>
+          )}
 
-      <View style={styles.disclaimerBox}>
-        <Text style={styles.disclaimerIcon}>🛡️</Text>
-        <View style={styles.flex1}>
-          <Text style={styles.disclaimerTitle}>No Hidden Charges</Text>
-          <Text style={styles.disclaimerText}>
-            The displayed price covers only the selected service package. Any
-            additional repairs or maintenance identified during inspection will
-            only be performed after your approval and may incur extra charges.
-            The service center must inform you before proceeding.
-          </Text>
+          {/* Remove */}
+             <TouchableOpacity
+            style={styles.removeBtn}
+            onPress={() => setSelectedService('')}>
+            <Text style={styles.removeBtnText}>Remove</Text>
+          </TouchableOpacity>
         </View>
-      </View>
+      ) : null}
     </View>
+ 
   );
 
   // ─── Step 1 (renders at step=1): Booking Details ─────────────
@@ -579,7 +589,6 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
             <TouchableOpacity
               onPress={() => {
                 setPickupModalVisible(true);
-                setChoosePickupOption('PickDrop');
               }}
               style={[
                 styles.optionBtn,
@@ -677,7 +686,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
       return (
         <View style={styles.bottomBar}>
           <CustomButton
-            title="Continue to Booking Details"
+            title="Next"
             disable={!selectedService}
             onPress={() => setStep(1)}
           />
@@ -688,19 +697,9 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
       return (
         <View style={styles.bottomBar}>
           <CustomButton
-            title="View Charges"
+            title="Continue"
             disable={!choosePickupOption}
             onPress={() => setStep(2)}
-          />
-        </View>
-      );
-    }
-    if (step === 2) {
-      return (
-        <View style={styles.bottomBar}>
-          <CustomButton
-            title="Review & Confirm"
-            onPress={() => setStep(3)}
           />
         </View>
       );
@@ -730,7 +729,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
         <Icon source={icon.back} size={30} />
       </TouchableOpacity>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
         <GarageImage shopImages={garageData?.shopImages} />
 
         {/* Garage info below hero */}
@@ -756,24 +755,150 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
             </View>
           </View>
         </View>
-
-        {/* Step indicator */}
-        <View style={styles.stepWrapper}>
-          {renderStepIndicator()}
-          <Text style={styles.stepLabel}>{stepTitles[step]}</Text>
+        <View>
+          {/* Step indicator */}
+          <View style={styles.stepWrapper}>
+            <Text style={styles.stepLabel}>{stepTitles[step]}</Text>
+            {renderStepIndicator()}
+          </View>
         </View>
-
         {/* Step content */}
         <View style={styles.body}>
           {step === 0 && renderStep0()}
           {step === 1 && renderStep2()}
-          {step === 2 && renderStep1()}
-          {step === 3 && renderStep3()}
+          {step === 2 && renderStep3()}
         </View>
       </ScrollView>
 
       {renderBottomBar()}
 
+      <View style={{flex: 1}}>
+        <Modal
+          visible={serviceModalVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setServiceModalVisible(false)}>
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setServiceModalVisible(false)}
+          />
+          <View style={styles.serviceSheet}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.sheetHeader}>
+              <View>
+                <Text style={styles.sheetTitle}>Add Service</Text>
+                <Text style={styles.sheetSubtitle}>
+                  Choose one service for this booking
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.sheetClose}
+                onPress={() => setServiceModalVisible(false)}>
+                <Text style={styles.sheetCloseText}>×</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {(garageData?.services?.length ?? 0) === 0 ? (
+                <View style={styles.noServiceBox}>
+                  <Text style={styles.noServiceText}>
+                    No services available
+                  </Text>
+                </View>
+              ) : (
+                garageData.services.map((svc: any) => {
+                  const itemId = svc.serviceId ?? svc._id;
+                  const active = selectedService === itemId;
+                  const includes = getServiceIncludes(svc);
+                  return (
+                    <TouchableOpacity
+                      key={itemId}
+                      activeOpacity={0.9}
+                      style={[
+                        styles.serviceSheetCard,
+                        active && styles.serviceSheetCardActive,
+                      ]}
+                      onPress={() => {
+                        setSelectedService(itemId);
+                        setServiceModalVisible(false);
+                      }}>
+                      <View style={styles.sheetServiceTop}>
+                        {svc.serviceImage ? (
+                          <Image
+                            source={{uri: svc.serviceImage}}
+                            style={styles.sheetServiceImg}
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <View
+                            style={[
+                              styles.sheetServiceImg,
+                              styles.serviceCardImgEmpty,
+                            ]}>
+                            <Text style={styles.serviceFallbackIcon}>⚙</Text>
+                          </View>
+                        )}
+                        <View style={styles.sheetServiceBody}>
+                          <Text
+                            style={styles.sheetServiceName}
+                            numberOfLines={2}>
+                            {getServiceName(svc)}
+                          </Text>
+                          {!!getServiceDescription(svc) && (
+                            <Text
+                              style={styles.sheetServiceDesc}
+                              numberOfLines={2}>
+                              {getServiceDescription(svc)}
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+
+                      {includes.length > 0 && (
+                        <View style={styles.serviceBullets}>
+                          {includes
+                            .slice(0, 7)
+                            .map((item: string, idx: number) => (
+                              <View
+                                key={`${item}-${idx}`}
+                                style={styles.bulletRow}>
+                                <View style={styles.bulletDot} />
+                                <Text
+                                  style={styles.bulletText}
+                                  numberOfLines={1}>
+                                  {item}
+                                </Text>
+                              </View>
+                            ))}
+                        </View>
+                      )}
+
+                      <View style={styles.sheetServiceFooter}>
+                        <Text style={styles.sheetPrice}>
+                          ₹{getServicePrice(svc)}
+                        </Text>
+                        <View
+                          style={[
+                            styles.addBtn,
+                            active && styles.addBtnActive,
+                          ]}>
+                          <Text
+                            style={[
+                              styles.addBtnText,
+                              active && styles.addBtnTextActive,
+                            ]}>
+                            {active ? 'Added' : 'Add'}
+                          </Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })
+              )}
+            </ScrollView>
+          </View>
+        </Modal>
+      </View>
       {BookingDateModal && (
         <DateTimePicker
           value={BookingDate}
@@ -802,16 +927,23 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
           }}
         />
       )}
+<View style={{flex: 1}}>
+
 
       <MapPickerModal
-        setModalVisible={() => {
-          addPickupDrop();
+        setModalVisible={(_visible, location) => {
+          if (location) {
+            setPickupLocation(location);
+            addPickupDrop(location);
+            setChoosePickupOption('PickDrop');
+          }
           setPickupModalVisible(false);
         }}
         modalVisible={pickupModalVisible}
         sendLocation={setPickupLocation}
         setLocationName={setPickupLocationName}
       />
+      </View>
     </View>
   );
 };
@@ -820,6 +952,96 @@ export default GarageDetails;
 
 const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: color.baground},
+
+  // Styles
+  svcCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 0.5,
+    borderColor: '#E5E5E5',
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  removeBtn: {
+
+    margin: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    backgroundColor: 'red',
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+  },
+  removeBtnText: {fontSize: 16, color: '#fff', fontWeight: '600'},
+  svcCardTop: {
+    flexDirection: 'row',
+    gap: 12,
+    padding: 12,
+  },
+  svcThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: 8,
+    borderWidth: 0.5,
+    borderColor: '#E5E5E5',
+  },
+  svcThumbEmpty: {
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  svcFallbackIcon: {fontSize: 28},
+  svcMeta: {flex: 1},
+  svcNameRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  svcName: {fontSize: 15, fontWeight: '600', flex: 1, color: '#111'},
+  typeBadge: {
+    backgroundColor: '#EAF3DE',
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  typeBadgeText: {fontSize: 11, color: '#3B6D11'},
+  svcPrice: {fontSize: 20, fontWeight: '600', color: '#111', marginTop: 4},
+  svcBikeLabel: {fontSize: 12, color: '#888', marginTop: 2},
+
+  // Description box
+  descBox: {
+    marginHorizontal: 12,
+    marginBottom: 0,
+    backgroundColor: '#F8F8F6',
+    borderRadius: 8,
+    padding: 10,
+  },
+  descBoxTitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#999',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  descItem: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
+  checkIcon: {fontSize: 13, color: '#1D9E75', marginTop: 1},
+  descItemText: {fontSize: 13, color: '#333', flex: 1},
+  durationRow: {
+    borderTopWidth: 0.5,
+    borderTopColor: '#E5E5E5',
+    marginTop: 8,
+    paddingTop: 8,
+  },
+  durationText: {fontSize: 12, color: '#888'},
+
 
   backBtn: {
     position: 'absolute',
@@ -875,7 +1097,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   stepLineActive: {backgroundColor: color.buttonColor},
-  stepLabel: {fontSize: 15, fontWeight: '700', color: '#fff'},
+  stepLabel: {fontSize: 15, fontWeight: '700', color: '#fff', marginBottom: 16},
 
   // ── Body ──
   body: {paddingHorizontal: 16, paddingTop: 4},
@@ -916,6 +1138,47 @@ const styles = StyleSheet.create({
   chargeValueMuted: {fontSize: 12, color: '#888', fontWeight: '600'},
   flex1: {flex: 1},
   descText: {fontSize: 13, color: '#A0A3BD', lineHeight: 20},
+
+  detailCard: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    padding: 14,
+  },
+  detailCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  detailDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    marginVertical: 14,
+  },
+  detailMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  detailMetaItem: {
+    flex: 1,
+    borderRightWidth: 1,
+    borderRightColor: 'rgba(255,255,255,0.08)',
+    paddingRight: 10,
+    marginRight: 10,
+  },
+  detailMetaItemLast: {
+    flex: 1,
+  },
+  detailMetaLabel: {
+    fontSize: 11,
+    color: '#A0A3BD',
+    marginBottom: 4,
+  },
+  detailMetaValue: {
+    fontSize: 13,
+    color: '#fff',
+    fontWeight: '700',
+  },
 
   // ── Service cards ──
   serviceCard: {
@@ -991,6 +1254,47 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(254,212,40,0.22)',
   },
   includeTagText: {fontSize: 10, color: color.buttonColor, fontWeight: '600'},
+
+  addServiceCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(254,212,40,0.08)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(254,212,40,0.26)',
+    padding: 14,
+  },
+  addServiceIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: color.buttonColor,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addServiceIconText: {
+    color: '#111827',
+    fontSize: 28,
+    lineHeight: 31,
+    fontWeight: '700',
+  },
+  selectedSvcCardPage: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    padding: 12,
+    marginTop: 12,
+    gap: 12,
+  },
+
+  serviceFallbackIcon: {
+    color: color.buttonColor,
+    fontSize: 22,
+    fontWeight: '800',
+  },
 
   // ── Garage feature rows ──
   featureRow: {
@@ -1156,5 +1460,157 @@ const styles = StyleSheet.create({
     backgroundColor: color.baground,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.48)',
+  },
+  serviceSheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    maxHeight: '82%',
+    backgroundColor: '#F2F5F6',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: Platform.OS === 'ios' ? 28 : 18,
+  },
+  sheetHandle: {
+    width: 42,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#C9D0D3',
+    alignSelf: 'center',
+    marginBottom: 14,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  sheetTitle: {
+    color: '#18212A',
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  sheetSubtitle: {
+    color: '#6B7280',
+    fontSize: 15,
+    marginTop: 3,
+  },
+  sheetClose: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#E0E6E8',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetCloseText: {
+    color: '#1F2937',
+    fontSize: 24,
+    lineHeight: 28,
+  },
+  serviceSheetCard: {
+    backgroundColor: '#DDE6E8',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#CFD9DC',
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: {width: 0, height: 3},
+    elevation: 3,
+  },
+  serviceSheetCardActive: {
+    borderColor: '#F05245',
+    backgroundColor: '#EAF0F1',
+  },
+  sheetServiceTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  sheetServiceImg: {
+    width: 42,
+    height: 42,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  sheetServiceBody: {
+    flex: 1,
+  },
+  sheetServiceName: {
+    color: '#1F2937',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  sheetServiceDesc: {
+    color: '#4B5563',
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 4,
+  },
+  serviceBullets: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.72)',
+    marginTop: 12,
+    paddingTop: 10,
+  },
+  bulletRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  bulletDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#F05245',
+    marginRight: 8,
+  },
+  bulletText: {
+    flex: 1,
+    color: '#374151',
+    fontSize: 12,
+  },
+  sheetServiceFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.72)',
+    marginTop: 10,
+    paddingTop: 10,
+  },
+  sheetPrice: {
+    color: '#F05245',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  addBtn: {
+    minWidth: 72,
+    height: 34,
+    borderRadius: 8,
+    backgroundColor: '#F05245',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addBtnActive: {
+    backgroundColor: color.buttonColor,
+  },
+  addBtnText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  addBtnTextActive: {
+    color: '#111827',
   },
 });

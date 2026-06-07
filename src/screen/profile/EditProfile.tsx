@@ -9,7 +9,7 @@ import CustomTextInput from '../../component/TextInput';
 import { hp } from '../../component/utils/Constant';
 import CustomButton from '../../component/CustomButton';
 import ScreenNameEnum from '../../routes/screenName.enum';
-import { StackNavigationProp } from '@react-navigation/stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import CustomDropdown from '../../component/CustomDropdown';
 import { get_citys, get_profile, get_states, updateProfile, updateProfileImage } from '../../redux/Api/apiRequests';
 import { captureImage, image_url, selectImageFromGallery } from '../../redux/Api';
@@ -18,7 +18,7 @@ import Loading from '../../configs/Loader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface ProfileDetailsProps {
-    navigation: StackNavigationProp<any, any>;
+    navigation: NativeStackNavigationProp<any, any>;
 }
 
 const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {

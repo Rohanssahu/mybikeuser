@@ -1,16 +1,9 @@
-import React, {FunctionComponent, useEffect, useState} from 'react';
-
-import {
-  CardStyleInterpolators,
-  createStackNavigator,
-} from '@react-navigation/stack';
+import React, {FunctionComponent} from 'react';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import _routes from '../routes/routes';
-import ScreenNameEnum from '../models/routes/screenName.enum';
-import {PermissionsAndroid} from 'react-native';
-import {RootState} from '../store/app.store';
-import {useSelector} from 'react-redux';
-import { Subscriptions } from '../iap/Subscriptions';
-const Stack = createStackNavigator();
+import ScreenNameEnum from '../routes/screenName.enum';
+
+const Stack = createNativeStackNavigator();
 
 const FeatureRoutes: FunctionComponent<any> = ({
   SceenName,
@@ -18,7 +11,7 @@ const FeatureRoutes: FunctionComponent<any> = ({
   SceenName?: ScreenNameEnum;
 }) => {
  
-  return permissionRequired != null ? (
+  return (
     <Stack.Navigator
       initialRouteName={SceenName}
     
@@ -26,10 +19,9 @@ const FeatureRoutes: FunctionComponent<any> = ({
       
         headerShown: false,
         gestureEnabled: true,
-        gestureDirection: 'horizontal',
-        cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+        animation: 'slide_from_right',
       }}>
-      {_routes.FEATURE_ROUTE.map(screen => (
+      {_routes.REGISTRATION_ROUTE.map(screen => (
         <Stack.Screen
           key={screen.name}
           name={screen.name}
@@ -40,7 +32,7 @@ const FeatureRoutes: FunctionComponent<any> = ({
      
      
     </Stack.Navigator>
-  ) : null;
+  );
 };
 
 

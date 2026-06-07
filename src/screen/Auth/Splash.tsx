@@ -1,19 +1,13 @@
-import React, { useEffect } from 'react';
+import React, {useEffect} from 'react';
 import { View, Image, StyleSheet, StatusBar, SafeAreaView } from 'react-native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { color } from '../../constant';
 import images from '../../component/Image';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Define the navigation type
-type RootStackParamList = {
-    Home: undefined; // Change 'Home' to your actual destination screen name
-};
-
-const Splash: React.FC = async() => {
-    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+const Splash: React.FC = () => {
+    const navigation = useNavigation<any>();
     const checkLogout = async () => {
         const token = await AsyncStorage.getItem('token')
 
@@ -27,12 +21,18 @@ const Splash: React.FC = async() => {
         }
     };
     useEffect(() => {
+        let isMounted = true;
         const timer = setTimeout(() => {
-            checkLogout()
+            if (isMounted) {
+                checkLogout()
+            }
         }, 3000); // 3 seconds delay
 
-        return () => clearTimeout(timer); // Cleanup timeout on unmount
-    }, [navigation]);
+        return () => {
+            isMounted = false;
+            clearTimeout(timer);
+        }; // Cleanup timeout on unmount
+    }, []);
 
     return (
         <View style={styles.container}>

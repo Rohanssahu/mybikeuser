@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, StatusBar } from 'react-native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from './Icon';
 import { icon } from './Image';
 import { color } from '../constant';
 
 interface CustomHeaderProps {
-    navigation: StackNavigationProp<any, any>;
+    navigation: NativeStackNavigationProp<any, any>;
     title: string;
     showSkip?: boolean; // Default is false
     onSkipPress?: () => void;

@@ -10,7 +10,7 @@ import {
   ViewToken,
 } from 'react-native';
 
-import {StackNavigationProp} from '@react-navigation/stack';
+import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {color} from '../constant';
 import {wp} from './utils/Constant';
 import {image_url} from '../redux/Api';
@@ -25,7 +25,7 @@ interface Banner {
 }
 
 interface BannerSliderProps {
-  navigation: StackNavigationProp<any, any>;
+  navigation: NativeStackNavigationProp<any, any>;
   data: any[]; // Expecting the data passed as a prop
 }
 
