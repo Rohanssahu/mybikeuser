@@ -529,7 +529,7 @@ console.log('garageData?.pickupCharge',garageData);
         </View>
       </View>
 
-      <Text style={styles.sectionTitle}>Date & Time</Text>
+      {/* <Text style={styles.sectionTitle}>Date & Time</Text>
       <TouchableOpacity
         onPress={() => setBookingDateModal(true)}
         style={styles.featureRow}
@@ -541,9 +541,9 @@ console.log('garageData?.pickupCharge',garageData);
           <Text style={styles.featureDesc}>Tap to change</Text>
         </View>
         <Icon source={icon.rightarrow} size={20} />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
-      <TouchableOpacity
+      {/* <TouchableOpacity
         onPress={() => setBookingTimeModal(true)}
         style={styles.featureRowMt}
         activeOpacity={0.7}>
@@ -554,7 +554,7 @@ console.log('garageData?.pickupCharge',garageData);
           <Text style={styles.featureDesc}>Tap to change</Text>
         </View>
         <Icon source={icon.rightarrow} size={20} />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <Text style={styles.sectionTitle}>Pickup & Drop</Text>
       <View style={styles.featureRow}>

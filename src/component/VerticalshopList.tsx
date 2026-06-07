@@ -47,6 +47,7 @@ const ShopCard = ({
     !imgError && item.shopImages && item.shopImages.length > 0
       ? {uri: `${image_url}${item.shopImages[0]}`}
       : require('../assets/images/gragd.png');
+  console.log('item', item);
 
   return (
     <TouchableOpacity
@@ -69,17 +70,13 @@ const ShopCard = ({
         <Text style={styles.title} numberOfLines={1}>
           {item.shopName}
         </Text>
-        {item.shopDescription ? (
-          <Text style={styles.desc} numberOfLines={2}>
-            {item.shopDescription}
-          </Text>
-        ) : null}
+
         <View style={styles.meta}>
-          {item.address ? (
+          {item?.fullAddress ? (
             <View style={styles.metaItem}>
               <Image source={icon.pin} style={styles.metaIcon} />
-              <Text style={styles.metaText} numberOfLines={1}>
-                {item.address}
+              <Text style={styles.metaText} numberOfLines={3}>
+                {item?.fullAddress}
               </Text>
             </View>
           ) : null}
@@ -113,7 +110,12 @@ const VerticalshopList: React.FC<VerticalListProps> = ({
       contentContainerStyle={styles.listContainer}
       scrollEnabled={false}
       renderItem={({item}) => (
-        <ShopCard item={item} navigation={navigation} bike={bike} serviceId={serviceId} />
+        <ShopCard
+          item={item}
+          navigation={navigation}
+          bike={bike}
+          serviceId={serviceId}
+        />
       )}
     />
   );
@@ -169,10 +171,11 @@ const styles = StyleSheet.create({
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
+
   },
   metaIcon: {
-    width: 12,
-    height: 12,
+    width: 22,
+    height: 22,
     tintColor: '#FED428',
     marginRight: 4,
   },
