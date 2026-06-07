@@ -168,50 +168,28 @@ const updateBooking = async (
     }
 };
 
-const payment_Cash = async (
-    token: string,
-    totalPrice: number,
-    setLoading: any,
-    User: any,
-    navigation: any,
-) => {
-    const requestBody = {
-        booking_id: User?._id,
-        customer_id: User?.user_id?._id,
-        dealer_id: User?.dealer_id?._id,
-        order_amount: totalPrice,
-        pay_type: 'cash',
-    };
-
-    setLoading(true); // Start loader
+const get_invoice = async (booking_id: string) => {
+    const token = await AsyncStorage.getItem('token');
     const apiRequests: ApiRequest[] = [
         {
-            endpoint: endpoint.paymentCash,
-            method: 'POST',
-            data: requestBody,
+            endpoint: `${endpoint.invoiceBill}/${booking_id}`,
+            method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
+                token: token,
             },
         },
     ];
-
     try {
         const results = await callMultipleApis(apiRequests);
         const response = results[0];
-
-        console.log('response cadsh payment ', response);
-
-        if (response.status == 200) {
-            setLoading(false); // Stop loader
-            successToast(response.message);
-            return { success: true, message: response.message, user: null };
+        if (response?.success) {
+            return { success: true, data: response.data };
         }
-        setLoading(false);
-        return { success: false, message: 'Unexpected response', user: null };
+        return { success: false, data: null };
     } catch (error: any) {
-        errorToast(error.message);
-        setLoading(false); // Stop loader
-        return { success: false, message: error.message, user: null };
+        console.error('get_invoice error:', error);
+        return { success: false, data: null };
     }
 };
 const otp_Verify = async (phoneNumber: string, otp: string,) => {
@@ -1368,4 +1346,4 @@ const tikitstatus = async (id: string, status: string) => {
 
 
 
-export { additionalservices, updateBooking, payment_Cash, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist, get_featured_categories }
+export { additionalservices, updateBooking, get_invoice, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist, get_featured_categories }

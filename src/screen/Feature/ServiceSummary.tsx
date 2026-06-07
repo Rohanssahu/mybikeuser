@@ -20,6 +20,7 @@ import {
   additionalservices,
   bookingdetails,
   garage_details,
+  get_invoice,
 } from '../../redux/Api/apiRequests';
 import { image_url } from '../../redux/Api';
 import { getAddressFromLatLng } from '../../component/helperFunction';
@@ -27,19 +28,26 @@ import OtpBox from './OtpBox';
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_CFG: Record<string, { color: string; bg: string; label: string }> = {
-  pending: { color: '#F59E0B', bg: 'rgba(245,158,11,0.15)', label: 'Pending Confirmation' },
-  confirmed: { color: '#10B981', bg: 'rgba(16,185,129,0.15)', label: 'Confirmed' },
-  completed: { color: '#3B82F6', bg: 'rgba(59,130,246,0.15)', label: 'Service Completed' },
-  user_cancelled: { color: '#EF4444', bg: 'rgba(239,68,68,0.15)', label: 'Cancelled by You' },
-  rejected: { color: '#EF4444', bg: 'rgba(239,68,68,0.15)', label: 'Rejected by Service Center' },
+  pending:        { color: '#F59E0B', bg: 'rgba(245,158,11,0.15)',   label: 'Pending Confirmation' },
+  confirmed:      { color: '#10B981', bg: 'rgba(16,185,129,0.15)',   label: 'Confirmed' },
+  completed:      { color: '#3B82F6', bg: 'rgba(59,130,246,0.15)',   label: 'Service Completed' },
+  'cash received':{ color: '#10B981', bg: 'rgba(16,185,129,0.15)',   label: 'Cash Received' },
+  user_cancelled: { color: '#EF4444', bg: 'rgba(239,68,68,0.15)',    label: 'Cancelled by You' },
+  rejected:       { color: '#EF4444', bg: 'rgba(239,68,68,0.15)',    label: 'Rejected by Service Center' },
+};
+
+const BILL_STATUS_CFG: Record<string, { color: string; bg: string; label: string }> = {
+  pending: { color: '#F59E0B', bg: 'rgba(245,158,11,0.15)', label: 'Pending' },
+  paid:    { color: '#10B981', bg: 'rgba(16,185,129,0.15)', label: 'Paid' },
 };
 
 // ─── Timeline steps ───────────────────────────────────────────────────────────
-const STEPS = ['Pending', 'Confirmed', 'In Service', 'Completed'];
+const STEPS = ['Pending', 'Confirmed', 'In Service', 'Completed', 'Paid'];
 const STEP_IDX: Record<string, number> = {
   pending: 0,
   confirmed: 1,
   completed: 3,
+  'cash received': 4,
 };
 
 const ServiceSummary: React.FC<any> = ({ navigation }) => {
@@ -51,6 +59,8 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
   const [addiservices, setAddiServices] = useState<any[]>([]);
   const [GarageDetails, setGarageDetails] = useState<any>(null);
   const [pickupAddress, setPickupAddress] = useState<string>('Fetching address…');
+  const [invoice, setInvoice] = useState<any>(null);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
 
   // ── Polling booking details every 10 s ──────────────────────────────────────
   useEffect(() => {
@@ -152,11 +162,24 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
 
   const makeCall = (no: string) => Linking.openURL(`tel:${no}`);
 
+  const fetchInvoice = async () => {
+    if (!booking?._id || invoiceLoading) { return; }
+    setInvoiceLoading(true);
+    const res = await get_invoice(booking._id);
+    if (res?.success) { setInvoice(res.data); }
+    setInvoiceLoading(false);
+  };
+
   // ── Layout helpers ────────────────────────────────────────────────────────────
   const status = booking?.status ?? 'pending';
+  const billStatus = booking?.billStatus ?? 'pending';
   const statusCfg = STATUS_CFG[status] ?? STATUS_CFG.pending;
-  const currentStep = STEP_IDX[status] ?? 0;
+  const billStatusCfg = BILL_STATUS_CFG[billStatus] ?? BILL_STATUS_CFG.pending;
+  const rawStep = STEP_IDX[status] ?? 0;
+  const currentStep =
+    status === 'cash received' || (rawStep === 3 && billStatus === 'paid') ? 4 : rawStep;
   const isCancelledOrRejected = status === 'user_cancelled' || status === 'rejected';
+  const showInvoice = status === 'cash received' || billStatus === 'paid';
 
   const shopLat = parseFloat(booking?.dealer_id?.latitude);
   const shopLng = parseFloat(booking?.dealer_id?.longitude);
@@ -403,16 +426,67 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
           {/* Dashed divider */}
           <View style={styles.billDivider} />
 
+          {/* Status grid */}
+          <View style={styles.statusGrid}>
+            <View style={styles.statusGridItem}>
+              <Text style={styles.statusGridLbl}>Booking Status</Text>
+              <View style={[styles.statusGridBadge, { backgroundColor: statusCfg.bg }]}>
+                <Text style={[styles.statusGridVal, { color: statusCfg.color }]}>
+                  {statusCfg.label}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.statusGridItem}>
+              <Text style={styles.statusGridLbl}>Bill Status</Text>
+              <View style={[styles.statusGridBadge, { backgroundColor: billStatusCfg.bg }]}>
+                <Text style={[styles.statusGridVal, { color: billStatusCfg.color }]}>
+                  {billStatusCfg.label}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.billDivider} />
+
           {/* Total */}
           <View style={styles.billTotalRow}>
-            <View>
-              <Text style={styles.billTotalLbl}>Total Amount</Text>
-              {booking?.billStatus ? (
-                <Text style={styles.billStatusTxt}>{booking.billStatus}</Text>
-              ) : null}
-            </View>
+            <Text style={styles.billTotalLbl}>Total Amount</Text>
             <Text style={styles.billTotalAmt}>₹{total}</Text>
           </View>
+
+          {/* View Invoice */}
+          {showInvoice && (
+            <TouchableOpacity
+              style={styles.invoiceBtn}
+              activeOpacity={0.8}
+              onPress={fetchInvoice}
+              disabled={invoiceLoading}>
+              <Text style={styles.invoiceBtnTxt}>
+                {invoiceLoading ? 'Loading…' : invoice ? 'Refresh Invoice' : 'View Invoice'}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Invoice detail card */}
+          {invoice && (
+            <View style={styles.invoiceCard}>
+              <Text style={styles.invoiceTitle}>Invoice</Text>
+              {[
+                { label: 'Invoice No.', value: invoice.invoice_number || invoice._id?.slice(-8).toUpperCase() },
+                { label: 'Amount',      value: invoice.total_amount != null ? `₹${invoice.total_amount}` : undefined },
+                { label: 'Payment',     value: invoice.pay_type || invoice.payment_type },
+                { label: 'Date',        value: invoice.created_at ? formatDT(invoice.created_at) : undefined },
+                { label: 'Status',      value: invoice.status },
+              ]
+                .filter(r => r.value)
+                .map(({ label, value }) => (
+                  <View key={label} style={styles.invoiceRow}>
+                    <Text style={styles.invoiceLbl}>{label}</Text>
+                    <Text style={styles.invoiceVal}>{value}</Text>
+                  </View>
+                ))}
+            </View>
+          )}
         </View>
 
         {/* ─── Additional Notes ────────────────────────────────────────────────── */}
@@ -637,8 +711,49 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   billTotalLbl: { fontSize: 15, fontWeight: '700', color: '#0D1952' },
-  billStatusTxt: { fontSize: 11, color: '#F59E0B', fontWeight: '600', marginTop: 2 },
   billTotalAmt: { fontSize: 22, fontWeight: '800', color: '#FED428' },
+
+  // Status grid
+  statusGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 10,
+    gap: 10,
+  },
+  statusGridItem: { flex: 1, alignItems: 'center', gap: 6 },
+  statusGridLbl: { fontSize: 11, color: '#6B7DBE', fontWeight: '500', textTransform: 'uppercase', letterSpacing: 0.4 },
+  statusGridBadge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, width: '100%', alignItems: 'center' },
+  statusGridVal: { fontSize: 12, fontWeight: '700', textAlign: 'center' },
+
+  // Invoice
+  invoiceBtn: {
+    marginTop: 14,
+    backgroundColor: '#0D1952',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(254,212,40,0.3)',
+  },
+  invoiceBtnTxt: { fontSize: 13, fontWeight: '700', color: '#FED428' },
+  invoiceCard: {
+    marginTop: 12,
+    backgroundColor: '#F8F9FF',
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E2E6F0',
+  },
+  invoiceTitle: { fontSize: 13, fontWeight: '700', color: '#0D1952', marginBottom: 8 },
+  invoiceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F2F8',
+  },
+  invoiceLbl: { fontSize: 12, color: '#6B7DBE' },
+  invoiceVal: { fontSize: 12, color: '#2D3A6A', fontWeight: '600' },
 
   // Notes
   noteRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 6 },

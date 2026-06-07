@@ -26,8 +26,17 @@ import {icon} from '../../component/Image';
 
 interface ShopItem {
   _id: string;
-  dealer_id?: {shopName?: string};
+  dealer_id?: {
+    shopName?: string;
+    address?: string;
+    fullAddress?: string;
+    city?: string;
+    state?: string;
+    shopImages?: string[];
+  };
   status?: string;
+  pickupStatus?: string;
+  create_date?: string;
 }
 
 const Booking: React.FC<{navigation: any}> = ({navigation}) => {

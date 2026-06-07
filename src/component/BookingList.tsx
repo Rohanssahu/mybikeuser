@@ -21,6 +21,9 @@ interface BookingItem {
   dealer_id?: {
     shopName?: string;
     address?: string;
+    fullAddress?: string;
+    city?: string;
+    state?: string;
     shopImages?: string[];
   };
 }
@@ -34,11 +37,12 @@ interface BookingListProps {
 }
 
 const STATUS_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
-  pending:        { color: '#F59E0B', bg: 'rgba(245,158,11,0.18)',  label: 'Pending' },
-  confirmed:      { color: '#10B981', bg: 'rgba(16,185,129,0.18)',  label: 'Confirmed' },
-  completed:      { color: '#3B82F6', bg: 'rgba(59,130,246,0.18)',  label: 'Completed' },
-  user_cancelled: { color: '#EF4444', bg: 'rgba(239,68,68,0.18)',   label: 'Cancelled' },
-  rejected:       { color: '#EF4444', bg: 'rgba(239,68,68,0.18)',   label: 'Rejected' },
+  pending:         { color: '#F59E0B', bg: 'rgba(245,158,11,0.18)',  label: 'Pending' },
+  confirmed:       { color: '#10B981', bg: 'rgba(16,185,129,0.18)',  label: 'Confirmed' },
+  completed:       { color: '#3B82F6', bg: 'rgba(59,130,246,0.18)',  label: 'Completed' },
+  'cash received': { color: '#10B981', bg: 'rgba(16,185,129,0.18)',  label: 'Cash Received' },
+  user_cancelled:  { color: '#EF4444', bg: 'rgba(239,68,68,0.18)',   label: 'Cancelled' },
+  rejected:        { color: '#EF4444', bg: 'rgba(239,68,68,0.18)',   label: 'Rejected' },
 };
 
 const FALLBACK_IMG =
@@ -93,7 +97,7 @@ const BookingList: React.FC<BookingListProps> = ({
                 <View style={styles.addrRow}>
                   <Icon source={icon.pin} size={12} tintColor="#6B7DBE" />
                   <Text style={styles.shopAddr} numberOfLines={1}>
-                    {'  '}{item?.dealer_id?.address || '—'}
+                    {'  '}{item?.dealer_id?.fullAddress || item?.dealer_id?.address || [item?.dealer_id?.city, item?.dealer_id?.state].filter(Boolean).join(', ') || '—'}
                   </Text>
                 </View>
               </View>
