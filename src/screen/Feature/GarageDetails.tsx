@@ -88,6 +88,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
   useEffect(() => {
     calculateDistanceFromSelectedLocation();
   }, [garageData, locationCoords]);
+console.log('garageData',garageData);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -168,6 +169,8 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
       garage_details(id, digitsOnly),
       get_dealer_services(id),
     ]);
+   
+    
 
     if (detailsRes?.success) {
       let services: any[] = [];
@@ -253,12 +256,13 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
       ),
     [garageData, selectedService],
   );
+console.log('garageData?.pickupCharge',garageData);
 
   const servicePrice: number =
     selectedSvc?.price ?? selectedSvc?.bikes?.[0]?.price ?? 0;
   const pickupCharge: number =
     choosePickupOption === 'PickDrop'
-      ? garageData?.pickupCharge ??
+      ? garageData?.pickupCharges ??
         Math.round((PickupDistance ?? 0) * PICKUP_RATE_PER_KM)
       : 0;
   const gstAmount: number = Math.round(servicePrice * GST_RATE);
