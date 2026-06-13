@@ -1346,4 +1346,29 @@ const tikitstatus = async (id: string, status: string) => {
 
 
 
-export { additionalservices, updateBooking, get_invoice, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist, get_featured_categories }
+const get_bookingTimerStatus = async (bookingId: string) => {
+    const token = (await AsyncStorage.getItem('token')) ?? '';
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: `${endpoint.bookingTimerStatus}/${bookingId}`,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                token: token,
+            },
+        },
+    ];
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+        if (response?.success) {
+            return { success: true, data: response };
+        }
+        return { success: false, data: null };
+    } catch (error: any) {
+        console.error('get_bookingTimerStatus error:', error);
+        return { success: false, data: null };
+    }
+};
+
+export { additionalservices, updateBooking, get_invoice, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist, get_featured_categories, get_bookingTimerStatus };

@@ -35,4 +35,5 @@ export const endpoint = {
   tikitstatus: '/bikedoctor/ticket/status/:ticket_id',
   additionalservices: '/bikedoctor/additional-service',
   featuredCategories: '/bikedoctor/location-featured-categories/nearby',
+  bookingTimerStatus: '/bikedoctor/bookings/getBookingTimerStatus',
 };

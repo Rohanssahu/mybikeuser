@@ -16,6 +16,7 @@ import TicketList from "../screen/BottamTab/TicketList";
 import AllServices from "../screen/Feature/AllServices";
 import BikeDetails from "../screen/Feature/BikeDetails";
 import BookingComplete from "../screen/Feature/BookingComplete";
+import DealerWaiting from "../screen/Feature/DealerWaiting";
 import GarageDetails from "../screen/Feature/GarageDetails";
 import MyBikes from "../screen/Feature/MyBikes";
 import NearByShops from "../screen/Feature/NearByShops";
@@ -70,6 +71,10 @@ const _routes = {
     {
       name: ScreenNameEnum.BOOKING_COMPLETE,
       Component: BookingComplete,
+    },
+    {
+      name: ScreenNameEnum.DEALER_WAITING,
+      Component: DealerWaiting,
     },
     {
       name: ScreenNameEnum.SERVICE_SUMMERY,

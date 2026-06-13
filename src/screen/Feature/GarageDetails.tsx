@@ -301,7 +301,7 @@ console.log('garageData?.pickupCharge',garageData);
         garageData?.shopName,
         formatDate(BookingDate),
       );
-      navigation.navigate(ScreenNameEnum.BOOKING_COMPLETE, {
+      navigation.navigate(ScreenNameEnum.DEALER_WAITING, {
         bookingId: res?.data?._id ?? res?.data?.bookingId ?? '',
         garageName: garageData?.shopName ?? '',
         serviceName: getServiceName(selectedSvc),
