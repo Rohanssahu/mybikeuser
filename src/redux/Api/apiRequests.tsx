@@ -1361,6 +1361,9 @@ const get_bookingTimerStatus = async (bookingId: string) => {
     try {
         const results = await callMultipleApis(apiRequests);
         const response = results[0];
+
+        console.log('get_bookingTimerStatusa',response);
+        
         if (response?.success) {
             return { success: true, data: response };
         }

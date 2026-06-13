@@ -16,6 +16,7 @@ import { image_url } from '../redux/Api';
 interface BookingItem {
   _id: string;
   status: string;
+  dealerResponseStatus?: string;
   pickupStatus?: string;
   create_date: string;
   dealer_id?: {
@@ -43,6 +44,7 @@ const STATUS_CONFIG: Record<string, { color: string; bg: string; label: string }
   'cash received': { color: '#10B981', bg: 'rgba(16,185,129,0.18)',  label: 'Cash Received' },
   user_cancelled:  { color: '#EF4444', bg: 'rgba(239,68,68,0.18)',   label: 'Cancelled' },
   rejected:        { color: '#EF4444', bg: 'rgba(239,68,68,0.18)',   label: 'Rejected' },
+  expired:         { color: '#EF4444', bg: 'rgba(239,68,68,0.18)',   label: 'Booking Expired' },
 };
 
 const FALLBACK_IMG =
@@ -75,7 +77,10 @@ const BookingList: React.FC<BookingListProps> = ({
       contentContainerStyle={styles.list}
       showsVerticalScrollIndicator={false}
       renderItem={({ item, index }) => {
-        const s = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.pending;
+        const isExpired =
+          item.status === 'expired' || item.dealerResponseStatus === 'expired';
+        const effectiveStatus = isExpired ? 'expired' : item.status;
+        const s = STATUS_CONFIG[effectiveStatus] ?? STATUS_CONFIG.pending;
         const imgSrc = item?.dealer_id?.shopImages?.[0]
           ? { uri: image_url + item.dealer_id.shopImages[0] }
           : { uri: FALLBACK_IMG };
@@ -145,7 +150,7 @@ const BookingList: React.FC<BookingListProps> = ({
                 <Icon source={icon.rightarrow} size={16} tintColor="#081041" />
               </TouchableOpacity>
 
-              {item.status === 'pending' && (
+              {item.status === 'pending' && !isExpired && (
                 <TouchableOpacity
                   style={styles.cancelBtn}
                   activeOpacity={0.8}

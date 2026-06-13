@@ -35,6 +35,7 @@ interface ShopItem {
     shopImages?: string[];
   };
   status?: string;
+  dealerResponseStatus?: string;
   pickupStatus?: string;
   create_date?: string;
 }
@@ -84,7 +85,9 @@ const Booking: React.FC<{navigation: any}> = ({navigation}) => {
         .includes(searchQuery.toLowerCase()) || !item?.dealer_id,
   );
 
-  const pendingCount = booking.filter(b => b.status === 'pending').length;
+  const pendingCount = booking.filter(
+    b => b.status === 'pending' && b.dealerResponseStatus !== 'expired',
+  ).length;
 
   return (
     <View style={styles.container}>

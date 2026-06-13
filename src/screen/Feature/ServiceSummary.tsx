@@ -34,6 +34,7 @@ const STATUS_CFG: Record<string, { color: string; bg: string; label: string }> =
   'cash received':{ color: '#10B981', bg: 'rgba(16,185,129,0.15)',   label: 'Cash Received' },
   user_cancelled: { color: '#EF4444', bg: 'rgba(239,68,68,0.15)',    label: 'Cancelled by You' },
   rejected:       { color: '#EF4444', bg: 'rgba(239,68,68,0.15)',    label: 'Rejected by Service Center' },
+  expired:        { color: '#EF4444', bg: 'rgba(239,68,68,0.15)',    label: 'Booking Expired' },
 };
 
 const BILL_STATUS_CFG: Record<string, { color: string; bg: string; label: string }> = {
@@ -171,14 +172,18 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
   };
 
   // ── Layout helpers ────────────────────────────────────────────────────────────
-  const status = booking?.status ?? 'pending';
+  const rawStatus = booking?.status ?? 'pending';
+  const dealerResponseStatus = booking?.dealerResponseStatus;
+  const status =
+    rawStatus === 'expired' || dealerResponseStatus === 'expired' ? 'expired' : rawStatus;
   const billStatus = booking?.billStatus ?? 'pending';
   const statusCfg = STATUS_CFG[status] ?? STATUS_CFG.pending;
   const billStatusCfg = BILL_STATUS_CFG[billStatus] ?? BILL_STATUS_CFG.pending;
   const rawStep = STEP_IDX[status] ?? 0;
   const currentStep =
     status === 'cash received' || (rawStep === 3 && billStatus === 'paid') ? 4 : rawStep;
-  const isCancelledOrRejected = status === 'user_cancelled' || status === 'rejected';
+  const isCancelledOrRejected =
+    status === 'user_cancelled' || status === 'rejected' || status === 'expired';
   const showInvoice = status === 'cash received' || billStatus === 'paid';
 
   const shopLat = parseFloat(booking?.dealer_id?.latitude);
