@@ -38,13 +38,17 @@ interface BookingListProps {
 }
 
 const STATUS_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
-  pending:         { color: '#F59E0B', bg: 'rgba(245,158,11,0.18)',  label: 'Pending' },
-  confirmed:       { color: '#10B981', bg: 'rgba(16,185,129,0.18)',  label: 'Confirmed' },
-  completed:       { color: '#3B82F6', bg: 'rgba(59,130,246,0.18)',  label: 'Completed' },
-  'cash received': { color: '#10B981', bg: 'rgba(16,185,129,0.18)',  label: 'Cash Received' },
-  user_cancelled:  { color: '#EF4444', bg: 'rgba(239,68,68,0.18)',   label: 'Cancelled' },
-  rejected:        { color: '#EF4444', bg: 'rgba(239,68,68,0.18)',   label: 'Rejected' },
-  expired:         { color: '#EF4444', bg: 'rgba(239,68,68,0.18)',   label: 'Booking Expired' },
+  pending:            { color: '#F59E0B', bg: 'rgba(245,158,11,0.18)',   label: 'Pending' },
+  confirmed:          { color: '#10B981', bg: 'rgba(16,185,129,0.18)',   label: 'Confirmed' },
+  completed:          { color: '#3B82F6', bg: 'rgba(59,130,246,0.18)',   label: 'Completed' },
+  awaiting_payment:   { color: '#F59E0B', bg: 'rgba(245,158,11,0.18)',   label: 'Awaiting Payment' },
+  payment_selected:   { color: '#8B5CF6', bg: 'rgba(139,92,246,0.18)',   label: 'Payment Selected' },
+  ready_for_delivery: { color: '#10B981', bg: 'rgba(16,185,129,0.18)',   label: 'Out for Delivery' },
+  delivered:          { color: '#10B981', bg: 'rgba(16,185,129,0.18)',   label: 'Delivered' },
+  'cash received':    { color: '#10B981', bg: 'rgba(16,185,129,0.18)',   label: 'Cash Received' },
+  user_cancelled:     { color: '#EF4444', bg: 'rgba(239,68,68,0.18)',    label: 'Cancelled' },
+  rejected:           { color: '#EF4444', bg: 'rgba(239,68,68,0.18)',    label: 'Rejected' },
+  expired:            { color: '#EF4444', bg: 'rgba(239,68,68,0.18)',    label: 'Booking Expired' },
 };
 
 const FALLBACK_IMG =
@@ -126,7 +130,7 @@ const BookingList: React.FC<BookingListProps> = ({
                 <Text style={styles.metaLbl}> Pickup</Text>
                 <Text style={styles.metaVal}>
                   {'  '}
-                  {item.status === 'completed'
+                  {['completed', 'awaiting_payment', 'payment_selected', 'ready_for_delivery', 'delivered'].includes(item.status)
                     ? 'Delivered'
                     : item?.pickupStatus || '—'}
                 </Text>

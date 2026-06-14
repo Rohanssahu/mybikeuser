@@ -36,4 +36,6 @@ export const endpoint = {
   additionalservices: '/bikedoctor/additional-service',
   featuredCategories: '/bikedoctor/location-featured-categories/nearby',
   bookingTimerStatus: '/bikedoctor/bookings/getBookingTimerStatus',
+  notification: '/bikedoctor/notification/:receiverId',
+  selectPaymentMethod: '/bikedoctor/bookings/select-payment-method',
 };

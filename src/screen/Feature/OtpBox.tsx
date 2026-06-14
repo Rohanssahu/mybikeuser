@@ -4,9 +4,10 @@ import { View, Text, StyleSheet } from 'react-native';
 interface OtpBoxProps {
   otp: string | number;
   label: string;
+  hint?: string;
 }
 
-const OtpBox: React.FC<OtpBoxProps> = ({ otp, label }) => {
+const OtpBox: React.FC<OtpBoxProps> = ({ otp, label, hint }) => {
   const digits = otp ? otp.toString().split('') : ['-', '-', '-', '-'];
 
   return (
@@ -22,7 +23,7 @@ const OtpBox: React.FC<OtpBoxProps> = ({ otp, label }) => {
           </View>
         ))}
       </View>
-      <Text style={styles.hint}>Share this OTP with the service agent</Text>
+      <Text style={styles.hint}>{hint ?? 'Share this OTP with the service agent'}</Text>
     </View>
   );
 };

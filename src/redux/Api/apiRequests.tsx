@@ -1374,4 +1374,62 @@ const get_bookingTimerStatus = async (bookingId: string) => {
     }
 };
 
-export { additionalservices, updateBooking, get_invoice, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist, get_featured_categories, get_bookingTimerStatus };
+const select_payment_method = async (bookingId: string, payment_method: 'ONLINE' | 'CASH') => {
+    const token = await AsyncStorage.getItem('token');
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: `${endpoint.selectPaymentMethod}/${bookingId}`,
+            method: 'POST',
+            data: { payment_method },
+            headers: {
+                'Content-Type': 'application/json',
+                token: token,
+            },
+        },
+    ];
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+        if (response?.success) {
+            return { success: true, data: response.data };
+        }
+        return { success: false, data: null };
+    } catch (error: any) {
+        console.error('select_payment_method error:', error);
+        return { success: false, data: null };
+    }
+};
+
+const get_Notification = async (receiverId: string, setIsLoading: (v: boolean) => void) => {
+    const resolvedEndpoint = endpoint.notification.replace(':receiverId', receiverId);
+    console.log('[get_Notification] endpoint:', resolvedEndpoint);
+    console.log('[get_Notification] receiverId:', receiverId);
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: resolvedEndpoint,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        },
+    ];
+    setIsLoading(true);
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+        console.log('[get_Notification] raw response:', JSON.stringify(response));
+        if (response?.success || response?.status) {
+            setIsLoading(false);
+            return { success: true, message: 'success', data: response };
+        } else {
+            setIsLoading(false);
+            return { success: false, message: 'Data Not Found', data: [] };
+        }
+    } catch (error: any) {
+        setIsLoading(false);
+        console.error('Error fetching notifications:', error);
+        return { success: false, message: error.message, data: [] };
+    }
+};
+
+export { additionalservices, updateBooking, get_invoice, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist, get_featured_categories, get_bookingTimerStatus, get_Notification, select_payment_method };

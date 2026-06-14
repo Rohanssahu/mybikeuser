@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Linking,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import Icon from '../../component/Icon';
@@ -21,6 +22,7 @@ import {
   bookingdetails,
   garage_details,
   get_invoice,
+  select_payment_method,
 } from '../../redux/Api/apiRequests';
 import { image_url } from '../../redux/Api';
 import { getAddressFromLatLng } from '../../component/helperFunction';
@@ -28,13 +30,17 @@ import OtpBox from './OtpBox';
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_CFG: Record<string, { color: string; bg: string; label: string }> = {
-  pending:        { color: '#F59E0B', bg: 'rgba(245,158,11,0.15)',   label: 'Pending Confirmation' },
-  confirmed:      { color: '#10B981', bg: 'rgba(16,185,129,0.15)',   label: 'Confirmed' },
-  completed:      { color: '#3B82F6', bg: 'rgba(59,130,246,0.15)',   label: 'Service Completed' },
-  'cash received':{ color: '#10B981', bg: 'rgba(16,185,129,0.15)',   label: 'Cash Received' },
-  user_cancelled: { color: '#EF4444', bg: 'rgba(239,68,68,0.15)',    label: 'Cancelled by You' },
-  rejected:       { color: '#EF4444', bg: 'rgba(239,68,68,0.15)',    label: 'Rejected by Service Center' },
-  expired:        { color: '#EF4444', bg: 'rgba(239,68,68,0.15)',    label: 'Booking Expired' },
+  pending:            { color: '#F59E0B', bg: 'rgba(245,158,11,0.15)',   label: 'Pending Confirmation' },
+  confirmed:          { color: '#10B981', bg: 'rgba(16,185,129,0.15)',   label: 'Confirmed' },
+  completed:          { color: '#3B82F6', bg: 'rgba(59,130,246,0.15)',   label: 'Service Completed' },
+  awaiting_payment:   { color: '#F59E0B', bg: 'rgba(245,158,11,0.15)',   label: 'Awaiting Payment' },
+  payment_selected:   { color: '#8B5CF6', bg: 'rgba(139,92,246,0.15)',   label: 'Payment Selected' },
+  ready_for_delivery: { color: '#10B981', bg: 'rgba(16,185,129,0.15)',   label: 'Out for Delivery' },
+  delivered:          { color: '#10B981', bg: 'rgba(16,185,129,0.15)',   label: 'Bike Delivered' },
+  'cash received':    { color: '#10B981', bg: 'rgba(16,185,129,0.15)',   label: 'Cash Received' },
+  user_cancelled:     { color: '#EF4444', bg: 'rgba(239,68,68,0.15)',    label: 'Cancelled by You' },
+  rejected:           { color: '#EF4444', bg: 'rgba(239,68,68,0.15)',    label: 'Rejected by Service Center' },
+  expired:            { color: '#EF4444', bg: 'rgba(239,68,68,0.15)',    label: 'Booking Expired' },
 };
 
 const BILL_STATUS_CFG: Record<string, { color: string; bg: string; label: string }> = {
@@ -42,13 +48,17 @@ const BILL_STATUS_CFG: Record<string, { color: string; bg: string; label: string
   paid:    { color: '#10B981', bg: 'rgba(16,185,129,0.15)', label: 'Paid' },
 };
 
-// ─── Timeline steps ───────────────────────────────────────────────────────────
-const STEPS = ['Pending', 'Confirmed', 'In Service', 'Completed', 'Paid'];
+// ─── Timeline ─────────────────────────────────────────────────────────────────
+const STEPS = ['Pending', 'Confirmed', 'In Service', 'Completed', 'Delivery', 'Done'];
 const STEP_IDX: Record<string, number> = {
-  pending: 0,
-  confirmed: 1,
-  completed: 3,
-  'cash received': 4,
+  pending:            0,
+  confirmed:          1,
+  completed:          3,
+  awaiting_payment:   3,
+  payment_selected:   3,
+  'cash received':    5,
+  ready_for_delivery: 4,
+  delivered:          5,
 };
 
 const ServiceSummary: React.FC<any> = ({ navigation }) => {
@@ -62,6 +72,11 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
   const [pickupAddress, setPickupAddress] = useState<string>('Fetching address…');
   const [invoice, setInvoice] = useState<any>(null);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
+
+  // Payment method selection state
+  const [selectedMethod, setSelectedMethod] = useState<'ONLINE' | 'CASH' | null>(null);
+  const [payMethodLoading, setPayMethodLoading] = useState(false);
+  const [cashConfirmed, setCashConfirmed] = useState(false);
 
   // ── Polling booking details every 10 s ──────────────────────────────────────
   useEffect(() => {
@@ -171,6 +186,25 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
     setInvoiceLoading(false);
   };
 
+  // ── Payment method handler ────────────────────────────────────────────────────
+  const handlePaymentContinue = async () => {
+    if (!selectedMethod || !booking?._id) { return; }
+    setPayMethodLoading(true);
+    const res = await select_payment_method(booking._id, selectedMethod);
+    setPayMethodLoading(false);
+    if (res?.success) {
+      if (selectedMethod === 'ONLINE') {
+        navigation.navigate(ScreenNameEnum.PaymentScreen, {
+          User: booking,
+          totalPrice: total,
+          response: booking,
+        });
+      } else {
+        setCashConfirmed(true);
+      }
+    }
+  };
+
   // ── Layout helpers ────────────────────────────────────────────────────────────
   const rawStatus = booking?.status ?? 'pending';
   const dealerResponseStatus = booking?.dealerResponseStatus;
@@ -179,20 +213,30 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
   const billStatus = booking?.billStatus ?? 'pending';
   const statusCfg = STATUS_CFG[status] ?? STATUS_CFG.pending;
   const billStatusCfg = BILL_STATUS_CFG[billStatus] ?? BILL_STATUS_CFG.pending;
+
   const rawStep = STEP_IDX[status] ?? 0;
   const currentStep =
-    status === 'cash received' || (rawStep === 3 && billStatus === 'paid') ? 4 : rawStep;
+    status === 'cash received' || status === 'delivered' ||
+    (rawStep >= 3 && billStatus === 'paid')
+      ? 5
+      : rawStep;
+
   const isCancelledOrRejected =
     status === 'user_cancelled' || status === 'rejected' || status === 'expired';
-  const showInvoice = status === 'cash received' || billStatus === 'paid';
+  const showInvoice = status === 'cash received' || billStatus === 'paid' || status === 'delivered';
 
   const shopLat = parseFloat(booking?.dealer_id?.latitude);
   const shopLng = parseFloat(booking?.dealer_id?.longitude);
   const hasCoords = !isNaN(shopLat) && !isNaN(shopLng) && shopLat !== 0 && shopLng !== 0;
 
+  // Backward-compat: old 'completed' + pending bill still shows pay now
   const showPayNow = status === 'completed' && booking?.billStatus === 'pending';
+  const showPaymentSelection = status === 'awaiting_payment';
+  const showCashConfirmed = cashConfirmed || (status === 'payment_selected' && booking?.paymentMethod === 'CASH');
+  const showDelivered = status === 'delivered';
+  const showDeliveryOtp = status === 'ready_for_delivery';
+
   const total = calculateTotal();
-  console.log('booking', booking);
 
   return (
     <View style={styles.root}>
@@ -202,7 +246,7 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}>
 
-        {/* OTP Banner */}
+        {/* ── Pickup / Delivery OTP Banner (confirmed status) ───────────────── */}
         {status === 'confirmed' && (
           <View style={styles.otpWrap}>
             <OtpBox
@@ -215,6 +259,37 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
                 booking?.pickupStatus === 'arrived' ? 'Pickup OTP' : 'Delivery OTP'
               }
             />
+          </View>
+        )}
+
+        {/* ── Delivery OTP Banner (ready_for_delivery) ─────────────────────── */}
+        {showDeliveryOtp && (
+          <View style={styles.otpWrap}>
+            <OtpBox
+              otp={booking?.deliveryOtp}
+              label="Delivery OTP"
+              hint="Share this OTP with dealer"
+            />
+          </View>
+        )}
+
+        {/* ── Delivered success banner ─────────────────────────────────────── */}
+        {showDelivered && (
+          <View style={styles.deliveredCard}>
+            <Text style={styles.deliveredEmoji}>🎉</Text>
+            <Text style={styles.deliveredTitle}>Bike Delivered Successfully</Text>
+            <Text style={styles.deliveredSub}>Thank you for choosing MR BIKE!</Text>
+          </View>
+        )}
+
+        {/* ── Cash confirmed banner ─────────────────────────────────────────── */}
+        {showCashConfirmed && !showDeliveryOtp && !showDelivered && (
+          <View style={styles.cashCard}>
+            <Text style={styles.cashIcon}>💵</Text>
+            <View style={styles.cashTextWrap}>
+              <Text style={styles.cashTitle}>Cash payment selected.</Text>
+              <Text style={styles.cashSub}>Pay dealer during pickup.</Text>
+            </View>
           </View>
         )}
 
@@ -268,6 +343,70 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
           </View>
         )}
 
+        {/* ── Payment Method Selection (awaiting_payment) ───────────────────── */}
+        {showPaymentSelection && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Choose Payment Method</Text>
+
+            <TouchableOpacity
+              style={[
+                styles.methodRow,
+                selectedMethod === 'ONLINE' && styles.methodRowSelected,
+              ]}
+              activeOpacity={0.8}
+              onPress={() => setSelectedMethod('ONLINE')}>
+              <View
+                style={[
+                  styles.radioOuter,
+                  selectedMethod === 'ONLINE' && styles.radioOuterActive,
+                ]}>
+                {selectedMethod === 'ONLINE' && <View style={styles.radioDotInner} />}
+              </View>
+              <View style={styles.methodLabelWrap}>
+                <Text style={styles.methodLabelTxt}>Online</Text>
+                <Text style={styles.methodLabelSub}>UPI / Card / Net Banking</Text>
+              </View>
+              <Text style={styles.methodEmoji}>📱</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.methodRow,
+                selectedMethod === 'CASH' && styles.methodRowSelected,
+              ]}
+              activeOpacity={0.8}
+              onPress={() => setSelectedMethod('CASH')}>
+              <View
+                style={[
+                  styles.radioOuter,
+                  selectedMethod === 'CASH' && styles.radioOuterActive,
+                ]}>
+                {selectedMethod === 'CASH' && <View style={styles.radioDotInner} />}
+              </View>
+              <View style={styles.methodLabelWrap}>
+                <Text style={styles.methodLabelTxt}>Cash</Text>
+                <Text style={styles.methodLabelSub}>Pay dealer during pickup</Text>
+              </View>
+              <Text style={styles.methodEmoji}>💵</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.continueBtn,
+                (!selectedMethod || payMethodLoading) && styles.continueBtnDisabled,
+              ]}
+              activeOpacity={0.85}
+              onPress={handlePaymentContinue}
+              disabled={!selectedMethod || payMethodLoading}>
+              {payMethodLoading ? (
+                <ActivityIndicator color="#081041" />
+              ) : (
+                <Text style={styles.continueBtnTxt}>Continue</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* ─── Shop + Map Card ─────────────────────────────────────────────────── */}
         <View style={styles.card}>
           {/* Shop header row */}
@@ -314,14 +453,12 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
                   title={booking?.dealer_id?.shopName}
                 />
               </MapView>
-              {/* Directions overlay */}
               <TouchableOpacity style={styles.directionsBtn} onPress={openMaps}>
                 <Icon source={icon.googlemaps} size={15} />
                 <Text style={styles.directionsTxt}> Get Directions</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            /* Fallback when no coords */
             <TouchableOpacity style={styles.noMapBtn} onPress={openMaps}>
               <Icon source={icon.pin} size={18} tintColor="#FED428" />
               <Text style={styles.noMapTxt}> Open in Maps</Text>
@@ -355,7 +492,8 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
             {
               label: 'Pickup',
               value:
-                status === 'completed'
+                ['completed', 'awaiting_payment', 'payment_selected',
+                 'ready_for_delivery', 'delivered', 'cash received'].includes(status)
                   ? 'Delivered'
                   : booking?.pickupStatus || '—',
             },
@@ -408,16 +546,17 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
               </View>
             );
           })}
-          {/* Pickup Charges*/}
-          {booking?.pickupAndDropId && 
-          <View style={styles.billRow}>
-            <View style={styles.billItemLeft}>
-              <View style={styles.billDotBlue} />
-              <Text style={styles.billItemName}> Pickup Charges</Text>
+
+          {/* Pickup Charges */}
+          {booking?.pickupAndDropId && (
+            <View style={styles.billRow}>
+              <View style={styles.billItemLeft}>
+                <View style={styles.billDotBlue} />
+                <Text style={styles.billItemName}> Pickup Charges</Text>
+              </View>
+              <Text style={styles.billItemPrice}>₹{booking?.dealer_id?.pickupCharges || 0}</Text>
             </View>
-            <Text style={styles.billItemPrice}>₹{booking?.dealer_id?.pickupCharges || 0}</Text>
-          </View>
-          }
+          )}
 
           <View style={styles.billRow}>
             <View style={styles.billItemLeft}>
@@ -427,8 +566,6 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
             <Text style={styles.billItemPrice}>₹{booking?.dealer_id?.tax || 0}</Text>
           </View>
 
-
-          {/* Dashed divider */}
           <View style={styles.billDivider} />
 
           {/* Status grid */}
@@ -513,11 +650,10 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
           {'\n'}Ride Safe! 🏍️
         </Text>
 
-        {/* Spacer so content isn't hidden behind sticky button */}
         {showPayNow && <View style={styles.payBarSpacer} />}
       </ScrollView>
 
-      {/* ─── Sticky Pay Now Button ───────────────────────────────────────────── */}
+      {/* ─── Sticky Pay Now Button (backward compat for old 'completed' status) ── */}
       {showPayNow && (
         <View style={styles.payBar}>
           <View style={styles.payBarInner}>
@@ -554,6 +690,50 @@ const styles = StyleSheet.create({
   // OTP
   otpWrap: { marginHorizontal: 14, marginTop: 10 },
 
+  // Delivered card
+  deliveredCard: {
+    marginHorizontal: 14,
+    marginTop: 12,
+    backgroundColor: 'rgba(16,185,129,0.12)',
+    borderRadius: 14,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(16,185,129,0.3)',
+  },
+  deliveredEmoji: { fontSize: 36, marginBottom: 8 },
+  deliveredTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#10B981',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  deliveredSub: {
+    fontSize: 13,
+    color: '#6B7DBE',
+    textAlign: 'center',
+  },
+
+  // Cash confirmed card
+  cashCard: {
+    marginHorizontal: 14,
+    marginTop: 12,
+    backgroundColor: '#0D1952',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(254,212,40,0.25)',
+  },
+  cashIcon: { fontSize: 26, marginRight: 12 },
+  cashTextWrap: { flex: 1 },
+  cashTitle: { fontSize: 14, fontWeight: '700', color: '#FED428' },
+  cashSub: { fontSize: 12, color: '#6B7DBE', marginTop: 2 },
+
   // Status banner
   statusBanner: {
     flexDirection: 'row',
@@ -574,22 +754,22 @@ const styles = StyleSheet.create({
     marginHorizontal: 14,
     marginTop: 12,
     borderRadius: 14,
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     paddingVertical: 16,
   },
   stepItem: { alignItems: 'center', flex: 0 },
   stepCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepCircleOn: { backgroundColor: '#FED428' },
   stepCircleOff: { backgroundColor: '#1C2B66', borderWidth: 1, borderColor: '#2E3F80' },
-  stepDotActive: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#081041' },
-  stepDotInactive: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#2E3F80' },
-  stepLbl: { fontSize: 10, marginTop: 4, textAlign: 'center', width: 58 },
+  stepDotActive: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#081041' },
+  stepDotInactive: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#2E3F80' },
+  stepLbl: { fontSize: 9, marginTop: 4, textAlign: 'center', width: 46 },
   stepLblOn: { color: '#FED428', fontWeight: '700' },
   stepLblOff: { color: '#3D4F80' },
   stepLine: { flex: 1, height: 2, marginBottom: 14 },
@@ -613,6 +793,53 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
 
+  // Payment method selection
+  methodRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1A2566',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    marginBottom: 10,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  methodRowSelected: {
+    borderColor: '#FED428',
+    backgroundColor: '#111E5A',
+  },
+  radioOuter: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#3D4F80',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  radioOuterActive: { borderColor: '#FED428' },
+  radioDotInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#FED428',
+  },
+  methodLabelWrap: { flex: 1 },
+  methodLabelTxt: { fontSize: 14, fontWeight: '700', color: '#fff' },
+  methodLabelSub: { fontSize: 11, color: '#6B7DBE', marginTop: 2 },
+  methodEmoji: { fontSize: 20 },
+  continueBtn: {
+    backgroundColor: '#FED428',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  continueBtnDisabled: { opacity: 0.45 },
+  continueBtnTxt: { fontSize: 15, fontWeight: '800', color: '#081041' },
+
   // Shop
   shopRow: { flexDirection: 'row', alignItems: 'center' },
   shopAvatar: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#1A2566' },
@@ -630,12 +857,7 @@ const styles = StyleSheet.create({
   },
 
   // Map
-  mapWrap: {
-    marginTop: 14,
-    borderRadius: 12,
-    overflow: 'hidden',
-    height: 170,
-  },
+  mapWrap: { marginTop: 14, borderRadius: 12, overflow: 'hidden', height: 170 },
   map: { width: '100%', height: '100%' },
   directionsBtn: {
     position: 'absolute',
@@ -774,7 +996,7 @@ const styles = StyleSheet.create({
   },
   footerHL: { color: '#FED428', fontWeight: '700' },
 
-  // Sticky Pay
+  // Sticky Pay (backward compat)
   payBar: {
     backgroundColor: '#0D1952',
     borderTopWidth: 1,
@@ -801,11 +1023,11 @@ const styles = StyleSheet.create({
   payBtnTxt: { fontSize: 15, fontWeight: '800', color: '#081041' },
   payBarSpacer: { height: 90 },
 
-  // Status dot (replaces MaterialIcons in banner)
+  // Status dot
   statusDot: { width: 8, height: 8, borderRadius: 4 },
 
   // Timeline check text
-  stepCheck: { fontSize: 12, fontWeight: '800', color: '#081041' },
+  stepCheck: { fontSize: 10, fontWeight: '800', color: '#081041' },
 
   // Bill row dots
   billDotGreen: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#10B981' },

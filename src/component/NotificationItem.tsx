@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSelector } from 'react-redux';
 import { image_url } from '../redux/Api';
 
@@ -9,20 +9,21 @@ interface NotificationItemProps {
   message: string;
   time: string;
   image: string;
+  onPress?: () => void;
 }
 
-const NotificationItem: React.FC<NotificationItemProps> = ({ name, message, time, image }) => {
+const NotificationItem: React.FC<NotificationItemProps> = ({ name, message, time, image, onPress }) => {
    const GetData = useSelector((state: any) => state.feature.userGetData);
 
   return (
-    <View style={styles.container}>
+    <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={onPress ? 0.7 : 1}>
       <Image source={{ uri: `${image_url}${GetData?.images}` }} style={styles.profileImage} resizeMode='contain' />
       <View style={styles.textContainer}>
         <Text style={styles.name}>{name}</Text>
         <Text style={styles.message}>{message}</Text>
         <Text style={styles.time}>{time}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 

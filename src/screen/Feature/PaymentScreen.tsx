@@ -14,9 +14,11 @@ import Icon from '../../component/Icon';
 import { icon } from '../../component/Image';
 import CustomHeader from '../../component/CustomHeaderProps';
 import { color } from '../../constant';
+import ScreenNameEnum from '../../routes/screenName.enum';
 
 const PaymentScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
+  const [paymentInitiated, setPaymentInitiated] = useState(false);
 
   const route: any = useRoute();
   const { User, totalPrice } = route.params;
@@ -45,12 +47,41 @@ const PaymentScreen = ({ navigation }: any) => {
         return;
       }
       await Linking.openURL(upiUrl);
+      setPaymentInitiated(true);
     } catch (error) {
       Alert.alert('Payment Error', 'Unable to open UPI app.');
     } finally {
       setLoading(false);
     }
   };
+
+  if (paymentInitiated) {
+    return (
+      <View style={styles.root}>
+        <CustomHeader navigation={navigation} title="Payment" />
+        <View style={styles.successWrap}>
+          <View style={styles.successIcon}>
+            <Text style={styles.successEmoji}>✅</Text>
+          </View>
+          <Text style={styles.successTitle}>Payment Successful</Text>
+          <Text style={styles.successSub}>Wait for dealer handover.</Text>
+          <Text style={styles.successHint}>
+            Your booking will be updated once the dealer confirms delivery.
+          </Text>
+          <TouchableOpacity
+            style={styles.viewBookingBtn}
+            activeOpacity={0.85}
+            onPress={() =>
+              navigation.navigate(ScreenNameEnum.SERVICE_SUMMERY, {
+                id: User?._id,
+              })
+            }>
+            <Text style={styles.viewBookingTxt}>View Booking</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.root}>
@@ -136,6 +167,57 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: color.baground },
   scroll: { padding: 16 },
 
+  // ── Success state ────────────────────────────────────────────────────────────
+  successWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  successIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(16,185,129,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  successEmoji: { fontSize: 38 },
+  successTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#fff',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  successSub: {
+    fontSize: 16,
+    color: '#FED428',
+    fontWeight: '600',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  successHint: {
+    fontSize: 13,
+    color: '#6B7DBE',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 32,
+  },
+  viewBookingBtn: {
+    backgroundColor: '#FED428',
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 14,
+  },
+  viewBookingTxt: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#081041',
+  },
+
+  // ── Bill card ────────────────────────────────────────────────────────────────
   billCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
