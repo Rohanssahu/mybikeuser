@@ -903,16 +903,17 @@ const additionalservices = async (id: string, token: string, cc: string) => {
         return { success: false, message: error.message, state: [] };
     }
 };
-const create_booking = async (dealer_id: string, services: string, pickupAndDropId: string, userBike_id: string, pickupDate: string) => {
-    // Prepare the request body for login API
+const create_booking = async (dealer_id: string, services: string[], pickupAndDropId: string | null, userBike_id: string, pickupDate: string) => {
     const requestBody = { dealer_id, services, pickupAndDropId, userBike_id, pickupDate };
     const token = await AsyncStorage.getItem('token')
+
+    console.log('requestBody',requestBody);
+    
     const apiRequests: ApiRequest[] = [
         {
             endpoint: endpoint.createBooking,
             method: 'POST',
             data: requestBody,
-
             headers: {
                 'Content-Type': 'application/json',
                 token: token,
@@ -921,27 +922,24 @@ const create_booking = async (dealer_id: string, services: string, pickupAndDrop
     ];
 
     try {
-        // Call the multiple APIs and await the result
         const results = await callMultipleApis(apiRequests);
         console.log('API Response: create_booking', results);
-
-
         const response = results[0];
 
-
         if (response.success) {
-
-            successToast(response.message)
+            successToast(response.message);
             return { success: true, message: response.message, data: response.data };
         } else {
-
-            successToast(response.message)
             return { success: false, message: response.message, data: [] };
         }
     }
-    catch (error) {
+    catch (error: any) {
         console.error('Error fetching data:', error);
-        return { success: false, message: error.message, data: null };
+        return {
+            success: false,
+            message: error?.response?.data?.message || error?.message || 'Something went wrong',
+            data: null,
+        };
     }
 };
 

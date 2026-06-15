@@ -88,7 +88,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
   useEffect(() => {
     calculateDistanceFromSelectedLocation();
   }, [garageData, locationCoords]);
-console.log('garageData',garageData);
+
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -256,7 +256,6 @@ console.log('garageData',garageData);
       ),
     [garageData, selectedService],
   );
-console.log('garageData?.pickupCharge',garageData);
 
   const servicePrice: number =
     selectedSvc?.price ?? selectedSvc?.bikes?.[0]?.price ?? 0;
@@ -287,13 +286,19 @@ console.log('garageData?.pickupCharge',garageData);
     if (!choosePickupOption) {
       return errorToast('Please choose pickup or visit option');
     }
+    if (!bike?._id) {
+      return errorToast('Bike information is missing. Please select a bike.');
+    }
+    if (choosePickupOption === 'PickDrop' && !PickupLocationId) {
+      return errorToast('Pickup location not saved. Please re-select pickup address.');
+    }
     setLoading(true);
     const res = await create_booking(
       garageData?._id,
-      selectedService,
-      choosePickupOption === 'Visit' ? '' : PickupLocationId,
-      bike?._id,
-      BookingDate.toString(),
+      [selectedService],
+      choosePickupOption === 'Visit' ? null : PickupLocationId,
+      bike._id,
+      BookingDate.toISOString(),
     );
     if (res?.success) {
       showBookingNotification(
@@ -308,6 +313,8 @@ console.log('garageData?.pickupCharge',garageData);
         date: `${formatDate(BookingDate)}, ${formatTime(BookingTime)}`,
         amount: totalPayable,
       });
+    } else {
+      errorToast(res?.message || 'Booking failed. Please try again.');
     }
     setLoading(false);
   };
