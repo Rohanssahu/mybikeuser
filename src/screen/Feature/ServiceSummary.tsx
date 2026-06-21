@@ -18,7 +18,6 @@ import CustomHeader from '../../component/CustomHeaderProps';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import { useIsFocused, useRoute } from '@react-navigation/native';
 import {
-  additionalservices,
   bookingdetails,
   garage_details,
   get_invoice,
@@ -67,7 +66,6 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
   const isFocus = useIsFocused();
 
   const [booking, setBooking] = useState<any>(null);
-  const [addiservices, setAddiServices] = useState<any[]>([]);
   const [GarageDetails, setGarageDetails] = useState<any>(null);
   const [pickupAddress, setPickupAddress] = useState<string>('Fetching address…');
   const [invoice, setInvoice] = useState<any>(null);
@@ -94,16 +92,6 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
   useEffect(() => {
     if (!booking) { return; }
 
-    const fetchAdditionalServices = async () => {
-      const apiId = booking?.dealer_id?._id;
-      const digitsOnly = booking?.userBike_id?.bike_cc?.replace(/\D/g, '');
-      const state = await additionalservices(apiId, '', digitsOnly);
-      if (state?.success) {
-        const selectedIds = booking?.additionalServices?.map((s: any) => s) || [];
-        setAddiServices(state.data.filter((s: any) => selectedIds.includes(s._id)));
-      }
-    };
-
     const fetchDealerDetails = async () => {
       try {
         const cc = booking?.services?.[0]?.bikes?.[0]?.cc;
@@ -116,7 +104,6 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
       }
     };
 
-    fetchAdditionalServices();
     fetchDealerDetails();
   }, [booking, isFocus]);
 
@@ -138,16 +125,14 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
   const servicePrice = serviceMatch?.bikes?.[0]?.price ?? 0;
 
   const calculateTotal = () => {
-    const svcTotal =
+    if (booking?.grandTotal != null) { return booking.grandTotal; }
+    if (booking?.totalBill != null)  { return booking.totalBill; }
+    return (
       booking?.services?.reduce(
         (sum: number, s: any) => sum + (s?.bikes?.[0]?.price || 0),
         0,
-      ) || 0;
-    const addTotal = addiservices.reduce(
-      (sum: number, s: any) => sum + (s?.bikes?.[0]?.price || 0),
-      0,
-    );
-    return svcTotal + addTotal + (booking?.tax || 0);
+      ) || 0
+    ) + (booking?.tax || 0);
   };
 
   const formatDT = (iso: string) => {
@@ -529,9 +514,17 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
             </View>
           ) : null}
 
-          {/* Additional services */}
-          {addiservices.map((service, i) => {
-            const svcName = service.base_additional_service_id?.name || '';
+          {/* Additional services — rendered directly from booking response */}
+          {(() => {
+          //  console.log('BOOKING_ADDITIONAL_SERVICES', JSON.stringify(booking?.additionalServices, null, 2));
+            return null;
+          })()}
+          {booking?.additionalServices?.map((service: any, i: number) => {
+            const svcName =
+              service?.base_additional_service_id?.name ||
+              service?.name ||
+              service?.additional_service_name ||
+              'Additional Service';
             return (
               <View key={service._id || i} style={styles.billRow}>
                 <View style={styles.billItemLeft}>

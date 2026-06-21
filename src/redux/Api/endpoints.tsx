@@ -37,5 +37,5 @@ export const endpoint = {
   featuredCategories: '/bikedoctor/location-featured-categories/nearby',
   bookingTimerStatus: '/bikedoctor/bookings/getBookingTimerStatus',
   notification: '/bikedoctor/notification/:receiverId',
-  selectPaymentMethod: '/bikedoctor/bookings/select-payment-method',
+  selectPaymentMethod: '/bikedoctor/bookings',
 };

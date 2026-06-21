@@ -892,8 +892,7 @@ const additionalservices = async (id: string, token: string, cc: string) => {
         const results = await callMultipleApis(apiRequests);
         const response = results[0];
 
-        if (response?.status == '200') {
-            // successToast('Bike Remove Successfully')
+        if (response?.success) {
             return { success: true, message: 'Success', data: response.data };
         } else {
             return { success: false, message: 'Unexpected response', data: [] };
@@ -1374,11 +1373,14 @@ const get_bookingTimerStatus = async (bookingId: string) => {
 
 const select_payment_method = async (bookingId: string, payment_method: 'ONLINE' | 'CASH') => {
     const token = await AsyncStorage.getItem('token');
+    const user_id = await AsyncStorage.getItem('user_id');
+    const requestBody = { user_id, payment_method };
+    console.log('PAYMENT_METHOD_BODY', requestBody);
     const apiRequests: ApiRequest[] = [
         {
-            endpoint: `${endpoint.selectPaymentMethod}/${bookingId}`,
+            endpoint: (() => { const finalUrl = `${endpoint.selectPaymentMethod}/${bookingId}/select-payment-method`; console.log('PAYMENT_METHOD_URL', finalUrl); return finalUrl; })(),
             method: 'POST',
-            data: { payment_method },
+            data: requestBody,
             headers: {
                 'Content-Type': 'application/json',
                 token: token,
