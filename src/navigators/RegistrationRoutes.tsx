@@ -60,7 +60,7 @@ const RegistrationRoutes: FunctionComponent = () => {
     
 
         // Fetch geocode
-        const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyB_Lz_b22Sf5eKRSHhgxOnoZ8InrtXkpSM`;
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyCM15ry8lewwj6YZ-04_m7Z58dsQo_hBBA`;
 
 
         const res = await fetch(url);

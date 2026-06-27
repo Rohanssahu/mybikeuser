@@ -7,8 +7,10 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
+  BackHandler,
 } from 'react-native';
 import {useRoute} from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
 import {color} from '../../constant';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import {hp, wp} from '../../component/utils/Constant';
@@ -59,6 +61,16 @@ const BookingComplete: React.FC<{navigation: any}> = ({navigation}) => {
   const route = useRoute();
   const params = (route.params ?? {}) as BookingParams;
   const hasDetails = !!params.garageName;
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        navigation.reset({index: 0, routes: [{name: ScreenNameEnum.BOTTAM_TAB}]});
+        return true;
+      });
+      return () => sub.remove();
+    }, [navigation]),
+  );
 
   return (
     <View style={styles.container}>
@@ -143,7 +155,7 @@ const BookingComplete: React.FC<{navigation: any}> = ({navigation}) => {
             style={styles.ctaButton}
             activeOpacity={0.85}
             onPress={() =>
-              navigation.navigate(ScreenNameEnum.BOTTAM_TAB)
+              navigation.reset({index: 0, routes: [{name: ScreenNameEnum.BOTTAM_TAB}]})
             }>
             <Text style={styles.ctaText}>Back to home</Text>
           </TouchableOpacity>

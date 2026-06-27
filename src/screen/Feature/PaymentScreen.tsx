@@ -8,8 +8,10 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  BackHandler,
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import Icon from '../../component/Icon';
 import { icon } from '../../component/Image';
 import CustomHeader from '../../component/CustomHeaderProps';
@@ -22,6 +24,14 @@ const PaymentScreen = ({ navigation }: any) => {
 
   const route: any = useRoute();
   const { User, totalPrice } = route.params;
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!paymentInitiated) return;
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+      return () => sub.remove();
+    }, [paymentInitiated]),
+  );
 
   const startUpiPayment = async () => {
     try {
@@ -72,8 +82,12 @@ const PaymentScreen = ({ navigation }: any) => {
             style={styles.viewBookingBtn}
             activeOpacity={0.85}
             onPress={() =>
-              navigation.navigate(ScreenNameEnum.SERVICE_SUMMERY, {
-                id: User?._id,
+              navigation.reset({
+                index: 1,
+                routes: [
+                  {name: ScreenNameEnum.BOTTAM_TAB},
+                  {name: ScreenNameEnum.SERVICE_SUMMERY, params: {id: User?._id}},
+                ],
               })
             }>
             <Text style={styles.viewBookingTxt}>View Booking</Text>

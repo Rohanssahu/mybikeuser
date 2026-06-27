@@ -9,7 +9,7 @@ export const endpoint = {
   servicelist: '/bikedoctor/service/servicelist',
   bannerlist: '/bikedoctor/banner/bannerlist',
   nearbydeler: '/bikedoctor/dealer/dealerWithInRange',
-  invoiceBill: '/payment/bills/booking',
+  invoiceBill: '/bikedoctor/payment/bills/booking',
   updateBooking: '/bikedoctor/bookings/updateBooking',
   userbooking: '/bikedoctor/bookings/getuserbookings',
   mybikes: '/bikedoctor/customers/getMyBikes',

@@ -32,7 +32,9 @@
       android:supportsRtl="true">
              <meta-data
      android:name="com.google.android.geo.API_KEY"
-     android:value="AIzaSyB_Lz_b22Sf5eKRSHhgxOnoZ8InrtXkpSM"/>
+     android:value="AIzaSyCM15ry8lewwj6YZ-04_m7Z58dsQo_hBBA"/>
+
+     
 
 <meta-data
     android:name="com.google.firebase.messaging.default_notification_icon"

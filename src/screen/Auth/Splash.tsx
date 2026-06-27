@@ -13,11 +13,11 @@ const Splash: React.FC = () => {
 
         if (!token) {
 
-            navigation.navigate(ScreenNameEnum.LOGIN_SCREEN);
+            navigation.replace(ScreenNameEnum.LOGIN_SCREEN);
         }
         if (token) {
 
-            navigation.navigate(ScreenNameEnum.BOTTAM_TAB);
+            navigation.reset({index: 0, routes: [{name: ScreenNameEnum.BOTTAM_TAB}]});
         }
     };
     useEffect(() => {

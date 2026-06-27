@@ -76,9 +76,9 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ navigation }) => {
         const response = await otp_Verify(phone, value);
         if (response.success) {
             if (response?.user?.isProfile) {
-                navigation.navigate(ScreenNameEnum.BOTTAM_TAB);
+                navigation.reset({index: 0, routes: [{name: ScreenNameEnum.BOTTAM_TAB}]});
             } else {
-                navigation.navigate(ScreenNameEnum.PROFILE_DETAILS);
+                navigation.reset({index: 0, routes: [{name: ScreenNameEnum.PROFILE_DETAILS}]});
             }
         }
         setisLoading(false);
