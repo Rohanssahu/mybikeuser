@@ -84,10 +84,11 @@ const GarageCard = ({
         ? `${Math.round(distanceKm * 1000)} m`
         : `${distanceKm.toFixed(1)} km`
       : '—';
+console.log('image_url',item.shopImages);
 
   const shopImage =
     !imgError && item.shopImages && item.shopImages.length > 0
-      ? {uri: `${image_url}${item.shopImages[0]}`}
+      ? {uri: item.shopImages[0]}
       : require('../assets/images/gragd.png');
 
   const rating = item.averageRating

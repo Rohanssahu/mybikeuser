@@ -21,6 +21,8 @@ import { errorToast, successToast } from '../../configs/customToast';
 import { otp_Verify, resend_Otp } from '../../redux/Api/apiRequests';
 import Loading from '../../configs/Loader';
 import ScreenNameEnum from '../../routes/screenName.enum';
+import Icon from '../../component/Icon';
+import { icon } from '../../component/Image';
 
 const RESEND_DELAY = 30;
 const CELL_COUNT = 4;
@@ -117,7 +119,7 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ navigation }) => {
             <TouchableOpacity
                 onPress={() => navigation.goBack()}
                 style={styles.backBtn}>
-                <Text style={styles.backArrow}>←</Text>
+                <Icon source={icon.back} size={24} tintColor="#FFFFFF" />
             </TouchableOpacity>
 
             {/* Progress pills */}
@@ -252,11 +254,6 @@ const styles = StyleSheet.create({
         borderColor: '#1A2870',
         alignItems: 'center',
         justifyContent: 'center',
-    },
-    backArrow: {
-        fontSize: 20,
-        color: '#FFFFFF',
-        fontWeight: '600',
     },
 
     /* Progress */

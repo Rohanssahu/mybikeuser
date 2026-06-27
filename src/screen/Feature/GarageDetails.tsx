@@ -1059,6 +1059,12 @@ const styles = StyleSheet.create({
     top: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 24) + 8,
     left: 10,
     zIndex: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0,0,0,0.38)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // ── Garage info ──

@@ -10,6 +10,8 @@ import {
   Image,
 } from 'react-native';
 import { useSelector } from 'react-redux';
+import Icon from '../../component/Icon';
+import { icon } from '../../component/Image';
 
 const Chat = () => {
   const route = useRoute();
@@ -123,12 +125,9 @@ console.log('result.data',result.data);
           onPress={() => {
             navigation.goBack();
           }}
-          style={{zIndexL:10}}
+          style={styles.backBtn}
         >
-          <Image
-            source={require('../../assets/Cropping/Back_Navs2x.png')}
-            style={{ height: 30, width: 30 }}
-          />
+          <Icon source={icon.back} size={24} tintColor="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Chat Support</Text>
       </View>
@@ -192,6 +191,14 @@ console.log('result.data',result.data);
         width: '100%',
     marginVertical:15,
     paddingHorizontal:10
+      },
+      backBtn: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10,
       },
       backButton: {
         backgroundColor: '#009838',
