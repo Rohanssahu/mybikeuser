@@ -171,7 +171,11 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
     ]);
    
     
-
+console.log('detailsRes',detailsRes?.data?.services);
+console.log(
+  "servicesRes",
+  JSON.stringify(servicesRes.data, null, 2)
+);
     if (detailsRes?.success) {
       let services: any[] = [];
       if (Array.isArray(servicesRes?.data) && servicesRes.data.length > 0) {
