@@ -22,6 +22,62 @@ import { icon } from '../../component/Image';
 import Geolocation from '@react-native-community/geolocation';
 import { getAddressFromLatLng } from '../../component/helperFunction';
 import OtpBox from './OtpBox';
+const BOOKING_STATUS_LABELS: Record<string, string> = {
+  pending: 'Pending',
+  confirmed: 'Confirmed',
+  awaiting_payment: 'Awaiting Payment',
+  payment_selected: 'Payment Selected',
+  ready_for_delivery: 'Ready For Delivery',
+  delivered: 'Delivered',
+  completed: 'Completed',
+  rejected: 'Rejected',
+  user_cancelled: 'Cancelled By User',
+  cancelled: 'Cancelled',
+  expired: 'Expired',
+  Payment: 'Payment',
+  'cash received': 'Cash Received',
+};
+
+const getBookingStatusLabel = (status: string) =>
+  BOOKING_STATUS_LABELS[status] || status || '-';
+
+const getBookingStatusColor = (status: string) => {
+  switch (status) {
+    case 'pending':
+    case 'awaiting_payment':
+    case 'payment_selected':
+    case 'Payment':
+      return '#d1a908';
+    case 'rejected':
+    case 'user_cancelled':
+    case 'cancelled':
+    case 'expired':
+      return 'red';
+    default:
+      return 'green';
+  }
+};
+
+const getPaymentStatusLabel = (paymentStatus: string, billStatus: string) => {
+  if (paymentStatus) {
+    return paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1);
+  }
+  if (billStatus) {
+    return billStatus.charAt(0).toUpperCase() + billStatus.slice(1);
+  }
+  return 'Pending';
+};
+
+const getPaymentStatusColor = (paymentStatus: string, billStatus: string) => {
+  if (paymentStatus === 'completed' || billStatus === 'paid') {
+    return 'green';
+  }
+  if (paymentStatus === 'failed') {
+    return 'red';
+  }
+  return '#d1a908';
+};
+
 // Define types for service items
 interface ServiceItem {
   name: string;
@@ -304,26 +360,25 @@ const Price =  services?.bikes[0]?.price
             <Text
               style={[
                 styles.totalPrice,
-                {
-                  color:
-                    booking?.status === 'pending'
-                      ? '#d1a908'
-                      : booking?.status === 'user_cancelled'
-                        ? 'red'
-                        : booking?.status === 'rejected'
-                          ? 'red'
-                          : 'green',
-                },
+                { color: getBookingStatusColor(booking?.status) },
               ]}>
-              {booking.status === 'user_cancelled'
-                ? 'Cancelled By User'
-                : booking.status}
+              {getBookingStatusLabel(booking?.status)}
             </Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Pickup Status</Text>
             <Text style={[styles.totalPrice, { color: '#d1a908' }]}>
               {booking?.pickupStatus}
+            </Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Payment Status</Text>
+            <Text
+              style={[
+                styles.totalPrice,
+                { color: getPaymentStatusColor(booking?.payment_status, booking?.billStatus) },
+              ]}>
+              {getPaymentStatusLabel(booking?.payment_status, booking?.billStatus)}
             </Text>
           </View>
           {booking?.pickupAndDropId != null && (
@@ -409,31 +464,6 @@ const Price =  services?.bikes[0]?.price
             </View>
           )}
 
-          {booking?.status === 'completed' && booking?.billStatus === 'pending' && (
-            <View
-              style={{
-                marginTop: 30,
-                width: '100%',
-                paddingHorizontal: 30,
-                marginBottom: 30,
-              }}>
-              <CustomButton
-                title= {`Pay Now ${calculateTotal()}`}
-                onPress={() => {
-                  navigation.navigate(ScreenNameEnum.PaymentScreen, {
-
-                    User: booking,
-                    totalPrice: booking?.totalBill,
-                    response: booking,
-
-                  });
-
-                }}
-              />
-            </View>
-          )
-          }
-
           {/* Footer */}
           <Text style={styles.footerText}>
             Thank you for servicing with{' '}
@@ -457,7 +487,7 @@ const Price =  services?.bikes[0]?.price
             </Text>
           </View>
         )}
-        {booking?.billGenerated && (
+        {booking?.billGenerated == true && (
           <View
             style={{
               marginTop: 30,
@@ -465,9 +495,9 @@ const Price =  services?.bikes[0]?.price
               paddingHorizontal: 30,
             }}>
             <CustomButton
-              title="Download Invoice"
+              title="View Invoice"
               onPress={() => {
-                navigation.navigate(ScreenNameEnum.BOTTAM_TAB);
+                navigation.navigate(ScreenNameEnum.INVOICE_SCREEN, { id });
               }}
             />
           </View>

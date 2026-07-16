@@ -1076,6 +1076,35 @@ const bookingdetails = async (id: string) => {
         return { success: false, message: error.message, state: [] };
     }
 };
+const get_bill_by_booking = async (bookingId: string) => {
+    const token = await AsyncStorage.getItem('token')
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.billByBooking?.replace(':booking_id', bookingId),
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'token': token
+            },
+        },
+    ];
+
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+
+        if (response?.success) {
+            return { success: true, message: "Success", data: response.data };
+        }
+        else {
+            return { success: false, message: "Unexpected response", data: null };
+        }
+
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return { success: false, message: error.message, data: null };
+    }
+};
 const cancel_booking = async (bookingId: string, status: string) => {
     const user_id = await AsyncStorage.getItem('user_id')
 
@@ -1308,4 +1337,4 @@ const tikitstatus = async (id: string, status: string) => {
 
 
 
-export { additionalservices, updateBooking, payment_Cash, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  
+export { additionalservices, updateBooking, payment_Cash, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, get_bill_by_booking, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist }  
