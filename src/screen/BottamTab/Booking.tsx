@@ -9,7 +9,7 @@ import {
   Image,
   Platform,
 } from 'react-native';
-import {color} from '../../constant';
+import {color, TAB_BAR_HEIGHT} from '../../constant';
 import BookingList from '../../component/BookingList';
 import SearchBar from '../../component/SearchBar';
 import {
@@ -17,6 +17,7 @@ import {
   get_userbooking,
 } from '../../redux/Api/apiRequests';
 import {useIsFocused} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {successToast} from '../../configs/customToast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -45,6 +46,8 @@ const Booking: React.FC<{navigation: any}> = ({navigation}) => {
   const [booking, setBooking] = useState<ShopItem[]>([]);
   const isFocus = useIsFocused();
   const [loading, setLoading] = useState(false);
+  const insets = useSafeAreaInsets();
+  const bottomPad = insets.bottom + TAB_BAR_HEIGHT;
 
   useEffect(() => {
     if (isFocus) {fetchBookings();}
@@ -120,9 +123,10 @@ const Booking: React.FC<{navigation: any}> = ({navigation}) => {
             navigation,
             onCallPress: (no: string) => makeCall(no),
             onCancelPress: (id: string) => cancelBooking(id),
+            contentBottomPadding: bottomPad,
           })
         : (
-        <View style={styles.emptyState}>
+        <View style={[styles.emptyState, {paddingBottom: bottomPad}]}>
           <Image source={icon.booking} style={styles.emptyIcon} />
           <Text style={styles.emptyTitle}>
             {searchQuery ? 'No matching bookings' : 'No bookings yet'}

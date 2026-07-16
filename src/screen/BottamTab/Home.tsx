@@ -15,8 +15,9 @@ import {
 } from 'react-native';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import {color} from '../../constant';
+import {color, TAB_BAR_HEIGHT} from '../../constant';
 import BannerSlider from '../../component/BannerSlider';
 import HomeHeader from '../../component/HomeHeader';
 import HorizontalList from '../../component/HorizontalList';
@@ -191,6 +192,7 @@ const FeaturedCategorySkeleton: React.FC = () => {
 
 const Home: React.FC = () => {
   const navigation = useNavigation<NavigationProps>();
+  const insets = useSafeAreaInsets();
   const [serviceList, setServiceList] = useState<Service[]>([]);
   const [bannerList, setBannerList] = useState<Banner[]>([]);
   const [dealerList, setDealerList] = useState<Dealer[]>([]);
@@ -286,6 +288,9 @@ const Home: React.FC = () => {
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingBottom: insets.bottom + TAB_BAR_HEIGHT,
+          }}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -357,8 +362,6 @@ const Home: React.FC = () => {
               No garages found near your location
             </Text>
           )}
-
-          <View style={styles.bottomPad} />
         </ScrollView>
       )}
     </View>
@@ -402,9 +405,6 @@ const styles = StyleSheet.create({
     marginVertical: 16,
     color: '#606880',
     fontSize: 13,
-  },
-  bottomPad: {
-    height: 20,
   },
 });
 

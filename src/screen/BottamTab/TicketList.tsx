@@ -11,7 +11,7 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import {color} from '../../constant';
+import {color, TAB_BAR_HEIGHT} from '../../constant';
 import {get_tikit} from '../../redux/Api/apiRequests';
 import SupportFormModal from './SupportFormModal';
 import ScreenNameEnum from '../../routes/screenName.enum';
@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useIsFocused} from '@react-navigation/native';
 import {format} from 'date-fns';
 import {icon} from '../../component/Image';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 interface Ticket {
   _id: string;
@@ -36,6 +37,8 @@ const TicketList: React.FC = ({navigation}: any) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const isFocused = useIsFocused();
+  const insets = useSafeAreaInsets();
+  const bottomPad = insets.bottom + TAB_BAR_HEIGHT;
 
   useEffect(() => {
     if (isFocused) {
@@ -121,7 +124,7 @@ const TicketList: React.FC = ({navigation}: any) => {
         <FlatList
           data={filteredTickets}
           keyExtractor={item => item._id}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[styles.list, {paddingBottom: bottomPad}]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -194,7 +197,7 @@ const TicketList: React.FC = ({navigation}: any) => {
           }}
         />
       ) : (
-        <View style={styles.centerBox}>
+        <View style={[styles.centerBox, {paddingBottom: bottomPad}]}>
           <Image source={icon.support} style={styles.emptyIcon} />
           <Text style={styles.emptyTitle}>
             {selectedTab === 'Open' ? 'No Open Tickets' : 'No Closed Tickets'}

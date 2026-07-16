@@ -16,5 +16,10 @@ export const color = {
 
 }
 
+// Base height of the bottom tab bar, excluding the device's safe-area bottom inset.
+// Screens rendered inside the Bottom Tab Navigator should add
+// `insets.bottom + TAB_BAR_HEIGHT` as bottom padding so content never sits behind the tab bar.
+export const TAB_BAR_HEIGHT = 60;
+
 
 

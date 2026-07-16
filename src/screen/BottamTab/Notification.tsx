@@ -8,6 +8,8 @@ import Loading from '../../configs/Loader';
 import NotificationItem from '../../component/NotificationItem';
 import { get_Notification } from '../../redux/Api/apiRequests';
 import ScreenNameEnum from '../../routes/screenName.enum';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { TAB_BAR_HEIGHT } from '../../constant';
 
 const BOOKING_NOTIFICATION_TYPES = [
   'service_completed',
@@ -20,6 +22,8 @@ const Notification = ({ navigation }: any) => {
     const isLogOut: any = useSelector((state: any) => state.auth);
     const [notifications, setnotifications] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const insets = useSafeAreaInsets();
+    const bottomPad = insets.bottom + TAB_BAR_HEIGHT;
 
     useEffect(() => {
         get_Notificationlist();
@@ -75,6 +79,7 @@ const Notification = ({ navigation }: any) => {
             <View style={styles.listWrap}>
                 <FlatList
                     data={notifications}
+                    contentContainerStyle={{ paddingBottom: bottomPad }}
                     keyExtractor={(item, index) =>
                         item?.id ? item.id.toString() : index.toString()
                     }

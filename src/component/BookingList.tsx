@@ -35,6 +35,7 @@ interface BookingListProps {
   navigation: any;
   onCancelPress: (id: string) => void;
   onCallPress?: (no: string) => void;
+  contentBottomPadding?: number;
 }
 
 const STATUS_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
@@ -59,6 +60,7 @@ const BookingList: React.FC<BookingListProps> = ({
   navigation,
   onCancelPress,
   loading,
+  contentBottomPadding,
 }) => {
   const [cancelIndex, setCancelIndex] = useState<number | null>(null);
 
@@ -78,7 +80,10 @@ const BookingList: React.FC<BookingListProps> = ({
     <FlatList
       data={data}
       keyExtractor={item => item._id}
-      contentContainerStyle={styles.list}
+      contentContainerStyle={[
+        styles.list,
+        contentBottomPadding != null && {paddingBottom: contentBottomPadding},
+      ]}
       showsVerticalScrollIndicator={false}
       renderItem={({ item, index }) => {
         const isExpired =

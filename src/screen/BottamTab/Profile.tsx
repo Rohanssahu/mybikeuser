@@ -13,11 +13,12 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useFocusEffect} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import {color} from '../../constant';
+import {color, TAB_BAR_HEIGHT} from '../../constant';
 import {icon} from '../../component/Image';
 import ProfileMenuList from '../../component/ProfileList';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import {get_profile} from '../../redux/Api/apiRequests';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 type RootStackParamList = {Profile: undefined};
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
@@ -38,6 +39,7 @@ interface ProfileMenuItem {
 
 const Profile: React.FC<Props> = ({navigation}) => {
   const [user, setUser] = useState<UserType>({});
+  const insets = useSafeAreaInsets();
 
   useFocusEffect(
     useCallback(() => {
@@ -94,7 +96,10 @@ const Profile: React.FC<Props> = ({navigation}) => {
       {/* Menu List */}
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}>
+        contentContainerStyle={[
+          styles.scrollContent,
+          {paddingBottom: insets.bottom + TAB_BAR_HEIGHT},
+        ]}>
         <ProfileMenuList data={profileData} />
       </ScrollView>
     </View>

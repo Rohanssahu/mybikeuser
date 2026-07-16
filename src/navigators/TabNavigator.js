@@ -1,11 +1,13 @@
 import {View, Text, Image, Keyboard, Platform, StyleSheet} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import _routes from '../routes/routes';
 
 const Tab = createBottomTabNavigator();
 
 export default function TabNavigator() {
+  const insets = useSafeAreaInsets();
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
@@ -33,8 +35,8 @@ export default function TabNavigator() {
           backgroundColor: '#0A1340',
           borderTopWidth: 1,
           borderTopColor: 'rgba(254,212,40,0.12)',
-          height: Platform.OS === 'ios' ? 82 : 68,
-          paddingBottom: Platform.OS === 'ios' ? 22 : 10,
+          height: 60 + insets.bottom,
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
           paddingTop: 8,
           elevation: 20,
           shadowColor: '#000',
