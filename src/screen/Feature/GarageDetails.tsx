@@ -165,33 +165,16 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
     }
 
     const digitsOnly = bike?.bike_cc?.toString().replace(/\D/g, '') || '';
+    const variantId = bike?.variant_id ?? bike?.variantId ?? '';
     const [detailsRes, servicesRes] = await Promise.all([
       garage_details(id, digitsOnly),
-      get_dealer_services(id),
+      get_dealer_services(id, variantId, digitsOnly),
     ]);
-   
-    
-console.log('detailsRes',detailsRes?.data?.services);
-console.log(
-  "servicesRes",
-  JSON.stringify(servicesRes.data, null, 2)
-);
+
     if (detailsRes?.success) {
-      let services: any[] = [];
-      if (Array.isArray(servicesRes?.data) && servicesRes.data.length > 0) {
-        const variantId = bike?.variant_id ?? bike?.variantId ?? null;
-        const byVariant = variantId
-          ? servicesRes.data.filter(
-              (s: any) =>
-                s.variantId === variantId || s.variant_id === variantId,
-            )
-          : [];
-        services = dedupeServices(
-          byVariant.length > 0 ? byVariant : servicesRes.data,
-        );
-      } else {
-        services = detailsRes.data.services || [];
-      }
+      const services = dedupeServices(
+        Array.isArray(servicesRes?.data) ? servicesRes.data : [],
+      );
       setGarageData({...detailsRes.data, services});
       if (incomingServiceId) {
         const match = services.find(
@@ -817,7 +800,7 @@ console.log(
               {(garageData?.services?.length ?? 0) === 0 ? (
                 <View style={styles.noServiceBox}>
                   <Text style={styles.noServiceText}>
-                    No services available
+                    No services are available for your selected bike.
                   </Text>
                 </View>
               ) : (

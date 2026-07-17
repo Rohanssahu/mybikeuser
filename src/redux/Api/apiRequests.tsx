@@ -774,16 +774,18 @@ const garage_details = async (id: string, digitsOnly: string) => {
     }
 };
 
-const get_dealer_services = async (dealerId: string) => {
-    
-   
+const get_dealer_services = async (dealerId: string, variant_id: string, cc?: string) => {
+
+    let servicesUrl = `${endpoint.dealerServices}?dealerId=${dealerId}&variant_id=${variant_id}`;
+    if (cc) {servicesUrl += `&cc=${cc}`;}
+
     const apiRequests: ApiRequest[] = [
         {
-            endpoint: `${endpoint.dealerServices}?dealerId=${dealerId}`,
+            endpoint: servicesUrl,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-            
+
             },
         },
     ];
@@ -807,11 +809,12 @@ const get_dealer_services = async (dealerId: string) => {
     }
 };
 
-const get_FilterBydeler = async (lat: string, long: string, variant_id: string, serviceId?: string) => {
+const get_FilterBydeler = async (lat: string, long: string, variant_id: string, serviceId?: string, cc?: string) => {
 
     const token = await AsyncStorage.getItem('token')
     let filterUrl = `${endpoint.nearbydeler}?userLat=${lat}&userLon=${long}&variant_id=${variant_id}`;
     if (serviceId) {filterUrl += `&serviceId=${serviceId}`;}
+    if (cc) {filterUrl += `&cc=${cc}`;}
     const apiRequests: ApiRequest[] = [
         {
             endpoint: filterUrl,

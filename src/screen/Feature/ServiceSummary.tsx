@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   Linking,
   Platform,
-  ActivityIndicator,
 } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import Icon from '../../component/Icon';
@@ -20,8 +19,6 @@ import { useIsFocused, useRoute } from '@react-navigation/native';
 import {
   bookingdetails,
   garage_details,
-  get_invoice,
-  select_payment_method,
 } from '../../redux/Api/apiRequests';
 import { image_url } from '../../redux/Api';
 import { getAddressFromLatLng } from '../../component/helperFunction';
@@ -68,13 +65,6 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
   const [booking, setBooking] = useState<any>(null);
   const [GarageDetails, setGarageDetails] = useState<any>(null);
   const [pickupAddress, setPickupAddress] = useState<string>('Fetching address…');
-  const [invoice, setInvoice] = useState<any>(null);
-  const [invoiceLoading, setInvoiceLoading] = useState(false);
-
-  // Payment method selection state
-  const [selectedMethod, setSelectedMethod] = useState<'ONLINE' | 'CASH' | null>(null);
-  const [payMethodLoading, setPayMethodLoading] = useState(false);
-  const [cashConfirmed, setCashConfirmed] = useState(false);
 
   // ── Polling booking details every 10 s ──────────────────────────────────────
   useEffect(() => {
@@ -163,33 +153,6 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
 
   const makeCall = (no: string) => Linking.openURL(`tel:${no}`);
 
-  const fetchInvoice = async () => {
-    if (!booking?._id || invoiceLoading) { return; }
-    setInvoiceLoading(true);
-    const res = await get_invoice(booking._id);
-    if (res?.success) { setInvoice(res.data); }
-    setInvoiceLoading(false);
-  };
-
-  // ── Payment method handler ────────────────────────────────────────────────────
-  const handlePaymentContinue = async () => {
-    if (!selectedMethod || !booking?._id) { return; }
-    setPayMethodLoading(true);
-    const res = await select_payment_method(booking._id, selectedMethod);
-    setPayMethodLoading(false);
-    if (res?.success) {
-      if (selectedMethod === 'ONLINE') {
-        navigation.navigate(ScreenNameEnum.PaymentScreen, {
-          User: booking,
-          totalPrice: total,
-          response: booking,
-        });
-      } else {
-        setCashConfirmed(true);
-      }
-    }
-  };
-
   // ── Layout helpers ────────────────────────────────────────────────────────────
   const rawStatus = booking?.status ?? 'pending';
   const dealerResponseStatus = booking?.dealerResponseStatus;
@@ -214,10 +177,7 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
   const shopLng = parseFloat(booking?.dealer_id?.longitude);
   const hasCoords = !isNaN(shopLat) && !isNaN(shopLng) && shopLat !== 0 && shopLng !== 0;
 
-  // Backward-compat: old 'completed' + pending bill still shows pay now
-  const showPayNow = status === 'completed' && booking?.billStatus === 'pending';
-  const showPaymentSelection = status === 'awaiting_payment';
-  const showCashConfirmed = cashConfirmed || (status === 'payment_selected' && booking?.paymentMethod === 'CASH');
+  const showCashConfirmed = status === 'payment_selected' && booking?.paymentMethod === 'CASH';
   const showDelivered = status === 'delivered';
   const showDeliveryOtp = status === 'ready_for_delivery';
 
@@ -325,70 +285,6 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
                 )}
               </React.Fragment>
             ))}
-          </View>
-        )}
-
-        {/* ── Payment Method Selection (awaiting_payment) ───────────────────── */}
-        {showPaymentSelection && (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Choose Payment Method</Text>
-
-            <TouchableOpacity
-              style={[
-                styles.methodRow,
-                selectedMethod === 'ONLINE' && styles.methodRowSelected,
-              ]}
-              activeOpacity={0.8}
-              onPress={() => setSelectedMethod('ONLINE')}>
-              <View
-                style={[
-                  styles.radioOuter,
-                  selectedMethod === 'ONLINE' && styles.radioOuterActive,
-                ]}>
-                {selectedMethod === 'ONLINE' && <View style={styles.radioDotInner} />}
-              </View>
-              <View style={styles.methodLabelWrap}>
-                <Text style={styles.methodLabelTxt}>Online</Text>
-                <Text style={styles.methodLabelSub}>UPI / Card / Net Banking</Text>
-              </View>
-              <Text style={styles.methodEmoji}>📱</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.methodRow,
-                selectedMethod === 'CASH' && styles.methodRowSelected,
-              ]}
-              activeOpacity={0.8}
-              onPress={() => setSelectedMethod('CASH')}>
-              <View
-                style={[
-                  styles.radioOuter,
-                  selectedMethod === 'CASH' && styles.radioOuterActive,
-                ]}>
-                {selectedMethod === 'CASH' && <View style={styles.radioDotInner} />}
-              </View>
-              <View style={styles.methodLabelWrap}>
-                <Text style={styles.methodLabelTxt}>Cash</Text>
-                <Text style={styles.methodLabelSub}>Pay dealer during pickup</Text>
-              </View>
-              <Text style={styles.methodEmoji}>💵</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.continueBtn,
-                (!selectedMethod || payMethodLoading) && styles.continueBtnDisabled,
-              ]}
-              activeOpacity={0.85}
-              onPress={handlePaymentContinue}
-              disabled={!selectedMethod || payMethodLoading}>
-              {payMethodLoading ? (
-                <ActivityIndicator color="#081041" />
-              ) : (
-                <Text style={styles.continueBtnTxt}>Continue</Text>
-              )}
-            </TouchableOpacity>
           </View>
         )}
 
@@ -572,7 +468,7 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
               </View>
             </View>
             <View style={styles.statusGridItem}>
-              <Text style={styles.statusGridLbl}>Bill Status</Text>
+              <Text style={styles.statusGridLbl}>Payment Status</Text>
               <View style={[styles.statusGridBadge, { backgroundColor: billStatusCfg.bg }]}>
                 <Text style={[styles.statusGridVal, { color: billStatusCfg.color }]}>
                   {billStatusCfg.label}
@@ -594,33 +490,11 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
             <TouchableOpacity
               style={styles.invoiceBtn}
               activeOpacity={0.8}
-              onPress={fetchInvoice}
-              disabled={invoiceLoading}>
-              <Text style={styles.invoiceBtnTxt}>
-                {invoiceLoading ? 'Loading…' : invoice ? 'Refresh Invoice' : 'View Invoice'}
-              </Text>
+              onPress={() =>
+                navigation.navigate(ScreenNameEnum.InvoiceScreen, { bookingId: booking._id })
+              }>
+              <Text style={styles.invoiceBtnTxt}>View Invoice</Text>
             </TouchableOpacity>
-          )}
-
-          {/* Invoice detail card */}
-          {invoice && (
-            <View style={styles.invoiceCard}>
-              <Text style={styles.invoiceTitle}>Invoice</Text>
-              {[
-                { label: 'Invoice No.', value: invoice.invoice_number || invoice._id?.slice(-8).toUpperCase() },
-                { label: 'Amount',      value: invoice.total_amount != null ? `₹${invoice.total_amount}` : undefined },
-                { label: 'Payment',     value: invoice.pay_type || invoice.payment_type },
-                { label: 'Date',        value: invoice.created_at ? formatDT(invoice.created_at) : undefined },
-                { label: 'Status',      value: invoice.status },
-              ]
-                .filter(r => r.value)
-                .map(({ label, value }) => (
-                  <View key={label} style={styles.invoiceRow}>
-                    <Text style={styles.invoiceLbl}>{label}</Text>
-                    <Text style={styles.invoiceVal}>{value}</Text>
-                  </View>
-                ))}
-            </View>
           )}
         </View>
 
@@ -642,33 +516,7 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
           <Text style={styles.footerHL}>MR BIKE!</Text>
           {'\n'}Ride Safe! 🏍️
         </Text>
-
-        {showPayNow && <View style={styles.payBarSpacer} />}
       </ScrollView>
-
-      {/* ─── Sticky Pay Now Button (backward compat for old 'completed' status) ── */}
-      {showPayNow && (
-        <View style={styles.payBar}>
-          <View style={styles.payBarInner}>
-            <View>
-              <Text style={styles.payBarLbl}>Total Payable</Text>
-              <Text style={styles.payBarAmt}>₹{total}</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.payBtn}
-              activeOpacity={0.85}
-              onPress={() =>
-                navigation.navigate(ScreenNameEnum.PaymentScreen, {
-                  User: booking,
-                  totalPrice: total,
-                  response: booking,
-                })
-              }>
-              <Text style={styles.payBtnTxt}>Pay Now  ›</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
     </View>
   );
 };

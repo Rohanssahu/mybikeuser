@@ -1,6 +1,7 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
+  Dimensions,
   FlatList,
   Image,
   Platform,
@@ -28,6 +29,15 @@ interface FeaturedCategory {
   serviceId?: {_id: string; name: string};
 }
 
+const {width: SCREEN_WIDTH} = Dimensions.get('window');
+const NUM_COLUMNS = 3;
+const GRID_PADDING = 16;
+const CARD_GAP = 10;
+const CARD_WIDTH =
+  (SCREEN_WIDTH - GRID_PADDING * 2 - CARD_GAP * (NUM_COLUMNS - 1)) /
+  NUM_COLUMNS;
+const CARD_IMAGE_HEIGHT = CARD_WIDTH;
+
 type SortKey = 'default' | 'az' | 'za';
 
 const SORT_OPTIONS: {label: string; value: SortKey}[] = [
@@ -54,16 +64,21 @@ const CategoryCard = ({
       style={styles.card}
       activeOpacity={0.8}
       onPress={onPress}>
-      <Image
-        source={imgSrc}
-        style={styles.cardImg}
-        resizeMode="cover"
-        onError={() => setImgError(true)}
-      />
-      <View style={styles.cardOverlay}>
-        <Text style={styles.cardName} numberOfLines={2}>
-          {item.categoryName}
-        </Text>
+      <View style={styles.cardInner}>
+        <Image
+          source={imgSrc}
+          style={styles.cardImg}
+          resizeMode="cover"
+          onError={() => setImgError(true)}
+        />
+        <View style={styles.cardNameWrapper}>
+          <Text
+            style={styles.cardName}
+            numberOfLines={2}
+            ellipsizeMode="tail">
+            {item.categoryName}
+          </Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -180,7 +195,7 @@ const AllServices: React.FC<Props> = ({navigation}) => {
         <FlatList
           data={filtered}
           keyExtractor={item => item._id}
-          numColumns={2}
+          numColumns={NUM_COLUMNS}
           columnWrapperStyle={styles.row}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
@@ -229,8 +244,8 @@ const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: color.baground},
   searchWrapper: {
     paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 8,
+    paddingTop: 16,
+    paddingBottom: 10,
   },
   searchBar: {
     flexDirection: 'row',
@@ -248,7 +263,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 16,
     gap: 8,
   },
   filterChip: {
@@ -274,35 +289,51 @@ const styles = StyleSheet.create({
   },
   resetBtnText: {fontSize: 12, color: '#ff6b6b', fontWeight: '600'},
   resultCount: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 10,
-    paddingHorizontal: 4,
+    fontSize: 13,
+    color: '#8a90a8',
+    marginBottom: 14,
+    paddingHorizontal: 2,
+    fontWeight: '600',
   },
-  list: {paddingHorizontal: 14, paddingBottom: 30, paddingTop: 4},
+  list: {
+    paddingHorizontal: GRID_PADDING,
+    paddingBottom: 30,
+    paddingTop: 4,
+  },
   row: {
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: CARD_GAP,
   },
   card: {
-    width: 100,
-    height: 100,
+    width: CARD_WIDTH,
+    borderRadius: 16,
+    backgroundColor: '#101B3D',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 3},
+    shadowOpacity: 0.22,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  cardInner: {
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#1B2A4A',
   },
-  cardImg: {width: '100%', height: '100%', position: 'absolute'},
-  cardOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    padding: 10,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+  cardImg: {
+    width: '100%',
+    height: CARD_IMAGE_HEIGHT,
+  },
+  cardNameWrapper: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 8,
   },
   cardName: {
     color: '#fff',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
-    lineHeight: 17,
+    lineHeight: 16,
+    textAlign: 'center',
   },
   loader: {flex: 1, justifyContent: 'center', alignItems: 'center'},
   emptyBox: {

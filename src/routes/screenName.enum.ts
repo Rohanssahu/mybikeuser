@@ -2,6 +2,7 @@ enum ScreenNameEnum {
   //Auth Screens
   SPLASH_SCREEN = 'SPLASH_SCREEN',
   PaymentScreen='PaymentScreen',
+  InvoiceScreen='InvoiceScreen',
   LOGIN_SCREEN = 'LOGIN_SCREEN',
 
 

@@ -14,7 +14,13 @@ import {icon, default as images} from '../../component/Image';
 import CustomHeader from '../../component/CustomHeaderProps';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {color} from '../../constant';
-import {get_mybikes, remove_bike} from '../../redux/Api/apiRequests';
+import {
+  get_mybikes,
+  remove_bike,
+  get_BikeCompany,
+  get_BikeModel,
+  get_BikeVariant,
+} from '../../redux/Api/apiRequests';
 import {useIsFocused, useRoute} from '@react-navigation/native';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import CustomButton from '../../component/CustomButton';
@@ -41,11 +47,84 @@ const MyBikes: React.FC<Props> = ({navigation}) => {
     if (isFocus) {fetchBikes();}
   }, [isFocus]);
 
+  const isObjectId = (value: any) =>
+    typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value);
+
+  const resolveText = (raw: any, map: Record<string, string>) => {
+    if (raw && map[raw]) {return map[raw];}
+    if (raw && !isObjectId(raw)) {return raw;}
+    return '-';
+  };
+
+  const withFallback = (rawBikes: any[]) =>
+    rawBikes.map((b: any) => ({
+      ...b,
+      companyName: isObjectId(b?.name) || !b?.name ? '-' : b.name,
+      modelName: isObjectId(b?.model) || !b?.model ? '-' : b.model,
+      variantName: '-',
+      ccDisplay: b?.bike_cc || '-',
+    }));
+
+  const enrichBikes = async (rawBikes: any[]) => {
+    const companyIds = Array.from(
+      new Set(rawBikes.map((b: any) => b?.name).filter(Boolean)),
+    );
+    const modelIds = Array.from(
+      new Set(rawBikes.map((b: any) => b?.model).filter(Boolean)),
+    );
+
+    const companyMap: Record<string, string> = {};
+    const companyRes = await get_BikeCompany();
+    (companyRes?.data || []).forEach((c: any) => {
+      if (c?._id) {companyMap[c._id] = c.name;}
+    });
+
+    const modelMap: Record<string, string> = {};
+    await Promise.all(
+      companyIds.map(async (companyId: any) => {
+        const res = await get_BikeModel(companyId);
+        (res?.data || []).forEach((m: any) => {
+          if (m?._id) {modelMap[m._id] = m.model_name;}
+        });
+      }),
+    );
+
+    const variantMap: Record<string, any> = {};
+    await Promise.all(
+      modelIds.map(async (modelId: any) => {
+        const res = await get_BikeVariant(modelId);
+        (res?.data || []).forEach((v: any) => {
+          if (v?._id) {variantMap[v._id] = v;}
+        });
+      }),
+    );
+
+    return rawBikes.map((b: any) => {
+      const variant = variantMap[b?.variant_id];
+      return {
+        ...b,
+        companyName: resolveText(b?.name, companyMap),
+        modelName: resolveText(b?.model, modelMap),
+        variantName: variant?.variant_name || '-',
+        ccDisplay: b?.bike_cc || variant?.engine_cc || '-',
+      };
+    });
+  };
+
   const fetchBikes = async () => {
     setLoading(true);
     try {
       const res = await get_mybikes();
-      setBikes(res?.data || []);
+      const rawBikes = res?.data || [];
+      if (!rawBikes.length) {
+        setBikes([]);
+      } else {
+        try {
+          setBikes(await enrichBikes(rawBikes));
+        } catch {
+          setBikes(withFallback(rawBikes));
+        }
+      }
     } catch {
       setBikes([]);
     } finally {
@@ -90,19 +169,20 @@ const MyBikes: React.FC<Props> = ({navigation}) => {
       <Image source={images.bikes} style={styles.bikeImg} resizeMode="contain" />
 
       <View style={styles.cardBody}>
-        <Text style={styles.plateTxt}>{item.plate_number?.toUpperCase()}</Text>
-        <Text style={styles.modelTxt}>{item.name}</Text>
+        <Text style={styles.plateTxt}>
+          {item.plate_number?.toUpperCase() || '-'}
+        </Text>
+        <Text style={styles.companyTxt}>{item.companyName || '-'}</Text>
+        <Text style={styles.modelTxt}>{item.modelName || '-'}</Text>
+        <Text style={styles.variantTxt}>{item.variantName || '-'}</Text>
         <View style={styles.tagRow}>
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>{item.model}</Text>
+          <View style={[styles.tag, styles.tagCC]}>
+            <Text style={[styles.tagText, styles.tagCCText]}>
+              {item.ccDisplay && item.ccDisplay !== '-'
+                ? `${item.ccDisplay} CC`
+                : '-'}
+            </Text>
           </View>
-          {item.bike_cc ? (
-            <View style={[styles.tag, styles.tagCC]}>
-              <Text style={[styles.tagText, styles.tagCCText]}>
-                {item.bike_cc} CC
-              </Text>
-            </View>
-          ) : null}
         </View>
 
         {!profile && (
@@ -213,10 +293,21 @@ const styles = StyleSheet.create({
     color: '#fff',
     letterSpacing: 1,
   },
+  companyTxt: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+    marginTop: 6,
+  },
   modelTxt: {
     fontSize: 13,
     color: '#A0A3BD',
     marginTop: 3,
+  },
+  variantTxt: {
+    fontSize: 12,
+    color: '#797E95',
+    marginTop: 2,
   },
   tagRow: {
     flexDirection: 'row',

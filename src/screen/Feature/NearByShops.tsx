@@ -46,12 +46,13 @@ const NearByShops: React.FC<Props> = ({ navigation }) => {
     const fetchServiceData = async () => {
         setLoading(true);
                   const { latitude, longitude } = await getCurrentLocation();
+        const cc = item?.bike_cc?.toString().replace(/\D/g, '') || undefined;
         try {
             const [dealer] = await Promise.all([
-                get_FilterBydeler(latitude, longitude, item?.variant_id, serviceId),
+                get_FilterBydeler(latitude, longitude, item?.variant_id, serviceId, cc),
             ]);
 
-            if (dealer.data) setDealerList(dealer.data);
+            setDealerList(dealer?.data ?? []);
 
         } catch (error) {
             console.error("Error fetching data:", error);
@@ -68,7 +69,7 @@ const NearByShops: React.FC<Props> = ({ navigation }) => {
             {dealerList.length > 0 ? (
               <VerticalshopList data={dealerList} navigation={navigation} bike={item} serviceId={serviceId}/>
             ) : (
-              <Text style={{ textAlign: 'center', marginVertical: 10 ,color:'#fff'}}>No Dealers Found This Location</Text>
+              <Text style={{ textAlign: 'center', marginVertical: 10 ,color:'#fff'}}>No dealers available for the selected service and bike.</Text>
             )}
                 
             </ScrollView>
