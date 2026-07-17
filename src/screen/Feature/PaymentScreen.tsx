@@ -17,10 +17,12 @@ import { icon } from '../../component/Image';
 import CustomHeader from '../../component/CustomHeaderProps';
 import { color } from '../../constant';
 import ScreenNameEnum from '../../routes/screenName.enum';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const PaymentScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
   const [paymentInitiated, setPaymentInitiated] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const route: any = useRoute();
   const { User, totalPrice } = route.params;
@@ -158,7 +160,7 @@ const PaymentScreen = ({ navigation }: any) => {
       </ScrollView>
 
       {/* ─── Sticky Pay Button ────────────────────────────────────────────────── */}
-      <View style={styles.payBar}>
+      <View style={[styles.payBar, {paddingBottom: insets.bottom + 14}]}>
         <TouchableOpacity
           style={[styles.payBtn, loading && styles.payBtnDisabled]}
           activeOpacity={0.85}
@@ -325,8 +327,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: 'rgba(254,212,40,0.15)',
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    paddingBottom: 22,
+    paddingTop: 14,
   },
   payBtn: {
     flexDirection: 'row',

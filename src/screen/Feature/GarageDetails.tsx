@@ -32,6 +32,7 @@ import Icon from '../../component/Icon';
 import GarageImage from './GarageBanner';
 import {useLocation} from '../../component/LocationContext';
 import {getCurrentLocation as getSavedOrCurrentLocation} from '../../component/helperFunction';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const PICKUP_RATE_PER_KM = 15;
 const GST_RATE = 0.18;
@@ -59,6 +60,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
     serviceId?: string;
   };
   const {locationCoords} = useLocation();
+  const insets = useSafeAreaInsets();
 
   const [garageData, setGarageData] = useState<any>(null);
   const [distance, setDistance] = useState<number | null>(null);
@@ -680,9 +682,13 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
   // ─── Bottom Bar ───────────────────────────────────────────────
 
   const renderBottomBar = () => {
+    const bottomBarStyle = [
+      styles.bottomBar,
+      {paddingBottom: insets.bottom + 14},
+    ];
     if (step === 0) {
       return (
-        <View style={styles.bottomBar}>
+        <View style={bottomBarStyle}>
           <CustomButton
             title="Next"
             disable={!selectedService}
@@ -693,7 +699,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
     }
     if (step === 1) {
       return (
-        <View style={styles.bottomBar}>
+        <View style={bottomBarStyle}>
           <CustomButton
             title="Continue"
             disable={!choosePickupOption}
@@ -703,7 +709,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
       );
     }
     return (
-      <View style={styles.bottomBar}>
+      <View style={bottomBarStyle}>
         <CustomButton title="Confirm Booking" onPress={createBooking} />
       </View>
     );
@@ -1460,7 +1466,7 @@ const styles = StyleSheet.create({
   // ── Bottom bar ──
   bottomBar: {
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingTop: 14,
     backgroundColor: color.baground,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.08)',

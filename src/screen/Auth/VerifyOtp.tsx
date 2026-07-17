@@ -16,6 +16,7 @@ import {
 } from 'react-native-confirmation-code-field';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { hp, wp } from '../../component/utils/Constant';
 import { errorToast, successToast } from '../../configs/customToast';
 import { otp_Verify, resend_Otp } from '../../redux/Api/apiRequests';
@@ -39,6 +40,7 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ navigation }) => {
 
     const route = useRoute();
     const { phone } = route.params as { phone: string };
+    const insets = useSafeAreaInsets();
 
     // Masked phone: +91XXXXXX7890 → +91 ******7890
     const maskedPhone = phone
@@ -197,7 +199,7 @@ const VerifyOtp: React.FC<VerifyOtpProps> = ({ navigation }) => {
             </View>
 
             {/* Verify Button */}
-            <View style={styles.btnWrap}>
+            <View style={[styles.btnWrap, {paddingBottom: insets.bottom + 16}]}>
                 <TouchableOpacity
                     style={[styles.verifyBtn, isComplete && styles.verifyBtnActive]}
                     onPress={Verify_otps}
@@ -392,7 +394,6 @@ const styles = StyleSheet.create({
     /* Verify Button */
     btnWrap: {
         paddingHorizontal: 24,
-        paddingBottom: Platform.OS === 'android' ? 32 : 40,
     },
     verifyBtn: {
         height: 60,
