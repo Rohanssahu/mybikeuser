@@ -162,6 +162,9 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
         }
         setLoading(false)
     }
+
+    const fullName = `${firstName} ${lastName}`.trim();
+
     return (
         <View style={{ flex: 1, backgroundColor: color.baground }}>
             {/* Header */}
@@ -174,77 +177,107 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                     onPress={() => {
                         setIsModalVisible(true)
                     }}
+                    activeOpacity={0.85}
                     style={styles.profileImageContainer}>
-                    <Image
-                        source={image?.path ? { uri: image?.path } : images.profileUpdate}
+                    <View style={styles.avatarWrapper}>
+                        <Image
+                            source={image?.path ? { uri: image?.path } : images.profileUpdate}
 
-                        // source={{ uri: 'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png' }}
-                        style={styles.profileImage} />
+                            // source={{ uri: 'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png' }}
+                            style={image?.path ? styles.profileImage : styles.profileImagePlaceholder}
+                            resizeMode={image?.path ? 'cover' : 'contain'}
+                        />
+                    </View>
                     <View style={styles.addIcon}>
-                        <Icon source={icon.add} size={20} />
+                        <Icon source={icon.add} size={14} tintColor={color.baground} />
                     </View>
                 </TouchableOpacity>
 
-                <View style={styles.formContainer}>
+                {/* Name / phone summary */}
+                <View style={styles.summaryContainer}>
+                    {!!fullName && <Text style={styles.summaryName}>{fullName}</Text>}
+                    {!!phone && <Text style={styles.summaryPhone}>{phone}</Text>}
+                </View>
 
-                    {/* First Name */}
-                    <Text style={styles.label}>First Name</Text>
-                    <CustomTextInput
-                        placeholder='Enter first name'
-                        onChangeText={setFirstName}
-                        value={firstName}
-                        inputStyle={[styles.input, errors.firstName && styles.errorInput]}
-                    />
-                    {errors.firstName ? <Text style={styles.errorText}>{errors.firstName}</Text> : null}
+                <View style={styles.card}>
+                    <View style={styles.row}>
+                        <View style={styles.halfField}>
+                            <Text style={styles.label}>First Name</Text>
+                            <View style={styles.inputWrapper}>
+                                <Icon source={icon.profile} size={16} tintColor={color.grey} style={styles.inputIcon} />
+                                <CustomTextInput
+                                    placeholder='Enter first name'
+                                    onChangeText={setFirstName}
+                                    value={firstName}
+                                    inputStyle={[styles.input, errors.firstName && styles.errorInput]}
+                                />
+                            </View>
+                            {errors.firstName ? <Text style={styles.errorText}>{errors.firstName}</Text> : null}
+                        </View>
 
-                    {/* Last Name */}
-                    <Text style={styles.label}>Last Name</Text>
-                    <CustomTextInput
-                        placeholder='Enter last name'
-                        onChangeText={setLastName}
-                        value={lastName}
-                        inputStyle={[styles.input, errors.lastName && styles.errorInput, { marginTop: 8 }]}
-                    />
-                    {errors.lastName ? <Text style={styles.errorText}>{errors.lastName}</Text> : null}
+                        <View style={styles.halfField}>
+                            <Text style={styles.label}>Last Name</Text>
+                            <View style={styles.inputWrapper}>
+                                <Icon source={icon.profile} size={16} tintColor={color.grey} style={styles.inputIcon} />
+                                <CustomTextInput
+                                    placeholder='Enter last name'
+                                    onChangeText={setLastName}
+                                    value={lastName}
+                                    inputStyle={[styles.input, errors.lastName && styles.errorInput]}
+                                />
+                            </View>
+                            {errors.lastName ? <Text style={styles.errorText}>{errors.lastName}</Text> : null}
+                        </View>
+                    </View>
 
-                    {/* Email */}
-                    <Text style={styles.label}>Email</Text>
-                    <CustomTextInput
-                        placeholder='Enter email'
-                        onChangeText={setEmail}
-                        value={email}
-                        inputStyle={[styles.input, errors.email && styles.errorInput, { marginTop: 8 }]}
-                    />
-                    {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
+                    <View style={styles.field}>
+                        <Text style={styles.label}>Email</Text>
+                        <View style={styles.inputWrapper}>
+                            <Icon source={icon.send} size={16} tintColor={color.grey} style={styles.inputIcon} />
+                            <CustomTextInput
+                                placeholder='Enter email'
+                                onChangeText={setEmail}
+                                value={email}
+                                inputStyle={[styles.input, errors.email && styles.errorInput]}
+                            />
+                        </View>
+                        {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
+                    </View>
 
-                    {/* Phone Number */}
-                    <Text style={styles.label}>Phone Number</Text>
-                    <CustomTextInput
-                        placeholder='Enter phone number'
-                        onChangeText={setPhone}
-                        value={phone}
-                        inputStyle={[styles.input, errors.phone && styles.errorInput, { marginTop: 8 }]}
-                    />
-                    {errors.phone ? <Text style={styles.errorText}>{errors.phone}</Text> : null}
+                    <View style={styles.field}>
+                        <Text style={styles.label}>Phone Number</Text>
+                        <View style={styles.inputWrapper}>
+                            <Icon source={icon.phone} size={16} tintColor={color.grey} style={styles.inputIcon} />
+                            <CustomTextInput
+                                placeholder='Enter phone number'
+                                onChangeText={setPhone}
+                                value={phone}
+                                inputStyle={[styles.input, errors.phone && styles.errorInput]}
+                            />
+                        </View>
+                        {errors.phone ? <Text style={styles.errorText}>{errors.phone}</Text> : null}
+                    </View>
 
-                    {/* Address */}
-                    <Text style={styles.label}>Address</Text>
-                    <CustomTextInput
-                        placeholder='Enter address'
-                        onChangeText={setAddress}
-                        value={address}
-                        inputStyle={[styles.input, errors.address && styles.errorInput, { marginTop: 8 }]}
-                    />
-                    {errors.address ? <Text style={styles.errorText}>{errors.address}</Text> : null}
-
-
+                    <View style={[styles.field, { marginBottom: 0 }]}>
+                        <Text style={styles.label}>Address</Text>
+                        <View style={styles.inputWrapper}>
+                            <Icon source={icon.pin} size={16} tintColor={color.grey} style={styles.inputIcon} />
+                            <CustomTextInput
+                                placeholder='Enter address'
+                                onChangeText={setAddress}
+                                value={address}
+                                inputStyle={[styles.input, errors.address && styles.errorInput]}
+                            />
+                        </View>
+                        {errors.address ? <Text style={styles.errorText}>{errors.address}</Text> : null}
+                    </View>
                 </View>
 
 
                 {/* Submit Button */}
                 <View style={styles.buttonContainer}>
                     <CustomButton
-                        title="Updateh Profile"
+                        title="Update profile"
                         onPress={() => { update_profile() }}
                         buttonStyle={styles.button}
                     />
@@ -264,44 +297,103 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
 
 
 const styles = StyleSheet.create({
-    label: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#fff',
-        marginBottom: 5,
-        marginTop: 15,
-    },
-
     profileImageContainer: {
-        marginTop: 20,
+        marginTop: 24,
         alignItems: 'center',
         justifyContent: 'center',
     },
+    avatarWrapper: {
+        height: 84,
+        width: 84,
+        borderRadius: 42,
+        borderWidth: 2,
+        borderColor: color.buttonColor,
+        backgroundColor: color.baground,
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+    },
     profileImage: {
-        height: 100,
-        width: 100,
-        borderRadius: 50,
-        borderWidth: 1,
-        borderColor: '#fff'
+        height: '100%',
+        width: '100%',
+    },
+    profileImagePlaceholder: {
+        height: 40,
+        width: 40,
+        tintColor: color.buttonColor,
     },
     addIcon: {
-        marginTop: -25,
-        right: -30,
-        borderWidth: 1,
-        borderColor: color.white,
-        borderRadius: 30,
-        padding: 1,
+        position: 'absolute',
+        bottom: 0,
+        right: '32%',
+        height: 26,
+        width: 26,
+        borderRadius: 13,
+        backgroundColor: color.buttonColor,
+        borderWidth: 3,
+        borderColor: color.baground,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-    formContainer: {
-        paddingHorizontal: 25,
-
+    summaryContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 10,
+        marginBottom: hp(3),
+    },
+    summaryName: {
+        color: color.white,
+        fontSize: 15,
+        fontWeight: '700',
+    },
+    summaryPhone: {
+        color: color.grey,
+        fontSize: 12,
+        marginTop: 2,
+    },
+    card: {
+        marginHorizontal: 20,
+        backgroundColor: color.cardSurface,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: color.borderSubtle,
+        padding: 16,
+    },
+    row: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    halfField: {
+        flex: 1,
+        marginBottom: 14,
+    },
+    field: {
+        marginBottom: 14,
+    },
+    label: {
+        color: color.grey,
+        fontSize: 12,
+        marginBottom: 6,
+        marginLeft: 2,
+    },
+    inputWrapper: {
+        justifyContent: 'center',
+    },
+    inputIcon: {
+        position: 'absolute',
+        left: 12,
+        zIndex: 1,
     },
     input: {
+        backgroundColor: color.baground,
         borderWidth: 1,
-        borderColor: '#fff',
-        borderRadius: 15,
-        padding: 10,
-        color: '#fff',
+        borderColor: 'rgba(255,255,255,0.12)',
+        borderRadius: 10,
+        paddingVertical: 12,
+        paddingLeft: 38,
+        paddingRight: 12,
+        color: color.white,
+        fontSize: 14,
     },
     errorInput: {
         borderColor: 'red',
@@ -313,12 +405,13 @@ const styles = StyleSheet.create({
         marginLeft: 5,
     },
     buttonContainer: {
-
         marginTop: 20,
         width: '100%',
         paddingHorizontal: 20,
     },
-    button: {},
+    button: {
+        borderRadius: 12,
+    },
 });
 
 export default EditProfile;

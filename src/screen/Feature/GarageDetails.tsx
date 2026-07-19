@@ -19,6 +19,7 @@ import {
   create_booking,
   garage_details,
   get_dealer_services,
+  get_profile,
 } from '../../redux/Api/apiRequests';
 import MapPickerModal from './MapPicker';
 import Loading from '../../configs/Loader';
@@ -268,6 +269,13 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
   const getServiceIncludes = (svc: any): string[] =>
     svc?.includes ?? svc?.whatsIncluded ?? svc?.base_service_id?.includes ?? [];
 
+  const goToCompleteProfile = (message: string) => {
+    errorToast(message);
+    navigation.navigate(ScreenNameEnum.BOTTAM_TAB, {
+      screen: ScreenNameEnum.PROFILE_SCREEN,
+    });
+  };
+
   const createBooking = async () => {
     if (!selectedService) {
       return errorToast('Please choose a service');
@@ -281,7 +289,24 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
     if (choosePickupOption === 'PickDrop' && !PickupLocationId) {
       return errorToast('Pickup location not saved. Please re-select pickup address.');
     }
+
     setLoading(true);
+
+    const userId = await AsyncStorage.getItem('user_id');
+    const profileRes = await get_profile(userId ?? '');
+    if (profileRes?.success) {
+      const profile = profileRes?.data;
+      const isProfileComplete =
+        !!profile?.first_name?.toString().trim() &&
+        !!profile?.phone?.toString().trim();
+      if (!isProfileComplete) {
+        setLoading(false);
+        return goToCompleteProfile('Please complete your profile before booking a service.');
+      }
+    }
+    // If the profile fetch itself failed (e.g. network issue), fall through —
+    // the backend re-validates profile completeness before creating the booking.
+
     const res = await create_booking(
       garageData?._id,
       [selectedService],
@@ -302,6 +327,8 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
         date: `${formatDate(BookingDate)}, ${formatTime(BookingTime)}`,
         amount: totalPayable,
       });
+    } else if (res?.errorCode === 'PROFILE_INCOMPLETE') {
+      goToCompleteProfile(res?.message || 'Please complete your profile before booking a service.');
     } else {
       errorToast(res?.message || 'Booking failed. Please try again.');
     }

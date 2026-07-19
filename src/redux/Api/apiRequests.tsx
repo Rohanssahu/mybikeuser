@@ -626,9 +626,9 @@ const get_BikeVariant = async (id: string) => {
         return { success: false, message: error.message, state: [] };
     }
 };
-const add_Bikes = async (name: string, model: string, bike_cc: string, plate_number: string, variant_id: string) => {
-    // Prepare the request body for login API
-    const requestBody = { name, model, bike_cc, plate_number, variant_id };
+const add_Bikes = async (plate_number: string, variant_id: string) => {
+    // name/model/bike_cc are resolved server-side from variant_id, not sent by the client
+    const requestBody = { plate_number, variant_id };
 
     const token = await AsyncStorage.getItem('token')
     const apiRequests: ApiRequest[] = [
@@ -932,7 +932,7 @@ const create_booking = async (dealer_id: string, services: string[], pickupAndDr
             successToast(response.message);
             return { success: true, message: response.message, data: response.data };
         } else {
-            return { success: false, message: response.message, data: [] };
+            return { success: false, message: response.message, data: [], errorCode: response.errorCode };
         }
     }
     catch (error: any) {
@@ -941,6 +941,7 @@ const create_booking = async (dealer_id: string, services: string[], pickupAndDr
             success: false,
             message: error?.response?.data?.message || error?.message || 'Something went wrong',
             data: null,
+            errorCode: error?.response?.data?.errorCode,
         };
     }
 };

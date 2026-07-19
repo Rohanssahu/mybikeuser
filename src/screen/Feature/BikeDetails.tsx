@@ -59,13 +59,7 @@ const BikeDetails: React.FC<{navigation: any}> = ({navigation}) => {
 
   const handleSubmit = async () => {
     if (!validateForm()) {return;}
-    const res = await add_Bikes(
-      selectedBikeId ?? '',
-      selectedModelId ?? '',
-      bikeCC,
-      plateNumber,
-      variantId,
-    );
+    const res = await add_Bikes(plateNumber, variantId);
     if (res?.success) {navigation.goBack();}
   };
 

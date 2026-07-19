@@ -12,7 +12,9 @@ export const color = {
     borderColor:'#FED428',
     borderPrimary:'#081041',
     white:'#fff',
-    grey:'#909090'
+    grey:'#909090',
+    cardSurface:'#0F1D3A',
+    borderSubtle:'rgba(255,255,255,0.08)'
 
 }
 

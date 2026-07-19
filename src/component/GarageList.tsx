@@ -127,6 +127,22 @@ console.log('image_url',item.shopImages);
         )}
 
         <View style={styles.metaRow}>
+          {item.isOpen !== undefined && (
+            <View
+              style={[
+                styles.statusChip,
+                item.isOpen ? styles.statusOpen : styles.statusClosed,
+              ]}>
+              <Text
+                style={[
+                  styles.statusText,
+                  item.isOpen ? styles.statusOpenText : styles.statusClosedText,
+                ]}>
+                {item.isOpen ? 'Open now' : 'Closed'}
+              </Text>
+            </View>
+          )}
+
           <View style={styles.pill}>
             <Image source={icon.pickups} style={styles.pillIcon} />
             <Text style={styles.pillText}>{distanceLabel}</Text>
@@ -166,25 +182,25 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     backgroundColor: '#0F1D3A',
-    borderRadius: 16,
-    padding: 12,
+    borderRadius: 20,
+    padding: 14,
     alignItems: 'center',
     marginBottom: 14,
     width: SCREEN_WIDTH - 32,
     alignSelf: 'center',
     shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowOffset: {width: 0, height: 3},
+    shadowOpacity: 0.22,
+    shadowOffset: {width: 0, height: 4},
     shadowRadius: 8,
-    elevation: 6,
+    elevation: 5,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.07)',
   },
   image: {
     width: 90,
     height: 90,
-    borderRadius: 12,
-    marginRight: 12,
+    borderRadius: 14,
+    marginRight: 14,
     backgroundColor: '#1B2A4A',
   },
   textContainer: {
@@ -195,6 +211,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
     marginBottom: 4,
+    letterSpacing: 0.1,
   },
   row: {
     flexDirection: 'row',
@@ -241,6 +258,27 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#E0E0E0',
     fontWeight: '600',
+  },
+  statusChip: {
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  statusOpen: {
+    backgroundColor: 'rgba(34,197,94,0.12)',
+  },
+  statusClosed: {
+    backgroundColor: 'rgba(148,163,184,0.12)',
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  statusOpenText: {
+    color: '#22C55E',
+  },
+  statusClosedText: {
+    color: '#94A3B8',
   },
 });
 

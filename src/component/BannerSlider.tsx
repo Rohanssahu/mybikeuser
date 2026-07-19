@@ -9,11 +9,13 @@ import {
   Dimensions,
   ViewToken,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {color} from '../constant';
 import {wp} from './utils/Constant';
 import {image_url} from '../redux/Api';
+import ScreenNameEnum from '../routes/screenName.enum';
 
 const {width} = Dimensions.get('window');
 
@@ -22,7 +24,20 @@ interface Banner {
   name: string;
   description: string;
   banner_image: string;
+  baseServiceId?: string | {_id: string} | null;
 }
+
+// baseServiceId may arrive populated ({_id, name, image}) or as a raw id string.
+const getBaseServiceId = (banner: Banner): string | null => {
+  try {
+    const raw = banner?.baseServiceId;
+    if (!raw) {return null;}
+    if (typeof raw === 'string') {return raw;}
+    return raw._id || null;
+  } catch {
+    return null;
+  }
+};
 
 interface BannerSliderProps {
   navigation: NativeStackNavigationProp<any, any>;
@@ -50,6 +65,7 @@ const BannerSlider: React.FC<BannerSliderProps> = ({navigation, data}) => {
         name: item.name,
         description: item.description || '',
         banner_image: item.banner_image,
+        baseServiceId: item.baseServiceId ?? null,
       })),
     [data],
   );
@@ -71,6 +87,17 @@ const BannerSlider: React.FC<BannerSliderProps> = ({navigation, data}) => {
       ? item.banner_image
       : `${image_url}${item.banner_image}`;
 
+    const handleBannerPress = () => {
+      const serviceId = getBaseServiceId(item);
+      if (!serviceId) {
+        return;
+      }
+      navigation.navigate(ScreenNameEnum.MY_BIKES, {
+        profile: false,
+        serviceId,
+      });
+    };
+
     return (
       <View style={styles.bannerContainer}>
         <Image
@@ -80,16 +107,25 @@ const BannerSlider: React.FC<BannerSliderProps> = ({navigation, data}) => {
           style={styles.bannerImage}
         />
 
-        <View style={styles.overlay} />
+        <LinearGradient
+          colors={['rgba(8,16,65,0)', 'rgba(8,16,65,0.85)']}
+          style={styles.overlay}
+        />
         <View style={styles.textContainer}>
-          <Text style={styles.title}>{item.name}</Text>
+          <Text style={styles.title} numberOfLines={1}>
+            {item.name}
+          </Text>
+          {!!item.description && (
+            <Text style={styles.description} numberOfLines={2}>
+              {item.description}
+            </Text>
+          )}
 
           <View>
             <TouchableOpacity
               style={styles.button}
-              onPress={() =>
-                navigation.navigate('ServiceDetails', {id: item.id})
-              }>
+              activeOpacity={0.85}
+              onPress={handleBannerPress}>
               <Text style={styles.buttonText}>Bike Service</Text>
             </TouchableOpacity>
           </View>
@@ -138,67 +174,76 @@ const styles = StyleSheet.create({
   },
   bannerContainer: {
     width: width * 0.9,
-    height: 180,
-    borderRadius: 10,
+    height: 190,
+    borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: '#1E293B',
+    backgroundColor: color.cardSurface,
     position: 'relative',
     marginHorizontal: 20,
+    borderWidth: 1,
+    borderColor: color.borderSubtle,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowOffset: {width: 0, height: 6},
+    shadowRadius: 10,
+    elevation: 5,
   },
   bannerImage: {
     width: wp(100),
     height: '100%',
-    borderRadius: 10,
-    backgroundColor: '#1E293B',
+    backgroundColor: color.cardSurface,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   textContainer: {
     position: 'absolute',
-    left: 15,
-    bottom: 20,
+    left: 16,
+    right: 16,
+    bottom: 18,
   },
   title: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 19,
+    fontWeight: '800',
     color: '#fff',
+    letterSpacing: 0.2,
   },
   description: {
-    fontSize: 14,
-    color: '#ddd',
-    marginVertical: 5,
+    fontSize: 13,
+    color: '#D7DBE8',
+    marginTop: 4,
+    marginBottom: 2,
+    lineHeight: 18,
   },
   button: {
-    backgroundColor: '#FFC107',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 20,
-    width: wp(30),
+    backgroundColor: color.buttonColor,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 5,
+    alignSelf: 'flex-start',
+    marginTop: 10,
   },
   buttonText: {
-    color: '#111827',
-    fontWeight: 'bold',
-    fontSize: 12,
+    color: color.baground,
+    fontWeight: '700',
+    fontSize: 13,
   },
   pagination: {
     flexDirection: 'row',
     alignSelf: 'center',
-    marginTop: 10,
+    marginTop: 12,
   },
   dot: {
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.35)',
+    backgroundColor: 'rgba(255,255,255,0.25)',
     marginHorizontal: 3,
   },
   activeDot: {
-    backgroundColor: '#FED428',
+    backgroundColor: color.buttonColor,
     width: 18,
     borderRadius: 4,
   },
