@@ -5,13 +5,12 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
 } from 'react-native';
 import Icon from './Icon';
 import { icon } from './Image';
 import ScreenNameEnum from '../routes/screenName.enum';
-import { image_url } from '../redux/Api';
+import { color } from '../constant';
 
 interface BookingItem {
   _id: string;
@@ -52,9 +51,6 @@ const STATUS_CONFIG: Record<string, { color: string; bg: string; label: string }
   expired:            { color: '#EF4444', bg: 'rgba(239,68,68,0.18)',    label: 'Booking Expired' },
 };
 
-const FALLBACK_IMG =
-  'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png';
-
 const BookingList: React.FC<BookingListProps> = ({
   data,
   navigation,
@@ -90,9 +86,20 @@ const BookingList: React.FC<BookingListProps> = ({
           item.status === 'expired' || item.dealerResponseStatus === 'expired';
         const effectiveStatus = isExpired ? 'expired' : item.status;
         const s = STATUS_CONFIG[effectiveStatus] ?? STATUS_CONFIG.pending;
-        const imgSrc = item?.dealer_id?.shopImages?.[0]
-          ? { uri: image_url + item.dealer_id.shopImages[0] }
-          : { uri: FALLBACK_IMG };
+        const address =
+          item?.dealer_id?.fullAddress ||
+          item?.dealer_id?.address ||
+          [item?.dealer_id?.city, item?.dealer_id?.state].filter(Boolean).join(', ') ||
+          '—';
+        const pickupText = [
+          'completed',
+          'awaiting_payment',
+          'payment_selected',
+          'ready_for_delivery',
+          'delivered',
+        ].includes(item.status)
+          ? 'Delivered'
+          : item?.pickupStatus || '—';
 
         return (
           <TouchableOpacity
@@ -101,79 +108,65 @@ const BookingList: React.FC<BookingListProps> = ({
             onPress={() =>
               navigation.navigate(ScreenNameEnum.SERVICE_SUMMERY, { id: item._id })
             }>
-            {/* Shop header */}
-            <View style={styles.shopRow}>
-              <Image source={imgSrc} style={styles.shopImg} />
-              <View style={styles.shopText}>
+            {/* Top row: icon chip + name + address */}
+            <View style={styles.topRow}>
+              <View style={styles.iconChip}>
+                <Icon source={icon.booking} size={16} tintColor={color.buttonColor} />
+              </View>
+              <View style={styles.topText}>
                 <Text style={styles.shopName} numberOfLines={1}>
                   {item?.dealer_id?.shopName || 'Service Center'}
                 </Text>
                 <View style={styles.addrRow}>
-                  <Icon source={icon.pin} size={12} tintColor="#6B7DBE" />
+                  <Icon source={icon.pin} size={11} tintColor="#6B7DBE" />
                   <Text style={styles.shopAddr} numberOfLines={1}>
-                    {'  '}{item?.dealer_id?.fullAddress || item?.dealer_id?.address || [item?.dealer_id?.city, item?.dealer_id?.state].filter(Boolean).join(', ') || '—'}
+                    {' '}{address}
                   </Text>
                 </View>
               </View>
+            </View>
+
+            {/* Middle row: booking id · date  |  status badge */}
+            <View style={styles.midRow}>
+              <Text style={styles.midInfo} numberOfLines={1}>
+                #{item._id.slice(-6).toUpperCase()}  ·  {formatDate(item.create_date)}
+              </Text>
               <View style={[styles.badge, { backgroundColor: s.bg }]}>
-                <View style={[styles.badgeDot, { backgroundColor: s.color }]} />
                 <Text style={[styles.badgeTxt, { color: s.color }]}>{s.label}</Text>
               </View>
             </View>
 
-            <View style={styles.sep} />
-
-            {/* Meta */}
-            <View style={styles.metaRow}>
-              <View style={styles.metaItem}>
-                <Icon source={icon.booking} size={14} tintColor="#6B7DBE" />
-                <Text style={styles.metaLbl}> ID</Text>
-                <Text style={styles.metaVal}>  #{item._id.slice(-6).toUpperCase()}</Text>
-              </View>
-              <View style={styles.metaItem}>
-                <Icon source={icon.pickups} size={14} tintColor="#6B7DBE" />
-                <Text style={styles.metaLbl}> Pickup</Text>
-                <Text style={styles.metaVal}>
-                  {'  '}
-                  {['completed', 'awaiting_payment', 'payment_selected', 'ready_for_delivery', 'delivered'].includes(item.status)
-                    ? 'Delivered'
-                    : item?.pickupStatus || '—'}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.dateRow}>
-              <Icon source={icon.calendar} size={13} tintColor="#3D4F80" />
-              <Text style={styles.dateTxt}> {formatDate(item.create_date)}</Text>
-            </View>
-
-            {/* Actions */}
-            <View style={styles.btnRow}>
-              <TouchableOpacity
-                style={styles.detailBtn}
-                activeOpacity={0.8}
-                onPress={() =>
-                  navigation.navigate(ScreenNameEnum.SERVICE_SUMMERY, { id: item._id })
-                }>
-                <Text style={styles.detailBtnTxt}>View Details</Text>
-                <Icon source={icon.rightarrow} size={16} tintColor="#081041" />
-              </TouchableOpacity>
-
-              {item.status === 'pending' && !isExpired && (
+            {/* Bottom row: pickup status  |  view details */}
+            <View style={styles.bottomRow}>
+              <Text style={styles.pickupTxt} numberOfLines={1}>
+                Pickup: {pickupText}
+              </Text>
+              <View style={styles.bottomRight}>
+                {item.status === 'pending' && !isExpired && (
+                  <TouchableOpacity
+                    style={styles.cancelBtn}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      onCancelPress(item._id);
+                      setCancelIndex(index);
+                    }}>
+                    {loading && cancelIndex === index ? (
+                      <ActivityIndicator size={12} color="#EF4444" />
+                    ) : (
+                      <Text style={styles.cancelBtnTxt}>Cancel</Text>
+                    )}
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity
-                  style={styles.cancelBtn}
-                  activeOpacity={0.8}
-                  onPress={() => {
-                    onCancelPress(item._id);
-                    setCancelIndex(index);
-                  }}>
-                  {loading && cancelIndex === index ? (
-                    <ActivityIndicator size={16} color="#fff" />
-                  ) : (
-                    <Text style={styles.cancelBtnTxt}>Cancel</Text>
-                  )}
+                  style={styles.detailLink}
+                  activeOpacity={0.7}
+                  onPress={() =>
+                    navigation.navigate(ScreenNameEnum.SERVICE_SUMMERY, { id: item._id })
+                  }>
+                  <Text style={styles.detailLinkTxt}>View details</Text>
+                  <Icon source={icon.rightarrow} size={13} tintColor={color.buttonColor} />
                 </TouchableOpacity>
-              )}
+              </View>
             </View>
           </TouchableOpacity>
         );
@@ -191,73 +184,54 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   card: {
-    backgroundColor: '#0D1952',
+    backgroundColor: color.cardSurface,
     borderRadius: 16,
-    padding: 14,
-    marginBottom: 14,
+    padding: 12,
+    marginBottom: 10,
     borderWidth: 1,
-    borderColor: 'rgba(254,212,40,0.08)',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
+    borderColor: color.borderSubtle,
   },
-  shopRow: { flexDirection: 'row', alignItems: 'center' },
-  shopImg: {
-    height: 46,
-    width: 46,
-    borderRadius: 23,
-    backgroundColor: '#1A2566',
+  topRow: { flexDirection: 'row', alignItems: 'center' },
+  iconChip: {
+    height: 34,
+    width: 34,
+    borderRadius: 10,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  shopText: { flex: 1, marginLeft: 10 },
-  shopName: { fontSize: 15, fontWeight: '700', color: '#fff' },
-  addrRow: { flexDirection: 'row', alignItems: 'center', marginTop: 3 },
-  shopAddr: { fontSize: 12, color: '#6B7DBE', flex: 1 },
-  badge: {
+  topText: { flex: 1, marginLeft: 10 },
+  shopName: { fontSize: 13, fontWeight: '700', color: '#fff' },
+  addrRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
+  shopAddr: { fontSize: 11, color: '#6B7DBE', flex: 1 },
+  midRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
-    marginLeft: 8,
-  },
-  badgeDot: { width: 6, height: 6, borderRadius: 3, marginRight: 5 },
-  badgeTxt: { fontSize: 11, fontWeight: '700' },
-  sep: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    marginVertical: 12,
-  },
-  metaRow: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginTop: 10,
   },
-  metaItem: { flexDirection: 'row', alignItems: 'center' },
-  metaLbl: { fontSize: 12, color: '#6B7DBE' },
-  metaVal: { fontSize: 12, color: '#A0AFCE', fontWeight: '600' },
-  dateRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
-  dateTxt: { fontSize: 12, color: '#3D4F80' },
-  btnRow: { flexDirection: 'row', gap: 8 },
-  detailBtn: {
-    flex: 1,
+  midInfo: { fontSize: 11, color: '#6B7DBE', flex: 1, marginRight: 8 },
+  badge: {
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  badgeTxt: { fontSize: 10, fontWeight: '700' },
+  bottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FED428',
-    paddingVertical: 12,
-    borderRadius: 10,
-    gap: 6,
+    justifyContent: 'space-between',
+    marginTop: 8,
   },
-  detailBtnTxt: { fontSize: 13, fontWeight: '700', color: '#081041' },
+  pickupTxt: { fontSize: 11, color: '#6B7DBE', flex: 1, marginRight: 8 },
+  bottomRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   cancelBtn: {
-    flex: 0.45,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#EF4444',
-    paddingVertical: 12,
-    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: 'rgba(239,68,68,0.15)',
   },
-  cancelBtnTxt: { fontSize: 13, fontWeight: '700', color: '#fff' },
+  cancelBtnTxt: { fontSize: 11, fontWeight: '700', color: '#EF4444' },
+  detailLink: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  detailLinkTxt: { fontSize: 12, fontWeight: '700', color: color.buttonColor },
 });

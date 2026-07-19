@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Image,
   Platform,
+  ScrollView,
 } from 'react-native';
 import {color, TAB_BAR_HEIGHT} from '../../constant';
 import BookingList from '../../component/BookingList';
@@ -24,6 +25,8 @@ import {
   showLocalNotificationcancel,
 } from '../../component/Notification';
 import {icon} from '../../component/Image';
+
+const FILTER_CHIPS = ['All', 'Pending', 'Confirmed', 'Completed', 'Cancelled'];
 
 interface ShopItem {
   _id: string;
@@ -116,6 +119,24 @@ const Booking: React.FC<{navigation: any}> = ({navigation}) => {
         />
       </View>
 
+      {/* Filter chips (UI only, not wired to filtering logic) */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterWrapper}
+        contentContainerStyle={styles.filterContent}>
+        {FILTER_CHIPS.map((label, index) => (
+          <View
+            key={label}
+            style={[styles.chip, index === 0 && styles.chipActive]}>
+            <Text
+              style={[styles.chipText, index === 0 && styles.chipTextActive]}>
+              {label}
+            </Text>
+          </View>
+        ))}
+      </ScrollView>
+
       {filteredBookings.length > 0
         ? React.createElement(BookingList as any, {
             data: filteredBookings,
@@ -184,6 +205,36 @@ const styles = StyleSheet.create({
   searchWrapper: {
     marginHorizontal: 16,
     marginBottom: 12,
+  },
+  filterWrapper: {
+    flexGrow: 0,
+    marginBottom: 12,
+  },
+  filterContent: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: color.cardSurface,
+    borderWidth: 1,
+    borderColor: color.borderSubtle,
+    marginRight: 8,
+  },
+  chipActive: {
+    backgroundColor: color.buttonColor,
+    borderColor: color.buttonColor,
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6B7DBE',
+  },
+  chipTextActive: {
+    color: color.baground,
+    fontWeight: '700',
   },
   emptyState: {
     flex: 1,
