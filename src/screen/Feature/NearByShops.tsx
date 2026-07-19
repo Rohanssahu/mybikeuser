@@ -63,7 +63,7 @@ const NearByShops: React.FC<Props> = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            <CustomHeader navigation={navigation} title="Near By Shops" onSkipPress={() => { }} showSkip={false} />
+            <CustomHeader navigation={navigation} title="Near By Shops" onSkipPress={() => { }} showSkip={false} showHome />
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
             {dealerList.length > 0 ? (

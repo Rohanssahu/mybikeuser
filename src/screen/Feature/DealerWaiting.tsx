@@ -28,7 +28,8 @@ const POLL_MS = 5000;
 
 const DealerWaiting: React.FC<{navigation: any}> = ({navigation}) => {
   const route = useRoute<any>();
-  const {bookingId, garageName, serviceName} = route.params as WaitingParams;
+  const {bookingId, garageName, serviceName, date, amount} =
+    route.params as WaitingParams;
 
   const [dealerStatus, setDealerStatus] = useState<DealerStatus>('awaiting');
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
@@ -88,7 +89,14 @@ const DealerWaiting: React.FC<{navigation: any}> = ({navigation}) => {
     setDealerStatus(s);
 
     if (s === 'accepted') {
-      navigation.replace(ScreenNameEnum.SERVICE_SUMMERY, {id: bookingId});
+      navigation.replace(ScreenNameEnum.PaymentScreen, {
+        bookingId,
+        garageName,
+        serviceName,
+        date,
+        amount,
+        totalPrice: amount,
+      });
     }
   };
 
@@ -120,7 +128,7 @@ const DealerWaiting: React.FC<{navigation: any}> = ({navigation}) => {
       <View style={styles.root}>
         <StatusBar backgroundColor={color.baground} barStyle="light-content" />
         <SafeAreaView style={styles.safe}>
-          <CustomHeader navigation={navigation} title="Booking Status" />
+          <CustomHeader navigation={navigation} title="Booking Status" showHome />
           <View style={styles.center}>
             <View
               style={[
@@ -163,7 +171,7 @@ const DealerWaiting: React.FC<{navigation: any}> = ({navigation}) => {
     <View style={styles.root}>
       <StatusBar backgroundColor={color.baground} barStyle="light-content" />
       <SafeAreaView style={styles.safe}>
-        <CustomHeader navigation={navigation} title="Waiting for Confirmation" />
+        <CustomHeader navigation={navigation} title="Waiting for Confirmation" showHome />
         <View style={styles.center}>
           {/* Hourglass */}
           <View style={styles.hourglassWrap}>

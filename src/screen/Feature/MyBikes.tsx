@@ -216,6 +216,7 @@ const MyBikes: React.FC<Props> = ({navigation}) => {
         title="My Bikes"
         onSkipPress={() => {}}
         showSkip={false}
+        showHome
       />
 
       {bikes.length > 0 ? (

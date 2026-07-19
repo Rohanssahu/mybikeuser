@@ -45,7 +45,7 @@ const InvoiceScreen: React.FC<any> = ({ navigation }) => {
 
   return (
     <View style={styles.root}>
-      <CustomHeader title="Invoice" navigation={navigation} />
+      <CustomHeader title="Invoice" navigation={navigation} showHome />
 
       {loading ? (
         <View style={styles.centerWrap}>

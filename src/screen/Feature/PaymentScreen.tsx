@@ -25,7 +25,7 @@ const PaymentScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
 
   const route: any = useRoute();
-  const { User, totalPrice } = route.params;
+  const { bookingId, garageName, serviceName, date, amount, totalPrice } = route.params;
 
   useFocusEffect(
     React.useCallback(() => {
@@ -70,13 +70,13 @@ const PaymentScreen = ({ navigation }: any) => {
   if (paymentInitiated) {
     return (
       <View style={styles.root}>
-        <CustomHeader navigation={navigation} title="Payment" />
+        <CustomHeader navigation={navigation} title="Payment" showHome />
         <View style={styles.successWrap}>
           <View style={styles.successIcon}>
             <Text style={styles.successEmoji}>✅</Text>
           </View>
           <Text style={styles.successTitle}>Payment Successful</Text>
-          <Text style={styles.successSub}>Wait for dealer handover.</Text>
+          <Text style={styles.successSub}>Your booking is confirmed.</Text>
           <Text style={styles.successHint}>
             Your booking will be updated once the dealer confirms delivery.
           </Text>
@@ -85,10 +85,12 @@ const PaymentScreen = ({ navigation }: any) => {
             activeOpacity={0.85}
             onPress={() =>
               navigation.reset({
-                index: 1,
+                index: 0,
                 routes: [
-                  {name: ScreenNameEnum.BOTTAM_TAB},
-                  {name: ScreenNameEnum.SERVICE_SUMMERY, params: {id: User?._id}},
+                  {
+                    name: ScreenNameEnum.BOOKING_COMPLETE,
+                    params: {bookingId, garageName, serviceName, date, amount},
+                  },
                 ],
               })
             }>
@@ -101,7 +103,7 @@ const PaymentScreen = ({ navigation }: any) => {
 
   return (
     <View style={styles.root}>
-      <CustomHeader navigation={navigation} title="Payment" />
+      <CustomHeader navigation={navigation} title="Payment" showHome />
 
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -114,7 +116,7 @@ const PaymentScreen = ({ navigation }: any) => {
           <View style={styles.billShopRow}>
             <Text style={styles.shopEmoji}>🏪</Text>
             <Text style={styles.billShopName}>
-              {'  '}{User?.dealer_id?.shopName || 'Service Center'}
+              {'  '}{garageName || 'Service Center'}
             </Text>
           </View>
 

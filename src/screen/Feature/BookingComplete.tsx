@@ -12,8 +12,10 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {useRoute} from '@react-navigation/native';
 import {useFocusEffect} from '@react-navigation/native';
 import {color} from '../../constant';
-import ScreenNameEnum from '../../routes/screenName.enum';
 import {hp, wp} from '../../component/utils/Constant';
+import Icon from '../../component/Icon';
+import {icon} from '../../component/Image';
+import {resetToHome} from '../../hooks/useBookingFlowNav';
 
 interface BookingParams {
   bookingId?: string;
@@ -65,7 +67,7 @@ const BookingComplete: React.FC<{navigation: any}> = ({navigation}) => {
   useFocusEffect(
     React.useCallback(() => {
       const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-        navigation.reset({index: 0, routes: [{name: ScreenNameEnum.BOTTAM_TAB}]});
+        resetToHome(navigation);
         return true;
       });
       return () => sub.remove();
@@ -76,6 +78,14 @@ const BookingComplete: React.FC<{navigation: any}> = ({navigation}) => {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <StatusBar backgroundColor="#141414" barStyle="light-content" />
+
+        <TouchableOpacity
+          style={styles.homeButton}
+          activeOpacity={0.8}
+          onPress={() => resetToHome(navigation)}>
+          <Icon source={icon.home1} size={24} />
+        </TouchableOpacity>
+
         <ScrollView
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}>
@@ -154,9 +164,7 @@ const BookingComplete: React.FC<{navigation: any}> = ({navigation}) => {
           <TouchableOpacity
             style={styles.ctaButton}
             activeOpacity={0.85}
-            onPress={() =>
-              navigation.reset({index: 0, routes: [{name: ScreenNameEnum.BOTTAM_TAB}]})
-            }>
+            onPress={() => resetToHome(navigation)}>
             <Text style={styles.ctaText}>Back to home</Text>
           </TouchableOpacity>
 
@@ -172,6 +180,13 @@ export default BookingComplete;
 const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: '#081041',},
   safeArea: {flex: 1},
+  homeButton: {
+    position: 'absolute',
+    top: hp(1.5),
+    right: wp(4),
+    zIndex: 10,
+    padding: 10,
+  },
   scroll: {
     alignItems: 'center',
     paddingHorizontal: 20,

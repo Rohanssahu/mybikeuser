@@ -98,6 +98,7 @@ const BikeDetails: React.FC<{navigation: any}> = ({navigation}) => {
         title="Add Your Bike"
         onSkipPress={() => {}}
         showSkip={false}
+        showHome
       />
 
       <ScrollView

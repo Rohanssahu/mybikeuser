@@ -185,7 +185,7 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
 
   return (
     <View style={styles.root}>
-      <CustomHeader title="Booking Details" navigation={navigation} />
+      <CustomHeader title="Booking Details" navigation={navigation} showHome />
 
       <ScrollView
         contentContainerStyle={styles.scroll}

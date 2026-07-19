@@ -4,20 +4,32 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from './Icon';
 import { icon } from './Image';
 import { color } from '../constant';
+import { useBookingFlowNav } from '../hooks/useBookingFlowNav';
 
 interface CustomHeaderProps {
     navigation: NativeStackNavigationProp<any, any>;
     title: string;
     showSkip?: boolean; // Default is false
     onSkipPress?: () => void;
+    showHome?: boolean; // Shows a Home icon top-right. Default is false
+    isBookingComplete?: boolean; // Home tap resets to Home without confirmation. Default is false
 }
 
-const CustomHeader: React.FC<CustomHeaderProps> = ({ navigation, title, showSkip = false, onSkipPress }) => {
+const CustomHeader: React.FC<CustomHeaderProps> = ({
+    navigation,
+    title,
+    showSkip = false,
+    onSkipPress,
+    showHome = false,
+    isBookingComplete = false,
+}) => {
+    const { handleHomePress } = useBookingFlowNav(navigation, isBookingComplete);
+
     return (
         <View style={styles.container}>
             {/* Back Button */}
             <TouchableOpacity
-            
+
             onPress={() => navigation.goBack()} style={styles.backButton}>
                 <Icon source={icon.back} size={30} />
             </TouchableOpacity>
@@ -25,17 +37,26 @@ const CustomHeader: React.FC<CustomHeaderProps> = ({ navigation, title, showSkip
             {/* Title */}
             <Text style={styles.title}>{title}</Text>
 
-            {/* Skip Button (conditionally displayed) */}
-            {showSkip? (
-                <TouchableOpacity onPress={onSkipPress} style={styles.skipButton}>
-                    <Text style={styles.skipText}>Skip</Text>
-                </TouchableOpacity>
-            ):
-            (
-                <View style={styles.skipButton}>
-                    <Text style={styles.skipText}></Text>
-                </View>
-            )}
+            <View style={styles.rightRow}>
+                {/* Skip Button (conditionally displayed) */}
+                {showSkip && (
+                    <TouchableOpacity onPress={onSkipPress} style={styles.skipButton}>
+                        <Text style={styles.skipText}>Skip</Text>
+                    </TouchableOpacity>
+                )}
+
+                {/* Home Button (conditionally displayed) */}
+                {showHome ? (
+                    <TouchableOpacity
+                        onPress={handleHomePress}
+                        style={styles.homeButton}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                        <Icon source={icon.home1} size={24} />
+                    </TouchableOpacity>
+                ) : (
+                    !showSkip && <View style={styles.skipButton} />
+                )}
+            </View>
         </View>
     );
 };
@@ -58,6 +79,10 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#fff',
     },
+    rightRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
     skipButton: {
         padding: 10,
     },
@@ -65,6 +90,9 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#fff',
         fontWeight: '500',
+    },
+    homeButton: {
+        padding: 10,
     },
 });
 

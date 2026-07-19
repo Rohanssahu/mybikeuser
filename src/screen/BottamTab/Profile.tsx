@@ -12,9 +12,9 @@ import {
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {useFocusEffect} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import {color, TAB_BAR_HEIGHT} from '../../constant';
-import {icon} from '../../component/Image';
 import ProfileMenuList from '../../component/ProfileList';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import {get_profile} from '../../redux/Api/apiRequests';
@@ -33,8 +33,15 @@ interface UserType {
 interface ProfileMenuItem {
   id: string;
   title: string;
-  icon: any;
+  icon: string;
   screen: string;
+}
+
+interface ProfileMenuSection {
+  id: string;
+  title?: string;
+  data: ProfileMenuItem[];
+  danger?: boolean;
 }
 
 const Profile: React.FC<Props> = ({navigation}) => {
@@ -90,7 +97,19 @@ const Profile: React.FC<Props> = ({navigation}) => {
           </Text>
         </View>
 
-        <Image source={icon.rightarrow} style={styles.arrow} />
+        <View style={styles.editBadge}>
+          <MaterialCommunityIcons
+            name="pencil-outline"
+            size={13}
+            color={color.buttonColor}
+          />
+          <Text style={styles.editLabel}>Edit</Text>
+          <MaterialCommunityIcons
+            name="chevron-right"
+            size={16}
+            color={color.buttonColor}
+          />
+        </View>
       </TouchableOpacity>
 
       {/* Menu List */}
@@ -100,7 +119,7 @@ const Profile: React.FC<Props> = ({navigation}) => {
           styles.scrollContent,
           {paddingBottom: insets.bottom + TAB_BAR_HEIGHT},
         ]}>
-        <ProfileMenuList data={profileData} />
+        <ProfileMenuList sections={profileSections} />
       </ScrollView>
     </View>
   );
@@ -108,12 +127,28 @@ const Profile: React.FC<Props> = ({navigation}) => {
 
 export default Profile;
 
-const profileData: ProfileMenuItem[] = [
-  {id: '2', title: 'My Bikes', icon: icon.bikep, screen: ScreenNameEnum.MY_BIKES},
-  {id: '3', title: 'Notifications', icon: icon.bellp, screen: ScreenNameEnum.NOTIFICATION_SETTING},
-  {id: '4', title: 'About Us', icon: icon.aboutIcon, screen: ScreenNameEnum.ABOUT_SCREEN},
-  {id: '5', title: 'Privacy Policy', icon: icon.privacy, screen: ScreenNameEnum.PRIVACY_POLICY},
-  {id: '6', title: 'Logout', icon: icon.logout, screen: 'Logout'},
+const profileSections: ProfileMenuSection[] = [
+  {
+    id: 'activity',
+    title: 'Activity',
+    data: [
+      {id: '2', title: 'My Bikes', icon: 'motorbike', screen: ScreenNameEnum.MY_BIKES},
+      {id: '3', title: 'Notifications', icon: 'bell-outline', screen: ScreenNameEnum.NOTIFICATION_SETTING},
+    ],
+  },
+  {
+    id: 'support',
+    title: 'Support',
+    data: [
+      {id: '4', title: 'About Us', icon: 'information-outline', screen: ScreenNameEnum.ABOUT_SCREEN},
+      {id: '5', title: 'Privacy Policy', icon: 'shield-lock-outline', screen: ScreenNameEnum.PRIVACY_POLICY},
+    ],
+  },
+  {
+    id: 'logout',
+    data: [{id: '6', title: 'Logout', icon: 'logout', screen: 'Logout'}],
+    danger: true,
+  },
 ];
 
 const styles = StyleSheet.create({
@@ -126,10 +161,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 24) + 8,
-    paddingBottom: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    paddingTop: Platform.OS === 'ios' ? 58 : (StatusBar.currentHeight ?? 24) + 14,
+    paddingBottom: 28,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   avatar: {
     height: 60,
@@ -165,12 +200,23 @@ const styles = StyleSheet.create({
     color: '#A0A3BD',
     marginTop: 4,
   },
-  arrow: {
-    width: 20,
-    height: 20,
-    tintColor: '#606880',
+  editBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    paddingVertical: 6,
+    paddingLeft: 10,
+    paddingRight: 6,
+    borderRadius: 20,
+  },
+  editLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: color.buttonColor,
+    marginHorizontal: 4,
   },
   scrollContent: {
-    paddingTop: 8,
+    paddingTop: 20,
+    paddingHorizontal: 16,
   },
 });

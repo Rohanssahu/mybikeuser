@@ -34,6 +34,7 @@ import GarageImage from './GarageBanner';
 import {useLocation} from '../../component/LocationContext';
 import {getCurrentLocation as getSavedOrCurrentLocation} from '../../component/helperFunction';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useBookingFlowNav} from '../../hooks/useBookingFlowNav';
 
 const PICKUP_RATE_PER_KM = 15;
 const GST_RATE = 0.18;
@@ -62,6 +63,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
   };
   const {locationCoords} = useLocation();
   const insets = useSafeAreaInsets();
+  const {handleHomePress} = useBookingFlowNav(navigation);
 
   const [garageData, setGarageData] = useState<any>(null);
   const [distance, setDistance] = useState<number | null>(null);
@@ -760,6 +762,13 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
         <Icon source={icon.back} size={30} />
       </TouchableOpacity>
 
+      <TouchableOpacity
+        onPress={handleHomePress}
+        style={styles.homeBtn}
+        activeOpacity={0.8}>
+        <Icon source={icon.home1} size={24} />
+      </TouchableOpacity>
+
       <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
         <GarageImage shopImages={garageData?.shopImages} />
 
@@ -1078,6 +1087,18 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 24) + 8,
     left: 10,
+    zIndex: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0,0,0,0.38)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  homeBtn: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 24) + 8,
+    right: 10,
     zIndex: 10,
     width: 44,
     height: 44,

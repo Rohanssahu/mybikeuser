@@ -129,6 +129,7 @@ const AllServices: React.FC<Props> = ({navigation}) => {
         title="Our Services"
         onSkipPress={() => {}}
         showSkip={false}
+        showHome
       />
 
       {/* Search bar */}
