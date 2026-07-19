@@ -65,8 +65,8 @@ export default function TabNavigator() {
                     <Image
                       source={screen.logo}
                       style={[
-                        styles.helpIcon,
-                        {tintColor: focused ? '#081041' : '#FED428'},
+                        styles.helpCircle,
+                        
                       ]}
                     />
                   </View>
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   tabLabel: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
     marginTop: 2,
   },
@@ -144,6 +144,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
+    marginTop:-20
   },
   helpCircle: {
     width: 50,

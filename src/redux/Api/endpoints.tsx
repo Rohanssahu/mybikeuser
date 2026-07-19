@@ -38,4 +38,8 @@ export const endpoint = {
   bookingTimerStatus: '/bikedoctor/bookings/getBookingTimerStatus',
   notification: '/bikedoctor/notification/:receiverId',
   selectPaymentMethod: '/bikedoctor/bookings',
+  legalDocument: '/bikedoctor/app/legal/:docType',
+  appSettings: '/bikedoctor/app/settings',
+  appBanners: '/bikedoctor/app/banners/:bannerType',
+  faqs: '/bikedoctor/app/faqs',
 };

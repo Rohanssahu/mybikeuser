@@ -24,10 +24,11 @@ import MyBikes from "../screen/Feature/MyBikes";
 import NearByShops from "../screen/Feature/NearByShops";
 import PaymentScreen from "../screen/Feature/PaymentScreen";
 import ServiceSummary from "../screen/Feature/ServiceSummary";
-import AboutUsScreen from "../screen/profile/AboutUsScreen";
 import EditProfile from "../screen/profile/EditProfile";
 import NotificatioScreen from "../screen/profile/NotificationSetting";
-import Privacy from "../screen/profile/Privacy";
+import LegalPageScreen from "../screen/profile/LegalPageScreen";
+import SocialLinksScreen from "../screen/profile/SocialLinksScreen";
+import FaqScreen from "../screen/profile/FaqScreen";
 import Vehical from "../screen/profile/Vehical";
 import ScreenNameEnum from "./screenName.enum";
 
@@ -96,11 +97,35 @@ const _routes = {
     },
     {
       name: ScreenNameEnum.ABOUT_SCREEN,
-      Component: AboutUsScreen,
+      Component: LegalPageScreen,
     },
     {
       name: ScreenNameEnum.PRIVACY_POLICY,
-      Component: Privacy,
+      Component: LegalPageScreen,
+    },
+    {
+      name: ScreenNameEnum.TERMS_CONDITIONS,
+      Component: LegalPageScreen,
+    },
+    {
+      name: ScreenNameEnum.REFUND_POLICY,
+      Component: LegalPageScreen,
+    },
+    {
+      name: ScreenNameEnum.CANCELLATION_POLICY,
+      Component: LegalPageScreen,
+    },
+    {
+      name: ScreenNameEnum.CONTACT_US,
+      Component: LegalPageScreen,
+    },
+    {
+      name: ScreenNameEnum.SOCIAL_LINKS,
+      Component: SocialLinksScreen,
+    },
+    {
+      name: ScreenNameEnum.FAQ_SCREEN,
+      Component: FaqScreen,
     },
     {
       name: ScreenNameEnum.SELECT_LOCATION,

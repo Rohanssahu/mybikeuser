@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bellIcon: {width: 22, height: 22, tintColor: '#FFFFFF'},
+  bellIcon: {width: 42, height: 42, tintColor: '#FED428'},
   badge: {
     position: 'absolute',
     top: 8,

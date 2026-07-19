@@ -1,10 +1,11 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
   StyleSheet,
   StatusBar,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useRoute} from '@react-navigation/native';
@@ -12,7 +13,9 @@ import {color} from '../../constant';
 import {hp, wp} from '../../component/utils/Constant';
 import CustomHeader from '../../component/CustomHeaderProps';
 import ScreenNameEnum from '../../routes/screenName.enum';
-import {get_bookingTimerStatus} from '../../redux/Api/apiRequests';
+import {cancel_booking, get_bookingTimerStatus} from '../../redux/Api/apiRequests';
+import {resetToHome} from '../../hooks/useBookingFlowNav';
+import {errorToast, successToast} from '../../configs/customToast';
 
 type DealerStatus = 'awaiting' | 'accepted' | 'rejected' | 'expired';
 
@@ -37,6 +40,13 @@ const DealerWaiting: React.FC<{navigation: any}> = ({navigation}) => {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mounted = useRef(true);
+  const dealerStatusRef = useRef<DealerStatus>('awaiting');
+  const allowLeaveRef = useRef(false);
+  const cancellingRef = useRef(false);
+
+  useEffect(() => {
+    dealerStatusRef.current = dealerStatus;
+  }, [dealerStatus]);
 
   const clearAll = () => {
     if (pollRef.current) {
@@ -89,6 +99,7 @@ const DealerWaiting: React.FC<{navigation: any}> = ({navigation}) => {
     setDealerStatus(s);
 
     if (s === 'accepted') {
+      allowLeaveRef.current = true;
       navigation.replace(ScreenNameEnum.PaymentScreen, {
         bookingId,
         garageName,
@@ -111,7 +122,66 @@ const DealerWaiting: React.FC<{navigation: any}> = ({navigation}) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleCancelBooking = async () => {
+    if (cancellingRef.current) {
+      return;
+    }
+    cancellingRef.current = true;
+    clearAll();
+
+    const res = await cancel_booking(bookingId, 'user_cancelled');
+    if (res?.success) {
+      successToast('Booking cancelled successfully.');
+    } else {
+      errorToast(
+        res?.message ||
+          'Could not cancel the booking right now. You can cancel it later from My Bookings.',
+      );
+    }
+
+    cancellingRef.current = false;
+    allowLeaveRef.current = true;
+    resetToHome(navigation);
+  };
+
+  // Shared handler for the header Back button, Android hardware back, the
+  // swipe-back gesture (all funnel through the `beforeRemove` listener below)
+  // and the header Home button — so there is exactly one confirmation path
+  // and never a route back to Booking Summary.
+  const confirmLeave = useCallback(() => {
+    if (dealerStatusRef.current !== 'awaiting' || cancellingRef.current) {
+      allowLeaveRef.current = true;
+      resetToHome(navigation);
+      return;
+    }
+    Alert.alert(
+      'Cancel Booking?',
+      'Going back will cancel your pending booking request with the dealer. Do you want to cancel this booking?',
+      [
+        {text: 'Stay', style: 'cancel'},
+        {
+          text: 'Cancel Booking',
+          style: 'destructive',
+          onPress: handleCancelBooking,
+        },
+      ],
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigation]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
+      if (allowLeaveRef.current || dealerStatusRef.current !== 'awaiting') {
+        return;
+      }
+      e.preventDefault();
+      confirmLeave();
+    });
+    return unsubscribe;
+  }, [navigation, confirmLeave]);
+
   const goChooseAnother = () => {
+    allowLeaveRef.current = true;
     navigation.pop(2);
   };
 
@@ -170,8 +240,15 @@ const DealerWaiting: React.FC<{navigation: any}> = ({navigation}) => {
   return (
     <View style={styles.root}>
       <StatusBar backgroundColor={color.baground} barStyle="light-content" />
+      <CustomHeader
+          navigation={navigation}
+          title="Waiting for Confirmation"
+          showHome
+          onBackPress={confirmLeave}
+          onHomePress={confirmLeave}
+        />
       <SafeAreaView style={styles.safe}>
-        <CustomHeader navigation={navigation} title="Waiting for Confirmation" showHome />
+     
         <View style={styles.center}>
           {/* Hourglass */}
           <View style={styles.hourglassWrap}>

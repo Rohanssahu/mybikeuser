@@ -1421,7 +1421,9 @@ const get_Notification = async (receiverId: string, setIsLoading: (v: boolean) =
     try {
         const results = await callMultipleApis(apiRequests);
         const response = results[0];
-        console.log('[get_Notification] raw response:', JSON.stringify(response));
+        console.log('[get_Notification] raw response:',);
+        
+        
         if (response?.success || response?.status) {
             setIsLoading(false);
             return { success: true, message: 'success', data: response };
@@ -1436,4 +1438,100 @@ const get_Notification = async (receiverId: string, setIsLoading: (v: boolean) =
     }
 };
 
-export { additionalservices, updateBooking, get_invoice, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist, get_featured_categories, get_bookingTimerStatus, get_Notification, select_payment_method };
+const get_legal_document = async (docType: string) => {
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.legalDocument.replace(':docType', docType),
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        },
+    ];
+
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+        if (response?.success) {
+            return { success: true, data: response.data };
+        }
+        return { success: false, data: null };
+    } catch (error: any) {
+        console.error('get_legal_document error:', error);
+        return { success: false, data: null };
+    }
+};
+
+const get_app_settings = async () => {
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.appSettings,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        },
+    ];
+
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+        if (response?.success) {
+            return { success: true, data: response.data };
+        }
+        return { success: false, data: null };
+    } catch (error: any) {
+        console.error('get_app_settings error:', error);
+        return { success: false, data: null };
+    }
+};
+
+const get_app_banners = async (bannerType: 'home' | 'popup' | 'announcement') => {
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.appBanners.replace(':bannerType', bannerType),
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        },
+    ];
+
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+        if (response?.success) {
+            return { success: true, data: response.data || [] };
+        }
+        return { success: false, data: [] };
+    } catch (error: any) {
+        console.error('get_app_banners error:', error);
+        return { success: false, data: [] };
+    }
+};
+
+const get_faqs = async () => {
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.faqs,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        },
+    ];
+
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+        if (response?.success) {
+            return { success: true, data: response.data || [] };
+        }
+        return { success: false, data: [] };
+    } catch (error: any) {
+        console.error('get_faqs error:', error);
+        return { success: false, data: [] };
+    }
+};
+
+export { additionalservices, updateBooking, get_invoice, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist, get_featured_categories, get_bookingTimerStatus, get_Notification, select_payment_method, get_legal_document, get_app_settings, get_app_banners, get_faqs };

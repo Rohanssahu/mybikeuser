@@ -13,6 +13,8 @@ interface CustomHeaderProps {
     onSkipPress?: () => void;
     showHome?: boolean; // Shows a Home icon top-right. Default is false
     isBookingComplete?: boolean; // Home tap resets to Home without confirmation. Default is false
+    onBackPress?: () => void; // Overrides the default navigation.goBack() for the back button
+    onHomePress?: () => void; // Overrides the default useBookingFlowNav home handler
 }
 
 const CustomHeader: React.FC<CustomHeaderProps> = ({
@@ -22,15 +24,18 @@ const CustomHeader: React.FC<CustomHeaderProps> = ({
     onSkipPress,
     showHome = false,
     isBookingComplete = false,
+    onBackPress,
+    onHomePress,
 }) => {
     const { handleHomePress } = useBookingFlowNav(navigation, isBookingComplete);
+    const resolvedHomePress = onHomePress ?? handleHomePress;
 
     return (
         <View style={styles.container}>
             {/* Back Button */}
             <TouchableOpacity
 
-            onPress={() => navigation.goBack()} style={styles.backButton}>
+            onPress={onBackPress ?? (() => navigation.goBack())} style={styles.backButton}>
                 <Icon source={icon.back} size={30} />
             </TouchableOpacity>
 
@@ -48,7 +53,7 @@ const CustomHeader: React.FC<CustomHeaderProps> = ({
                 {/* Home Button (conditionally displayed) */}
                 {showHome ? (
                     <TouchableOpacity
-                        onPress={handleHomePress}
+                        onPress={resolvedHomePress}
                         style={styles.homeButton}
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                         <Icon source={icon.home1} size={24} />

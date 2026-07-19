@@ -140,8 +140,21 @@ const profileSections: ProfileMenuSection[] = [
     id: 'support',
     title: 'Support',
     data: [
-      {id: '4', title: 'About Us', icon: 'information-outline', screen: ScreenNameEnum.ABOUT_SCREEN},
-      {id: '5', title: 'Privacy Policy', icon: 'shield-lock-outline', screen: ScreenNameEnum.PRIVACY_POLICY},
+      {id: '4', title: 'Help & Support', icon: 'lifebuoy', screen: ScreenNameEnum.SUPPORT_SCREEN},
+      {id: '4a', title: 'FAQ', icon: 'frequently-asked-questions', screen: ScreenNameEnum.FAQ_SCREEN},
+      {id: '5', title: 'Contact Us', icon: 'card-account-phone-outline', screen: ScreenNameEnum.CONTACT_US},
+      {id: '6', title: 'Social Links', icon: 'link-variant', screen: ScreenNameEnum.SOCIAL_LINKS},
+    ],
+  },
+  {
+    id: 'legal',
+    title: 'Legal',
+    data: [
+      {id: '7', title: 'About Us', icon: 'information-outline', screen: ScreenNameEnum.ABOUT_SCREEN},
+      {id: '8', title: 'Privacy Policy', icon: 'shield-lock-outline', screen: ScreenNameEnum.PRIVACY_POLICY},
+      {id: '9', title: 'Terms & Conditions', icon: 'file-document-outline', screen: ScreenNameEnum.TERMS_CONDITIONS},
+      {id: '10', title: 'Refund Policy', icon: 'cash-refund', screen: ScreenNameEnum.REFUND_POLICY},
+      {id: '11', title: 'Cancellation Policy', icon: 'calendar-remove-outline', screen: ScreenNameEnum.CANCELLATION_POLICY},
     ],
   },
   {

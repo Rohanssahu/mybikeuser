@@ -16,8 +16,8 @@ import {useFocusEffect} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {format} from 'date-fns';
 
-import {color, SUPPORT_PHONE_NUMBER, TAB_BAR_HEIGHT} from '../../constant';
-import {get_profile, get_tikit} from '../../redux/Api/apiRequests';
+import {color, TAB_BAR_HEIGHT} from '../../constant';
+import {get_app_settings, get_profile, get_tikit} from '../../redux/Api/apiRequests';
 import {
   getCurrentLocation,
   locationPermission,
@@ -32,6 +32,7 @@ import QuickHelpGrid, {QuickHelpItem} from '../../component/help/QuickHelpGrid';
 import RecentTicketCard from '../../component/help/RecentTicketCard';
 import FAQAccordion, {FAQItem} from '../../component/help/FAQAccordion';
 import ContactSupportCard from '../../component/help/ContactSupportCard';
+import ContactInfoCard from '../../component/help/ContactInfoCard';
 import HelpIcon from '../../component/help/icons';
 
 interface Ticket {
@@ -71,11 +72,28 @@ const FAQ_ITEMS: FAQItem[] = [
   },
 ];
 
+interface AppSupportSettings {
+  supportEmail?: string;
+  supportPhone?: string;
+  whatsappNumber?: string;
+  supportHours?: string;
+}
+
 const HelpCenter: React.FC = ({navigation}: any) => {
   const insets = useSafeAreaInsets();
   const [firstName, setFirstName] = useState('');
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [ticketsLoading, setTicketsLoading] = useState(true);
+  const [supportSettings, setSupportSettings] = useState<AppSupportSettings>({});
+
+  const loadSupportSettings = useCallback(async () => {
+    try {
+      const res = await get_app_settings();
+      if (res?.success) {setSupportSettings(res.data || {});}
+    } catch (error) {
+      console.error('Error fetching support settings:', error);
+    }
+  }, []);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -111,7 +129,8 @@ const HelpCenter: React.FC = ({navigation}: any) => {
     useCallback(() => {
       loadProfile();
       loadTickets();
-    }, [loadProfile, loadTickets]),
+      loadSupportSettings();
+    }, [loadProfile, loadTickets, loadSupportSettings]),
   );
 
   const formatDate = (dateString: string) => {
@@ -127,13 +146,29 @@ const HelpCenter: React.FC = ({navigation}: any) => {
   };
 
   const handleCall = () => {
-    Linking.openURL(`tel:${SUPPORT_PHONE_NUMBER}`).catch(() =>
+    if (!supportSettings.supportPhone) {return;}
+    Linking.openURL(`tel:${supportSettings.supportPhone}`).catch(() =>
       errorToast('Unable to start a call on this device.'),
     );
   };
 
   const handleChat = () => {
     goToTicketList();
+  };
+
+  const handleEmail = () => {
+    if (!supportSettings.supportEmail) {return;}
+    Linking.openURL(`mailto:${supportSettings.supportEmail}`).catch(() =>
+      errorToast('Unable to open an email client on this device.'),
+    );
+  };
+
+  const handleWhatsapp = () => {
+    if (!supportSettings.whatsappNumber) {return;}
+    const digits = supportSettings.whatsappNumber.replace(/[^\d+]/g, '');
+    Linking.openURL(`https://wa.me/${digits.replace('+', '')}`).catch(() =>
+      errorToast('Unable to open WhatsApp on this device.'),
+    );
   };
 
   const handleShareLocation = async () => {
@@ -188,6 +223,18 @@ const HelpCenter: React.FC = ({navigation}: any) => {
             onCallPress={handleCall}
             onChatPress={handleChat}
             onLocationPress={handleShareLocation}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <ContactInfoCard
+            supportEmail={supportSettings.supportEmail}
+            supportPhone={supportSettings.supportPhone}
+            whatsappNumber={supportSettings.whatsappNumber}
+            supportHours={supportSettings.supportHours}
+            onCallPress={handleCall}
+            onEmailPress={handleEmail}
+            onWhatsappPress={handleWhatsapp}
           />
         </View>
 

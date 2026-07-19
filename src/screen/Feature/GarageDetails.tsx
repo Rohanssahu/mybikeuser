@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import {
   garage_details,
   get_dealer_services,
   get_profile,
+  get_userbooking,
 } from '../../redux/Api/apiRequests';
 import MapPickerModal from './MapPicker';
 import Loading from '../../configs/Loader';
@@ -69,6 +70,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
   const [distance, setDistance] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<Step>(0);
+  const submittingRef = useRef(false);
 
   const [pickupModalVisible, setPickupModalVisible] = useState(false);
   const [PickupLocation, setPickupLocation] = useState<any>('');
@@ -279,6 +281,11 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
   };
 
   const createBooking = async () => {
+    // Guard against double-taps firing a second Create Booking request
+    // while the first one is still in flight.
+    if (submittingRef.current || loading) {
+      return;
+    }
     if (!selectedService) {
       return errorToast('Please choose a service');
     }
@@ -292,49 +299,70 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
       return errorToast('Pickup location not saved. Please re-select pickup address.');
     }
 
+    submittingRef.current = true;
     setLoading(true);
 
-    const userId = await AsyncStorage.getItem('user_id');
-    const profileRes = await get_profile(userId ?? '');
-    if (profileRes?.success) {
-      const profile = profileRes?.data;
-      const isProfileComplete =
-        !!profile?.first_name?.toString().trim() &&
-        !!profile?.phone?.toString().trim();
-      if (!isProfileComplete) {
-        setLoading(false);
-        return goToCompleteProfile('Please complete your profile before booking a service.');
-      }
-    }
-    // If the profile fetch itself failed (e.g. network issue), fall through —
-    // the backend re-validates profile completeness before creating the booking.
+    try {
+      const userId = await AsyncStorage.getItem('user_id');
 
-    const res = await create_booking(
-      garageData?._id,
-      [selectedService],
-      choosePickupOption === 'Visit' ? null : PickupLocationId,
-      bike._id,
-      BookingDate.toISOString(),
-    );
-    if (res?.success) {
-      showBookingNotification(
-        getServiceName(selectedSvc),
-        garageData?.shopName,
-        formatDate(BookingDate),
+      // Prevent creating a second pending booking if one is already awaiting
+      // dealer confirmation (e.g. user backed out of the Waiting screen).
+      const existingBookings = await get_userbooking(userId ?? '');
+      const hasPendingBooking = (existingBookings?.data ?? []).some(
+        (b: any) =>
+          b?.status === 'pending' &&
+          b?.dealerResponseStatus !== 'expired' &&
+          b?.dealerResponseStatus !== 'rejected',
       );
-      navigation.navigate(ScreenNameEnum.DEALER_WAITING, {
-        bookingId: res?.data?._id ?? res?.data?.bookingId ?? '',
-        garageName: garageData?.shopName ?? '',
-        serviceName: getServiceName(selectedSvc),
-        date: `${formatDate(BookingDate)}, ${formatTime(BookingTime)}`,
-        amount: totalPayable,
-      });
-    } else if (res?.errorCode === 'PROFILE_INCOMPLETE') {
-      goToCompleteProfile(res?.message || 'Please complete your profile before booking a service.');
-    } else {
-      errorToast(res?.message || 'Booking failed. Please try again.');
+      if (hasPendingBooking) {
+        return errorToast(
+          'You already have a pending booking. Please wait for it to be resolved before booking again.',
+        );
+      }
+
+      const profileRes = await get_profile(userId ?? '');
+      if (profileRes?.success) {
+        const profile = profileRes?.data;
+        const isProfileComplete =
+          !!profile?.first_name?.toString().trim() &&
+          !!profile?.phone?.toString().trim();
+        if (!isProfileComplete) {
+          return goToCompleteProfile('Please complete your profile before booking a service.');
+        }
+      }
+      // If the profile fetch itself failed (e.g. network issue), fall through —
+      // the backend re-validates profile completeness before creating the booking.
+
+      const res = await create_booking(
+        garageData?._id,
+        [selectedService],
+        choosePickupOption === 'Visit' ? null : PickupLocationId,
+        bike._id,
+        BookingDate.toISOString(),
+      );
+      if (res?.success) {
+        showBookingNotification(
+          getServiceName(selectedSvc),
+          garageData?.shopName,
+          formatDate(BookingDate),
+        );
+        // replace (not navigate) so Booking Summary can never be reached via Back
+        navigation.replace(ScreenNameEnum.DEALER_WAITING, {
+          bookingId: res?.data?._id ?? res?.data?.bookingId ?? '',
+          garageName: garageData?.shopName ?? '',
+          serviceName: getServiceName(selectedSvc),
+          date: `${formatDate(BookingDate)}, ${formatTime(BookingTime)}`,
+          amount: totalPayable,
+        });
+      } else if (res?.errorCode === 'PROFILE_INCOMPLETE') {
+        goToCompleteProfile(res?.message || 'Please complete your profile before booking a service.');
+      } else {
+        errorToast(res?.message || 'Booking failed. Please try again.');
+      }
+    } finally {
+      submittingRef.current = false;
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleBack = () => {
@@ -739,7 +767,11 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
     }
     return (
       <View style={bottomBarStyle}>
-        <CustomButton title="Confirm Booking" onPress={createBooking} />
+        <CustomButton
+          title="Confirm Booking"
+          disable={loading}
+          onPress={createBooking}
+        />
       </View>
     );
   };

@@ -24,7 +24,9 @@ import {icon} from '../../component/Image';
 import HorizontalList from '../../component/HorizontalList';
 import GarageList from '../../component/GarageList';
 import ScreenNameEnum from '../../routes/screenName.enum';
+import AnnouncementPopup, {AnnouncementBanner} from '../modal/AnnouncementPopup';
 import {
+  get_app_banners,
   get_bannerlist,
   get_featured_categories,
   get_mybikes,
@@ -257,6 +259,8 @@ const Home: React.FC = () => {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [userCoords, setUserCoords] = useState<UserCoords | null>(null);
   const [User, setUser] = useState<any>(null);
+  const [announcement, setAnnouncement] = useState<AnnouncementBanner | null>(null);
+  const [announcementVisible, setAnnouncementVisible] = useState(false);
   const {locationName} = useLocation();
 
   useFocusEffect(
@@ -264,6 +268,27 @@ const Home: React.FC = () => {
       loadAll();
     }, []),
   );
+
+  // Fetched once per app session — not on every tab focus — so a dismissed
+  // popup doesn't reappear each time the user switches back to Home.
+  useEffect(() => {
+    const loadAnnouncement = async () => {
+      try {
+        const [popupRes, announcementRes] = await Promise.all([
+          get_app_banners('popup'),
+          get_app_banners('announcement'),
+        ]);
+        const active = [...(popupRes?.data ?? []), ...(announcementRes?.data ?? [])];
+        if (active.length > 0) {
+          setAnnouncement(active[0]);
+          setAnnouncementVisible(true);
+        }
+      } catch (error) {
+        console.error('Home loadAnnouncement error:', error);
+      }
+    };
+    loadAnnouncement();
+  }, []);
 
   const loadFeaturedCategories = async (coords: UserCoords) => {
     setFeaturedLoading(true);
@@ -335,6 +360,12 @@ const Home: React.FC = () => {
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor={color.baground} barStyle="light-content" />
+
+      <AnnouncementPopup
+        visible={announcementVisible}
+        banner={announcement}
+        onClose={() => setAnnouncementVisible(false)}
+      />
 
       {loading ? (
         <View style={styles.loaderContainer}>
