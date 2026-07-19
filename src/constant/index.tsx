@@ -23,5 +23,8 @@ export const color = {
 // `insets.bottom + TAB_BAR_HEIGHT` as bottom padding so content never sits behind the tab bar.
 export const TAB_BAR_HEIGHT = 60;
 
+// TODO: replace with the real roadside assistance helpline once provided by ops/support.
+export const SUPPORT_PHONE_NUMBER = '+911800000000';
+
 
 

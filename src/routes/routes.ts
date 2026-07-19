@@ -8,6 +8,7 @@ import Splash from "../screen/Auth/Splash";
 import VerifyOtp from "../screen/Auth/VerifyOtp";
 import Booking from "../screen/BottamTab/Booking";
 import Help from "../screen/BottamTab/Help";
+import HelpCenter from "../screen/BottamTab/HelpCenter";
 import Home from "../screen/BottamTab/Home";
 import Notification from "../screen/BottamTab/Notification";
 import Profile from "../screen/BottamTab/Profile";
@@ -114,6 +115,10 @@ const _routes = {
       Component: Help,
     },
     {
+      name: ScreenNameEnum.TICKET_LIST,
+      Component: TicketList,
+    },
+    {
       name: ScreenNameEnum.Notification,
       Component: Notification,
     },
@@ -149,7 +154,7 @@ const _routes = {
     },
     {
       name: ScreenNameEnum.SUPPORT_SCREEN,
-      Component: TicketList,
+      Component: HelpCenter,
       active: icon.support,
       logo: icon.support,
       lable: 'Help'

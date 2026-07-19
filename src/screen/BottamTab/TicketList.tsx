@@ -84,9 +84,20 @@ const TicketList: React.FC = ({navigation}: any) => {
 
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Support</Text>
-          <Text style={styles.headerSub}>We're here to help you</Text>
+        <View style={styles.headerTitleRow}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => navigation.goBack()}
+            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            activeOpacity={0.8}>
+            <Image source={icon.back} style={styles.backIcon} />
+          </TouchableOpacity>
+          <View>
+            <Text style={styles.headerTitle}>Support</Text>
+            <Text style={styles.headerSub}>We're here to help you</Text>
+          </View>
         </View>
         <TouchableOpacity
           style={styles.newTicketBtn}
@@ -239,6 +250,17 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 24) + 8,
     paddingBottom: 16,
   },
+  headerTitleRow: {flexDirection: 'row', alignItems: 'center'},
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  backIcon: {width: 16, height: 16, tintColor: '#fff'},
   headerTitle: {fontSize: 22, fontWeight: '700', color: '#fff'},
   headerSub: {fontSize: 13, color: '#6B7DBE', marginTop: 2},
   newTicketBtn: {
