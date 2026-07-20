@@ -20,7 +20,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {color, TAB_BAR_HEIGHT} from '../../constant';
 import BannerSlider from '../../component/BannerSlider';
 import HomeHeader from '../../component/HomeHeader';
-import {icon} from '../../component/Image';
+import images, {icon} from '../../component/Image';
 import HorizontalList from '../../component/HorizontalList';
 import GarageList from '../../component/GarageList';
 import ScreenNameEnum from '../../routes/screenName.enum';
@@ -133,7 +133,7 @@ const MyVehicleCard: React.FC<{
     return (
       <View style={styles.vehicleCard}>
         <View style={styles.vehicleIconWrap}>
-          <Image source={icon.bikep} style={styles.vehicleIcon} />
+          <Image source={images.bikes} style={styles.vehicleIcon} />
         </View>
         <View style={styles.vehicleInfo}>
           <Text style={styles.vehicleTitle} numberOfLines={1}>
@@ -622,7 +622,7 @@ const styles = StyleSheet.create({
   vehicleIcon: {
     width: 26,
     height: 26,
-    tintColor: color.buttonColor,
+   
   },
   vehicleInfo: {
     flex: 1,

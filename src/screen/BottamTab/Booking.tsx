@@ -26,7 +26,57 @@ import {
 } from '../../component/Notification';
 import {icon} from '../../component/Image';
 
-const FILTER_CHIPS = ['All', 'Pending', 'Confirmed', 'Completed', 'Cancelled'];
+const FILTER_CHIPS = [
+  {label: 'All', value: 'all'},
+  {label: 'Pending', value: 'pending'},
+  {label: 'Confirmed', value: 'confirmed'},
+  {label: 'In Service', value: 'in_service'},
+  {label: 'Completed', value: 'completed'},
+  {label: 'Cancelled', value: 'cancelled'},
+];
+
+// Backend lifecycle lives on `status` (verified against BookingList's
+// STATUS_CONFIG and ServiceSummary's STATUS_CFG, which map these same raw
+// values). `dealerResponseStatus` only overrides to "expired".
+const STATUS_GROUPS: Record<string, string[]> = {
+  pending: ['pending', 'waiting', 'requested'],
+  confirmed: ['confirmed', 'accepted'],
+  in_service: ['in_service'],
+  completed: [
+    'completed',
+    'delivered',
+    'service_completed',
+    'ready_for_delivery',
+    'awaiting_payment',
+    'payment_selected',
+    'cash received',
+  ],
+  cancelled: [
+    'cancelled',
+    'user_cancelled',
+    'dealer_cancelled',
+    'rejected',
+    'expired',
+  ],
+};
+
+const getStatusGroup = (item: ShopItem): string => {
+  const isExpired =
+    item?.status === 'expired' || item?.dealerResponseStatus === 'expired';
+  const raw = isExpired ? 'expired' : (item?.status || '').toLowerCase().trim();
+  const group =
+    Object.keys(STATUS_GROUPS).find(key => STATUS_GROUPS[key].includes(raw)) ||
+    raw;
+  // TEMP DEBUG: verify actual backend field values before removing.
+  console.log('[Booking] item:', item);
+  console.log('[Booking] status field used for filtering ->', {
+    id: item?._id,
+    status: item?.status,
+    dealerResponseStatus: item?.dealerResponseStatus,
+    resolvedGroup: group,
+  });
+  return group;
+};
 
 interface ShopItem {
   _id: string;
@@ -46,6 +96,7 @@ interface ShopItem {
 
 const Booking: React.FC<{navigation: any}> = ({navigation}) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState('all');
   const [booking, setBooking] = useState<ShopItem[]>([]);
   const isFocus = useIsFocused();
   const [loading, setLoading] = useState(false);
@@ -61,6 +112,8 @@ const Booking: React.FC<{navigation: any}> = ({navigation}) => {
       const user_id = await AsyncStorage.getItem('user_id');
       if (!user_id) {return;}
       const response = await get_userbooking(user_id);
+      // TEMP DEBUG: verify raw booking payload shape from backend.
+      console.log('[Booking] get_userbooking response.data:', response?.data);
       setBooking(response?.data?.length > 0 ? response.data : []);
     } catch (error) {
       console.error('Error fetching bookings:', error);
@@ -84,12 +137,15 @@ const Booking: React.FC<{navigation: any}> = ({navigation}) => {
     setLoading(false);
   };
 
-  const filteredBookings = booking.filter(
-    item =>
+  const filteredBookings = booking.filter(item => {
+    const matchesSearch =
       item?.dealer_id?.shopName
         ?.toLowerCase()
-        .includes(searchQuery.toLowerCase()) || !item?.dealer_id,
-  );
+        .includes(searchQuery.toLowerCase()) || !item?.dealer_id;
+    const matchesFilter =
+      selectedFilter === 'all' || getStatusGroup(item) === selectedFilter;
+    return matchesSearch && matchesFilter;
+  });
 
   const pendingCount = booking.filter(
     b => b.status === 'pending' && b.dealerResponseStatus !== 'expired',
@@ -119,22 +175,26 @@ const Booking: React.FC<{navigation: any}> = ({navigation}) => {
         />
       </View>
 
-      {/* Filter chips (UI only, not wired to filtering logic) */}
+      {/* Filter chips */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.filterWrapper}
         contentContainerStyle={styles.filterContent}>
-        {FILTER_CHIPS.map((label, index) => (
-          <View
-            key={label}
-            style={[styles.chip, index === 0 && styles.chipActive]}>
-            <Text
-              style={[styles.chipText, index === 0 && styles.chipTextActive]}>
-              {label}
-            </Text>
-          </View>
-        ))}
+        {FILTER_CHIPS.map(chip => {
+          const isActive = selectedFilter === chip.value;
+          return (
+            <TouchableOpacity
+              key={chip.value}
+              activeOpacity={0.8}
+              onPress={() => setSelectedFilter(chip.value)}
+              style={[styles.chip, isActive && styles.chipActive]}>
+              <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+                {chip.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
 
       {filteredBookings.length > 0
@@ -212,11 +272,14 @@ const styles = StyleSheet.create({
   },
   filterContent: {
     paddingHorizontal: 16,
-    gap: 8,
+    paddingVertical: 8,
+    alignItems: 'center',
   },
   chip: {
+    height: 40,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
     borderRadius: 20,
     backgroundColor: color.cardSurface,
     borderWidth: 1,

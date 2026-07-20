@@ -31,7 +31,7 @@ const POLL_MS = 5000;
 
 const DealerWaiting: React.FC<{navigation: any}> = ({navigation}) => {
   const route = useRoute<any>();
-  const {bookingId, garageName, serviceName, date, amount} =
+  const {bookingId, garageName, serviceName} =
     route.params as WaitingParams;
 
   const [dealerStatus, setDealerStatus] = useState<DealerStatus>('awaiting');
@@ -100,13 +100,18 @@ const DealerWaiting: React.FC<{navigation: any}> = ({navigation}) => {
 
     if (s === 'accepted') {
       allowLeaveRef.current = true;
-      navigation.replace(ScreenNameEnum.PaymentScreen, {
-        bookingId,
-        garageName,
-        serviceName,
-        date,
-        amount,
-        totalPrice: amount,
+      navigation.reset({
+        index: 1,
+        routes: [
+          {
+            name: ScreenNameEnum.BOTTAM_TAB,
+            params: {screen: ScreenNameEnum.BOOKING_SCREEN},
+          },
+          {
+            name: ScreenNameEnum.SERVICE_SUMMERY,
+            params: {id: bookingId},
+          },
+        ],
       });
     }
   };

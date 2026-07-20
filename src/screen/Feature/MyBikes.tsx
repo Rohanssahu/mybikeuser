@@ -163,46 +163,57 @@ const MyBikes: React.FC<Props> = ({navigation}) => {
       (navigation as any).navigate(ScreenNameEnum.NEARBY_SHOPS, {item, serviceId});
     }
   };
-
   const renderBike = ({item}: {item: any}) => (
     <View style={styles.card}>
-      <Image source={images.bikes} style={styles.bikeImg} resizeMode="contain" />
-
-      <View style={styles.cardBody}>
-        <Text style={styles.plateTxt}>
-          {item.plate_number?.toUpperCase() || '-'}
-        </Text>
-        <Text style={styles.companyTxt}>{item.companyName || '-'}</Text>
-        <Text style={styles.modelTxt}>{item.modelName || '-'}</Text>
-        <Text style={styles.variantTxt}>{item.variantName || '-'}</Text>
-        <View style={styles.tagRow}>
-          <View style={[styles.tag, styles.tagCC]}>
-            <Text style={[styles.tagText, styles.tagCCText]}>
-              {item.ccDisplay && item.ccDisplay !== '-'
-                ? `${item.ccDisplay} CC`
-                : '-'}
+      <TouchableOpacity
+        style={styles.deleteBtn}
+        onPress={() => confirmRemove(item._id)}
+        hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+        <Image source={icon.delete} style={styles.deleteIcon} />
+      </TouchableOpacity>
+  
+      <View style={styles.topRow}>
+        <Image
+          source={images.bikes}
+          style={styles.bikeImg}
+          resizeMode="contain"
+        />
+  
+        <View style={styles.cardBody}>
+          <Text style={styles.plateTxt} numberOfLines={1}>
+            {item.plate_number?.toUpperCase() || '-'}
+          </Text>
+  
+          <Text style={styles.companyTxt} numberOfLines={1}>
+            {item.companyName || '-'}
+          </Text>
+  
+          <Text style={styles.modelTxt} numberOfLines={1}>
+            {item.modelName || '-'}
+          </Text>
+  
+          <Text style={styles.variantTxt} numberOfLines={1}>
+            {item.variantName || '-'}
+          </Text>
+  
+          <View style={styles.tag}>
+            <Text style={styles.tagText}>
+              {item.ccDisplay ? `${item.ccDisplay} CC` : '-'}
             </Text>
           </View>
         </View>
-
-        {!profile && (
-          <TouchableOpacity
-            onPress={() => handleSelect(item)}
-            style={styles.selectBtn}
-            activeOpacity={0.8}>
-            <Text style={styles.selectBtnText}>
-              {Grageid ? 'Book Service' : 'Find Garages'}
-            </Text>
-          </TouchableOpacity>
-        )}
       </View>
-
-      <TouchableOpacity
-        onPress={() => confirmRemove(item._id)}
-        style={styles.deleteBtn}
-        hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-        <Image source={icon.delete} style={styles.deleteIcon} />
-      </TouchableOpacity>
+  
+      {!profile && (
+        <TouchableOpacity
+          style={styles.selectBtn}
+          onPress={() => handleSelect(item)}
+          activeOpacity={0.8}>
+          <Text style={styles.selectBtnText}>
+            {Grageid ? 'Book Service' : 'Find Garages'}
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 
@@ -265,83 +276,120 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 30,
   },
+
   card: {
-    flexDirection: 'row',
-    backgroundColor: '#0F1D3A',
-    borderRadius: 16,
+    backgroundColor: '#101B33',
+    borderRadius: 18,
     padding: 14,
     marginBottom: 14,
     width: SCREEN_WIDTH - 32,
     alignSelf: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.07)',
+    position: 'relative',
+  
     shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowOffset: {width: 0, height: 3},
+    shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    elevation: 5,
   },
+  
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  
   bikeImg: {
-    width: 72,
-    height: 72,
-    marginRight: 12,
-    alignSelf: 'center',
+    width: 95,
+    height: 70,
+    marginRight: 14,
   },
-  cardBody: {flex: 1},
+  
+  cardBody: {
+    flex: 1,
+  },
+  
   plateTxt: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#fff',
-    letterSpacing: 1,
+    color: '#FFF',
   },
+  
   companyTxt: {
-    fontSize: 14,
+    marginTop: 4,
+    fontSize: 15,
+    color: '#FFF',
     fontWeight: '600',
-    color: '#fff',
-    marginTop: 6,
   },
+  
   modelTxt: {
-    fontSize: 13,
-    color: '#A0A3BD',
-    marginTop: 3,
-  },
-  variantTxt: {
-    fontSize: 12,
-    color: '#797E95',
     marginTop: 2,
+    fontSize: 13,
+    color: '#C6C8D5',
   },
+  
+  variantTxt: {
+    marginTop: 2,
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  
+  tag: {
+    alignSelf: 'flex-start',
+    marginTop: 8,
+    backgroundColor: '#233A67',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 15,
+  },
+  
+  tagText: {
+    color: '#FFD54F',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  
+  selectBtn: {
+    marginTop: 14,
+    height: 42,
+    borderRadius: 10,
+    backgroundColor: color.buttonColor,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  
+  selectBtnText: {
+    color: '#000',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  
+  deleteBtn: {
+    position: 'absolute',
+    right: 12,
+    top: 12,
+    zIndex: 10,
+  },
+  
+  deleteIcon: {
+    width: 20,
+    height: 20,
+   
+  },
+  
   tagRow: {
     flexDirection: 'row',
     marginTop: 8,
     gap: 6,
   },
-  tag: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-  },
-  tagText: {fontSize: 11, color: '#ccc', fontWeight: '500'},
+ 
   tagCC: {backgroundColor: 'rgba(254,212,40,0.12)'},
   tagCCText: {color: '#FED428'},
-  selectBtn: {
-    marginTop: 10,
-    backgroundColor: color.buttonColor,
-    borderRadius: 20,
-    paddingVertical: 7,
-    paddingHorizontal: 18,
-    alignSelf: 'flex-start',
-  },
-  selectBtnText: {
-    color: '#000',
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  deleteBtn: {
-    padding: 4,
-    alignSelf: 'flex-start',
-  },
-  deleteIcon: {width: 22, height: 22},
+
+
+
   addBtnWrapper: {
     marginHorizontal: 16,
     marginTop: 8,

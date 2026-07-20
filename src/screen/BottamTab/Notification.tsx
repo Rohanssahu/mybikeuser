@@ -9,7 +9,7 @@ import NotificationItem from '../../component/NotificationItem';
 import { get_Notification } from '../../redux/Api/apiRequests';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { TAB_BAR_HEIGHT } from '../../constant';
+import { color, TAB_BAR_HEIGHT } from '../../constant';
 
 const BOOKING_NOTIFICATION_TYPES = [
   'service_completed',
@@ -111,7 +111,7 @@ const Notification = ({ navigation }: any) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: color.baground,
     },
     listWrap: {
         padding: 15,

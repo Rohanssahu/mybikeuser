@@ -5,7 +5,7 @@ const images = {
   map: require('../assets/images/maps.png'),
   profileUpdate: require('../assets/images/user.png'),
   bannerimg: require('../assets/images/image.png'),
-  bikes: require('../assets/images/bikes.png'),
+  bikes: require('../assets/images/rider_motorbike_fed428.png'),
   honda: require('../assets/images/honda.png'),
   scuty: require('../assets/images/scutry.png'),
   superbike: require('../assets/images/superbike.png'),
