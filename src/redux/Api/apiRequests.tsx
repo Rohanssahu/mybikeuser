@@ -116,13 +116,13 @@ const updateBooking = async (
     setLoading: any,
     navigation: any,
 ) => {
+    // Pricing snapshot fields (tax, totalBill) are never sent — the backend
+    // is the only pricing authority and recomputes them from `services` via
+    // pricingEngine.computePriceBreakdown() whenever the service list changes.
     const requestBody = {
         bookingId: dataUser?._id,
         billGenerated: false,
         lastServiceKm: lastServiceKm,
-        tax: dataUser?.tax,
-        totalBill: Price,
-        billStatus: 'pending',
         services: id,
     };
 
@@ -905,12 +905,12 @@ const additionalservices = async (id: string, token: string, cc: string) => {
         return { success: false, message: error.message, state: [] };
     }
 };
-const create_booking = async (dealer_id: string, services: string[], pickupAndDropId: string | null, userBike_id: string, pickupDate: string) => {
-    const requestBody = { dealer_id, services, pickupAndDropId, userBike_id, pickupDate };
+const create_booking = async (dealer_id: string, services: string[], transportOption: string, pickupAndDropId: string | null, userBike_id: string, pickupDate: string) => {
+    const requestBody = { dealer_id, services, transportOption, pickupAndDropId, userBike_id, pickupDate };
     const token = await AsyncStorage.getItem('token')
 
     console.log('requestBody',requestBody);
-    
+
     const apiRequests: ApiRequest[] = [
         {
             endpoint: endpoint.createBooking,
@@ -942,6 +942,46 @@ const create_booking = async (dealer_id: string, services: string[], pickupAndDr
             message: error?.response?.data?.message || error?.message || 'Something went wrong',
             data: null,
             errorCode: error?.response?.data?.errorCode,
+        };
+    }
+};
+
+// Live price preview from the pricing engine — NO local math. Every field the
+// User App shows as a money value comes from this response.
+const get_pricing_quote = async (
+    dealerId: string,
+    serviceIds: string[],
+    transportOption: string,
+    bikeCC: string | number,
+) => {
+    const requestBody = { dealerId, serviceIds, transportOption, bikeCC };
+    const token = await AsyncStorage.getItem('token');
+
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.pricingQuote,
+            method: 'POST',
+            data: requestBody,
+            headers: {
+                'Content-Type': 'application/json',
+                token: token,
+            },
+        },
+    ];
+
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+
+        if (response?.success) {
+            return { success: true, data: response.data };
+        }
+        return { success: false, message: response?.message || 'Unable to fetch price', data: null };
+    } catch (error: any) {
+        return {
+            success: false,
+            message: error?.response?.data?.message || error?.message || 'Something went wrong',
+            data: null,
         };
     }
 };
@@ -1534,4 +1574,4 @@ const get_faqs = async () => {
     }
 };
 
-export { additionalservices, updateBooking, get_invoice, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist, get_featured_categories, get_bookingTimerStatus, get_Notification, select_payment_method, get_legal_document, get_app_settings, get_app_banners, get_faqs };
+export { additionalservices, updateBooking, get_invoice, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, get_pricing_quote, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist, get_featured_categories, get_bookingTimerStatus, get_Notification, select_payment_method, get_legal_document, get_app_settings, get_app_banners, get_faqs };

@@ -40,7 +40,7 @@ const InvoiceScreen: React.FC<any> = ({ navigation }) => {
     })();
   }, [bookingId]);
 
-  const gstRate = bill?.tax_rate ?? 18;
+  const gstRate = bill?.tax_rate ?? 0;
   const gstAmount = bill?.tax_amount ?? 0;
 
   return (

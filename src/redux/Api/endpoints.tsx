@@ -22,6 +22,7 @@ export const endpoint = {
   garagedetails: '/bikedoctor/dealer/getShopDetails',
   dealerServices: '/bikedoctor/dealer/services',
   createBooking: '/bikedoctor/bookings/createBooking',
+  pricingQuote: '/pricing/quote',
   addpickndrop: '/bikedoctor/pickndrop/addpickndrop',
   getprofile: '/bikedoctor/customers/customersdata',
   updateprofile: '/bikedoctor/customers/editcustomer/:id',

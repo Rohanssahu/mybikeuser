@@ -10,6 +10,7 @@ import {
   Platform,
   Modal,
   Pressable,
+  ActivityIndicator,
 } from 'react-native';
 import CustomButton from '../../component/CustomButton';
 import ScreenNameEnum from '../../routes/screenName.enum';
@@ -17,6 +18,7 @@ import {useRoute} from '@react-navigation/native';
 import {
   addPickupAddress,
   create_booking,
+  get_pricing_quote,
   garage_details,
   get_dealer_services,
   get_profile,
@@ -37,10 +39,19 @@ import {getCurrentLocation as getSavedOrCurrentLocation} from '../../component/h
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useBookingFlowNav} from '../../hooks/useBookingFlowNav';
 
-const PICKUP_RATE_PER_KM = 15;
-const GST_RATE = 0.18;
-
 type Step = 0 | 1 | 2;
+
+type TransportOption = 'SELF_VISIT' | 'PICKUP_ONLY' | 'DROP_ONLY' | 'PICKUP_AND_DROP';
+
+const TRANSPORT_LABELS: Record<TransportOption, string> = {
+  SELF_VISIT: 'Self Visit',
+  PICKUP_ONLY: 'Pickup Only',
+  DROP_ONLY: 'Drop Only',
+  PICKUP_AND_DROP: 'Pickup + Drop',
+};
+
+const needsAddress = (option: TransportOption | '') =>
+  option === 'PICKUP_ONLY' || option === 'DROP_ONLY' || option === 'PICKUP_AND_DROP';
 
 const ReviewRow = ({label, value}: {label: string; value: string}) => (
   <View style={styles.reviewRow}>
@@ -77,10 +88,17 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
   const [PickupLocationName, setPickupLocationName] = useState('');
   const [PickupLocationId, setPickupLocationId] = useState('');
   const [PickupDistance, setPickupDistance] = useState<number | null>(null);
-  const [choosePickupOption, setChoosePickupOption] = useState('');
+  const [transportOption, setTransportOption] = useState<TransportOption | ''>('');
+  const [pendingTransportOption, setPendingTransportOption] = useState<TransportOption | ''>('');
 
   const [selectedService, setSelectedService] = useState('');
   const [serviceModalVisible, setServiceModalVisible] = useState(false);
+
+  // Live price preview from the backend — the only source of any money value
+  // rendered on this screen. Never computed locally.
+  const [quote, setQuote] = useState<any>(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState('');
 
   const [BookingDate, setBookingDate] = useState(new Date());
   const [BookingTime, setBookingTime] = useState(() => {
@@ -251,15 +269,57 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
     [garageData, selectedService],
   );
 
+  // Catalog price shown while picking a service — comes straight from the
+  // backend's service listing. The actual payable amount (Step 3) always
+  // comes from the /pricing/quote response below, never from this value.
   const servicePrice: number =
     selectedSvc?.price ?? selectedSvc?.bikes?.[0]?.price ?? 0;
-  const pickupCharge: number =
-    choosePickupOption === 'PickDrop'
-      ? garageData?.pickupCharges ??
-        Math.round((PickupDistance ?? 0) * PICKUP_RATE_PER_KM)
-      : 0;
-  const gstAmount: number = Math.round(servicePrice * GST_RATE);
-  const totalPayable: number = servicePrice + pickupCharge + gstAmount;
+
+  // Which transport options this dealer actually supports.
+  const transportChoices = useMemo(() => {
+    const choices: TransportOption[] = ['SELF_VISIT'];
+    if (garageData?.providesPickup) choices.push('PICKUP_ONLY');
+    if (garageData?.providesDrop) choices.push('DROP_ONLY');
+    if (garageData?.providesPickup && garageData?.providesDrop) {
+      choices.push('PICKUP_AND_DROP');
+    }
+    return choices;
+  }, [garageData?.providesPickup, garageData?.providesDrop]);
+
+  const bikeCC = bike?.bike_cc?.toString().replace(/\D/g, '') || '';
+
+  // Whenever the service, transport option, bike or dealer changes, re-price
+  // the booking from the backend. This is the ONLY place a payable amount is
+  // produced on this screen.
+  useEffect(() => {
+    const dealerId = garageData?._id;
+    const adminServiceId = selectedSvc?.adminServiceId;
+
+    if (!dealerId || !adminServiceId || !transportOption || !bikeCC) {
+      setQuote(null);
+      setQuoteError('');
+      return undefined;
+    }
+
+    let cancelled = false;
+    setQuoteLoading(true);
+    setQuoteError('');
+
+    get_pricing_quote(dealerId, [adminServiceId], transportOption, bikeCC).then(res => {
+      if (cancelled) return;
+      if (res?.success) {
+        setQuote(res.data);
+      } else {
+        setQuote(null);
+        setQuoteError(res?.message || 'Unable to calculate price. Please try again.');
+      }
+      setQuoteLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [garageData?._id, selectedSvc?.adminServiceId, transportOption, bikeCC]);
 
   const getServiceName = (svc: any) =>
     (svc?.serviceName ?? svc?.base_service_id?.name ?? '').toUpperCase();
@@ -289,14 +349,17 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
     if (!selectedService) {
       return errorToast('Please choose a service');
     }
-    if (!choosePickupOption) {
-      return errorToast('Please choose pickup or visit option');
+    if (!transportOption) {
+      return errorToast('Please choose how you will bring your bike');
     }
     if (!bike?._id) {
       return errorToast('Bike information is missing. Please select a bike.');
     }
-    if (choosePickupOption === 'PickDrop' && !PickupLocationId) {
-      return errorToast('Pickup location not saved. Please re-select pickup address.');
+    if (needsAddress(transportOption) && !PickupLocationId) {
+      return errorToast('Pickup/drop location not saved. Please re-select the address.');
+    }
+    if (quoteLoading || !quote) {
+      return errorToast('Please wait for the price to be calculated before confirming.');
     }
 
     submittingRef.current = true;
@@ -336,7 +399,8 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
       const res = await create_booking(
         garageData?._id,
         [selectedService],
-        choosePickupOption === 'Visit' ? null : PickupLocationId,
+        transportOption,
+        needsAddress(transportOption) ? PickupLocationId : null,
         bike._id,
         BookingDate.toISOString(),
       );
@@ -352,7 +416,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
           garageName: garageData?.shopName ?? '',
           serviceName: getServiceName(selectedSvc),
           date: `${formatDate(BookingDate)}, ${formatTime(BookingTime)}`,
-          amount: totalPayable,
+          amount: res?.data?.customerTotal ?? quote?.customerTotal ?? 0,
         });
       } else if (res?.errorCode === 'PROFILE_INCOMPLETE') {
         goToCompleteProfile(res?.message || 'Please complete your profile before booking a service.');
@@ -609,61 +673,51 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
         <Icon source={icon.rightarrow} size={20} />
       </TouchableOpacity> */}
 
-      <Text style={styles.sectionTitle}>Pickup & Drop</Text>
+      <Text style={styles.sectionTitle}>Transport Option</Text>
       <View style={styles.featureRow}>
         <Icon source={icon.pickups} size={28} />
         <View style={styles.featureInfo}>
           <Text style={styles.featureTitle}>How will you bring your bike?</Text>
-          {choosePickupOption === 'PickDrop' && PickupLocationName ? (
+          {needsAddress(transportOption) && PickupLocationName ? (
             <Text style={styles.featureDesc}>{PickupLocationName}</Text>
-          ) : choosePickupOption === 'Visit' ? (
+          ) : transportOption === 'SELF_VISIT' ? (
             <Text style={styles.featureDesc}>Self visit / drop by shop</Text>
           ) : (
-            <Text style={styles.featureDesc}>
-              {garageData?.pickupAndDrop
-                ? 'Pickup & Drop available'
-                : 'Choose an option below'}
-            </Text>
+            <Text style={styles.featureDesc}>Choose an option below</Text>
           )}
           <View style={styles.pickupOptions}>
-            <TouchableOpacity
-              onPress={() => {
-                setPickupLocationId('Visit');
-                setChoosePickupOption('Visit');
-              }}
-              style={[
-                styles.optionBtn,
-                choosePickupOption === 'Visit' && styles.optionBtnActive,
-              ]}>
-              <Text
+            {transportChoices.map(option => (
+              <TouchableOpacity
+                key={option}
+                onPress={() => {
+                  if (option === 'SELF_VISIT') {
+                    setPickupLocationId('');
+                    setPickupLocationName('');
+                    setTransportOption('SELF_VISIT');
+                  } else {
+                    setPendingTransportOption(option);
+                    setPickupModalVisible(true);
+                  }
+                }}
                 style={[
-                  styles.optionBtnText,
-                  choosePickupOption === 'Visit' && styles.optionBtnTextActive,
+                  styles.optionBtn,
+                  transportOption === option && styles.optionBtnActive,
                 ]}>
-                Visit
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => {
-                setPickupModalVisible(true);
-              }}
-              style={[
-                styles.optionBtn,
-                choosePickupOption === 'PickDrop' && styles.optionBtnActive,
-              ]}>
-              <Text
-                style={[
-                  styles.optionBtnText,
-                  choosePickupOption === 'PickDrop' &&
-                    styles.optionBtnTextActive,
-                ]}>
-                {`Pickup & Drop${
-                  PickupDistance !== null
-                    ? ` (${PickupDistance.toFixed(1)} km)`
-                    : ''
-                }`}
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={[
+                    styles.optionBtnText,
+                    transportOption === option && styles.optionBtnTextActive,
+                  ]}>
+                  {option === 'SELF_VISIT'
+                    ? TRANSPORT_LABELS[option]
+                    : `${TRANSPORT_LABELS[option]}${
+                        transportOption === option && PickupDistance !== null
+                          ? ` (${PickupDistance.toFixed(1)} km)`
+                          : ''
+                      }`}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
       </View>
@@ -687,40 +741,68 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
           value={`${formatDate(BookingDate)}, ${formatTime(BookingTime)}`}
         />
         <ReviewRow
-          label="Pickup"
+          label="Transport"
           value={
-            choosePickupOption === 'Visit'
-              ? 'Self Visit'
-              : PickupLocationName || 'Pickup & Drop'
+            transportOption
+              ? `${TRANSPORT_LABELS[transportOption]}${
+                  needsAddress(transportOption) && PickupLocationName
+                    ? ` — ${PickupLocationName}`
+                    : ''
+                }`
+              : ''
           }
         />
       </View>
 
       <Text style={styles.sectionTitle}>Payment Breakdown</Text>
       <View style={styles.chargesCard}>
-        <View style={styles.chargeRow}>
-          <Text style={styles.chargeLabel}>Service Charge</Text>
-          <Text style={styles.chargeValue}>₹{servicePrice}</Text>
-        </View>
-        {choosePickupOption === 'PickDrop' && (
+        {quoteLoading ? (
+          <ActivityIndicator color={color.buttonColor} style={styles.quoteSpinner} />
+        ) : quote ? (
           <>
+            <View style={styles.chargeRow}>
+              <Text style={styles.chargeLabel}>Service Amount</Text>
+              <Text style={styles.chargeValue}>₹{quote.serviceAmount}</Text>
+            </View>
+            {quote.pickupCharges > 0 && (
+              <>
+                <View style={styles.chargeDivider} />
+                <View style={styles.chargeRow}>
+                  <Text style={styles.chargeLabel}>Pickup Charges</Text>
+                  <Text style={styles.chargeValue}>₹{quote.pickupCharges}</Text>
+                </View>
+              </>
+            )}
+            {quote.dropCharges > 0 && (
+              <>
+                <View style={styles.chargeDivider} />
+                <View style={styles.chargeRow}>
+                  <Text style={styles.chargeLabel}>Drop Charges</Text>
+                  <Text style={styles.chargeValue}>₹{quote.dropCharges}</Text>
+                </View>
+              </>
+            )}
             <View style={styles.chargeDivider} />
             <View style={styles.chargeRow}>
-              <Text style={styles.chargeLabel}>Pickup & Drop</Text>
-              <Text style={styles.chargeValue}>₹{pickupCharge}</Text>
+              <Text style={styles.chargeLabel}>Subtotal</Text>
+              <Text style={styles.chargeValue}>₹{quote.subtotal}</Text>
+            </View>
+            <View style={styles.chargeDivider} />
+            <View style={styles.chargeRow}>
+              <Text style={styles.chargeLabel}>Tax ({quote.taxRate}%)</Text>
+              <Text style={styles.chargeValue}>₹{quote.taxAmount}</Text>
+            </View>
+            <View style={styles.chargeTotalDivider} />
+            <View style={styles.chargeRow}>
+              <Text style={styles.chargeTotalLabel}>Customer Total</Text>
+              <Text style={styles.chargeTotalValue}>₹{quote.customerTotal}</Text>
             </View>
           </>
+        ) : (
+          <Text style={styles.chargeNote}>
+            {quoteError || 'Price will appear once a service and transport option are selected.'}
+          </Text>
         )}
-        <View style={styles.chargeDivider} />
-        <View style={styles.chargeRow}>
-          <Text style={styles.chargeLabel}>Tax / GST (18%)</Text>
-          <Text style={styles.chargeValue}>₹{gstAmount}</Text>
-        </View>
-        <View style={styles.chargeTotalDivider} />
-        <View style={styles.chargeRow}>
-          <Text style={styles.chargeTotalLabel}>Total Payable</Text>
-          <Text style={styles.chargeTotalValue}>₹{totalPayable}</Text>
-        </View>
       </View>
 
       <View style={styles.disclaimerBox}>
@@ -759,7 +841,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
         <View style={bottomBarStyle}>
           <CustomButton
             title="Continue"
-            disable={!choosePickupOption}
+            disable={!transportOption || (needsAddress(transportOption) && !PickupLocationId)}
             onPress={() => setStep(2)}
           />
         </View>
@@ -769,7 +851,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
       <View style={bottomBarStyle}>
         <CustomButton
           title="Confirm Booking"
-          disable={loading}
+          disable={loading || quoteLoading || !quote}
           onPress={createBooking}
         />
       </View>
@@ -1004,11 +1086,12 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
 
       <MapPickerModal
         setModalVisible={(_visible, location) => {
-          if (location) {
+          if (location && pendingTransportOption) {
             setPickupLocation(location);
             addPickupDrop(location);
-            setChoosePickupOption('PickDrop');
+            setTransportOption(pendingTransportOption);
           }
+          setPendingTransportOption('');
           setPickupModalVisible(false);
         }}
         modalVisible={pickupModalVisible}
@@ -1444,6 +1527,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 14,
     padding: 16,
+  },
+  quoteSpinner: {
+    paddingVertical: 20,
   },
   chargeRow: {
     flexDirection: 'row',

@@ -15,11 +15,8 @@ import { icon } from '../../component/Image';
 import { color } from '../../constant';
 import CustomHeader from '../../component/CustomHeaderProps';
 import ScreenNameEnum from '../../routes/screenName.enum';
-import { useIsFocused, useRoute } from '@react-navigation/native';
-import {
-  bookingdetails,
-  garage_details,
-} from '../../redux/Api/apiRequests';
+import { useRoute } from '@react-navigation/native';
+import { bookingdetails } from '../../redux/Api/apiRequests';
 import { image_url } from '../../redux/Api';
 import { getAddressFromLatLng } from '../../component/helperFunction';
 import OtpBox from './OtpBox';
@@ -60,10 +57,8 @@ const STEP_IDX: Record<string, number> = {
 const ServiceSummary: React.FC<any> = ({ navigation }) => {
   const route = useRoute<any>();
   const { id } = route.params;
-  const isFocus = useIsFocused();
 
   const [booking, setBooking] = useState<any>(null);
-  const [GarageDetails, setGarageDetails] = useState<any>(null);
   const [pickupAddress, setPickupAddress] = useState<string>('Fetching address…');
 
   // ── Polling booking details every 10 s ──────────────────────────────────────
@@ -78,25 +73,6 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
     return () => clearInterval(interval);
   }, [id]);
 
-  // ── Side-data when booking / focus changes ───────────────────────────────────
-  useEffect(() => {
-    if (!booking) { return; }
-
-    const fetchDealerDetails = async () => {
-      try {
-        const cc = booking?.services?.[0]?.bikes?.[0]?.cc;
-        const dealerId = booking?.services?.[0]?.dealer_id;
-        if (!dealerId) { return; }
-        const res = await garage_details(dealerId, cc);
-        if (res?.success) { setGarageDetails(res.data); }
-      } catch (err) {
-        console.log('garage_details err', err);
-      }
-    };
-
-    fetchDealerDetails();
-  }, [booking, isFocus]);
-
   useEffect(() => {
     const lat = booking?.pickupAndDropId?.user_lat;
     const lng = booking?.pickupAndDropId?.user_lng;
@@ -108,22 +84,9 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
   }, [booking?.pickupAndDropId]);
 
   // ── Derived data ─────────────────────────────────────────────────────────────
-  const serviceMatch = GarageDetails?.services?.find(
-    (s: any) => s._id === booking?.services?.[0]?._id,
-  );
-  const serviceName = serviceMatch?.base_service_id?.name;
-  const servicePrice = serviceMatch?.bikes?.[0]?.price ?? 0;
-
-  const calculateTotal = () => {
-    if (booking?.grandTotal != null) { return booking.grandTotal; }
-    if (booking?.totalBill != null)  { return booking.totalBill; }
-    return (
-      booking?.services?.reduce(
-        (sum: number, s: any) => sum + (s?.bikes?.[0]?.price || 0),
-        0,
-      ) || 0
-    ) + (booking?.tax || 0);
-  };
+  // Every value below is read directly from the booking's immutable pricing
+  // snapshot (services/pricingEngine.js) — never recomputed on the client.
+  const serviceName = booking?.services?.[0]?.base_service_id?.name;
 
   const formatDT = (iso: string) => {
     if (!iso) { return '—'; }
@@ -181,7 +144,7 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
   const showDelivered = status === 'delivered';
   const showDeliveryOtp = status === 'ready_for_delivery';
 
-  const total = calculateTotal();
+  const total = booking?.customerTotal ?? 0;
 
   return (
     <View style={styles.root}>
@@ -399,22 +362,19 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
         <View style={styles.billCard}>
           <Text style={styles.billTitle}>Bill Summary</Text>
 
-          {/* Main service */}
+          {/* Main service — amount is the booking's own pricing snapshot,
+              never a live re-lookup of the service's current price. */}
           {serviceName ? (
             <View style={styles.billRow}>
               <View style={styles.billItemLeft}>
                 <View style={styles.billDotGreen} />
                 <Text style={styles.billItemName}> {serviceName}</Text>
               </View>
-              <Text style={styles.billItemPrice}>₹{servicePrice}</Text>
+              <Text style={styles.billItemPrice}>₹{booking?.serviceAmount ?? 0}</Text>
             </View>
           ) : null}
 
           {/* Additional services — rendered directly from booking response */}
-          {(() => {
-          //  console.log('BOOKING_ADDITIONAL_SERVICES', JSON.stringify(booking?.additionalServices, null, 2));
-            return null;
-          })()}
           {booking?.additionalServices?.map((service: any, i: number) => {
             const svcName =
               service?.base_additional_service_id?.name ||
@@ -436,23 +396,33 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
             );
           })}
 
-          {/* Pickup Charges */}
-          {booking?.pickupAndDropId && (
+          {/* Pickup / Drop charges — booking's own frozen snapshot, not the
+              dealer's current live rate. */}
+          {booking?.pickupCharges > 0 && (
             <View style={styles.billRow}>
               <View style={styles.billItemLeft}>
                 <View style={styles.billDotBlue} />
                 <Text style={styles.billItemName}> Pickup Charges</Text>
               </View>
-              <Text style={styles.billItemPrice}>₹{booking?.dealer_id?.pickupCharges || 0}</Text>
+              <Text style={styles.billItemPrice}>₹{booking.pickupCharges}</Text>
+            </View>
+          )}
+          {booking?.dropCharges > 0 && (
+            <View style={styles.billRow}>
+              <View style={styles.billItemLeft}>
+                <View style={styles.billDotBlue} />
+                <Text style={styles.billItemName}> Drop Charges</Text>
+              </View>
+              <Text style={styles.billItemPrice}>₹{booking.dropCharges}</Text>
             </View>
           )}
 
           <View style={styles.billRow}>
             <View style={styles.billItemLeft}>
               <View style={styles.billDotBlue} />
-              <Text style={styles.billItemName}> Tax / Fees</Text>
+              <Text style={styles.billItemName}> Tax ({booking?.taxRate ?? 0}%)</Text>
             </View>
-            <Text style={styles.billItemPrice}>₹{booking?.dealer_id?.tax || 0}</Text>
+            <Text style={styles.billItemPrice}>₹{booking?.taxAmount ?? 0}</Text>
           </View>
 
           <View style={styles.billDivider} />
