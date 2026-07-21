@@ -47,7 +47,7 @@ const TRANSPORT_LABELS: Record<TransportOption, string> = {
   SELF_VISIT: 'Self Visit',
   PICKUP_ONLY: 'Pickup Only',
   DROP_ONLY: 'Drop Only',
-  PICKUP_AND_DROP: 'Pickup + Drop',
+  PICKUP_AND_DROP: 'Pickup&Drop',
 };
 
 const needsAddress = (option: TransportOption | '') =>
