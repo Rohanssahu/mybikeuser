@@ -1641,6 +1641,28 @@ const styles = StyleSheet.create({
   },
   disclaimerText: {fontSize: 12, color: '#A0A3BD', lineHeight: 18},
 
+  // ── Active booking card (Single Active Booking Per Bike) ──
+  activeBookingCard: {
+    marginTop: 16,
+    backgroundColor: 'rgba(245,158,11,0.08)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(245,158,11,0.35)',
+    padding: 14,
+  },
+  activeBookingTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#F59E0B',
+    marginBottom: 12,
+  },
+  activeBookingNote: {
+    fontSize: 12,
+    color: '#A0A3BD',
+    lineHeight: 18,
+    marginTop: 12,
+  },
+
   // ── Review card (Step 3) ──
   reviewCard: {
     backgroundColor: 'rgba(255,255,255,0.05)',
