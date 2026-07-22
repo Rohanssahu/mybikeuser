@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Pressable, Platform, Image } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -52,6 +52,7 @@ interface NotificationItemProps {
   message: string;
   time: string;
   type?: string;
+  image?: string;
   unread?: boolean;
   onPress?: () => void;
   index?: number;
@@ -62,12 +63,15 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   message,
   time,
   type,
+  image,
   unread,
   onPress,
   index = 0,
 }) => {
   const meta = resolveNotificationMeta(type);
   const clickable = !!onPress;
+  const [imgError, setImgError] = useState(false);
+  const showImage = !!image && !imgError;
 
   return (
     <Animated.View
@@ -81,8 +85,17 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           styles.card,
           clickable && Platform.OS === 'ios' && pressed && styles.cardPressed,
         ]}>
-        <View style={[styles.iconCircle, { backgroundColor: meta.bg }]}>
-          <MaterialCommunityIcons name={meta.icon} size={24} color={meta.tint} />
+        <View style={[styles.iconCircle, !showImage && { backgroundColor: meta.bg }]}>
+          {showImage ? (
+            <Image
+              source={{ uri: image }}
+              style={styles.thumbImage}
+              resizeMode="cover"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <MaterialCommunityIcons name={meta.icon} size={24} color={meta.tint} />
+          )}
           {unread ? <View style={styles.unreadDot} /> : null}
         </View>
 
@@ -124,6 +137,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+    overflow: 'hidden',
+  },
+  thumbImage: {
+    width: 48,
+    height: 48,
   },
   unreadDot: {
     position: 'absolute',

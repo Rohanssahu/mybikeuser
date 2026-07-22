@@ -164,12 +164,14 @@ const Notification = ({ navigation }: any) => {
                             const formattedTime = formatNotificationTime(item?.sentAt);
                             const type = item?.type || item?.notification_type || item?.data?.type;
                             const isBookingNotif = BOOKING_NOTIFICATION_TYPES.includes(type);
+                            const image = item?.image || item?.data?.image;
                             return (
                                 <NotificationItem
                                     name={resolveTitle(item, type)}
                                     message={item?.body}
                                     time={formattedTime}
                                     type={type}
+                                    image={image}
                                     unread={isItemUnread(item)}
                                     index={index}
                                     onPress={isBookingNotif ? () => handleNotificationPress(item) : undefined}

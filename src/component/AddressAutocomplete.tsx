@@ -37,6 +37,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
   return (
     <GooglePlacesAutocomplete
       placeholder="Search for area, street name..."
+      
       fetchDetails={true}
       onPress={(data, details = null) => {
         if (!details?.geometry?.location) {
@@ -53,8 +54,8 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
         sendLocation({latitude: lat, longitude: lng});
       }}
       textInputProps={{
-        placeholderTextColor: '#555',
-        selectionColor: '#FF5722',
+        placeholderTextColor: '#fff',
+        selectionColor: '#fff',
         autoFocus: true,   // keyboard opens immediately when search view appears
       }}
       enablePoweredByContainer={false}
@@ -62,6 +63,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
         key: 'AIzaSyCM15ry8lewwj6YZ-04_m7Z58dsQo_hBBA',
         language: 'en',
       }}
+      
       styles={autocompleteStyles}
       listViewDisplayed="auto"
       onFocus={onFocus}

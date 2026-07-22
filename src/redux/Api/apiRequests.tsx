@@ -172,7 +172,7 @@ const get_invoice = async (booking_id: string) => {
     const token = await AsyncStorage.getItem('token');
     const apiRequests: ApiRequest[] = [
         {
-            endpoint: `${endpoint.invoiceBill}/${booking_id}`,
+            endpoint: `${endpoint.invoiceUnified}/${booking_id}`,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
