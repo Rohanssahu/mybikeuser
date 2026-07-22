@@ -25,6 +25,8 @@ import {useIsFocused, useRoute} from '@react-navigation/native';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import CustomButton from '../../component/CustomButton';
 import Loading from '../../configs/Loader';
+import {useUserBookings} from '../../hooks/useUserBookings';
+import {getBookingStatusLabel} from '../../utils/bookingStatus';
 
 type RootStackParamList = {AllServices: undefined};
 type Props = NativeStackScreenProps<RootStackParamList, 'AllServices'>;
@@ -42,6 +44,7 @@ const MyBikes: React.FC<Props> = ({navigation}) => {
   const [bikes, setBikes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const isFocus = useIsFocused();
+  const {findActiveForBike} = useUserBookings(isFocus);
 
   useEffect(() => {
     if (isFocus) {fetchBikes();}
@@ -163,7 +166,15 @@ const MyBikes: React.FC<Props> = ({navigation}) => {
       (navigation as any).navigate(ScreenNameEnum.NEARBY_SHOPS, {item, serviceId});
     }
   };
-  const renderBike = ({item}: {item: any}) => (
+
+  const goToActiveBooking = (bookingId: string) => {
+    (navigation as any).navigate(ScreenNameEnum.SERVICE_SUMMERY, {id: bookingId});
+  };
+
+  const renderBike = ({item}: {item: any}) => {
+    const activeBooking = findActiveForBike(item._id);
+
+    return (
     <View style={styles.card}>
       <TouchableOpacity
         style={styles.deleteBtn}
@@ -171,51 +182,68 @@ const MyBikes: React.FC<Props> = ({navigation}) => {
         hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
         <Image source={icon.delete} style={styles.deleteIcon} />
       </TouchableOpacity>
-  
+
       <View style={styles.topRow}>
         <Image
           source={images.bikes}
           style={styles.bikeImg}
           resizeMode="contain"
         />
-  
+
         <View style={styles.cardBody}>
           <Text style={styles.plateTxt} numberOfLines={1}>
             {item.plate_number?.toUpperCase() || '-'}
           </Text>
-  
+
           <Text style={styles.companyTxt} numberOfLines={1}>
             {item.companyName || '-'}
           </Text>
-  
+
           <Text style={styles.modelTxt} numberOfLines={1}>
             {item.modelName || '-'}
           </Text>
-  
+
           <Text style={styles.variantTxt} numberOfLines={1}>
             {item.variantName || '-'}
           </Text>
-  
+
           <View style={styles.tag}>
             <Text style={styles.tagText}>
               {item.ccDisplay ? `${item.ccDisplay} CC` : '-'}
             </Text>
           </View>
+
+          {activeBooking && (
+            <View style={styles.activeBadge}>
+              <Text style={styles.activeBadgeText}>
+                🟠 Service In Progress · {getBookingStatusLabel(activeBooking.status)}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
-  
+
       {!profile && (
         <TouchableOpacity
           style={styles.selectBtn}
-          onPress={() => handleSelect(item)}
+          onPress={() =>
+            activeBooking
+              ? goToActiveBooking(activeBooking._id as string)
+              : handleSelect(item)
+          }
           activeOpacity={0.8}>
           <Text style={styles.selectBtnText}>
-            {Grageid ? 'Book Service' : 'Find Garages'}
+            {activeBooking
+              ? 'Track Service'
+              : Grageid
+              ? 'Book Service'
+              : 'Find Garages'}
           </Text>
         </TouchableOpacity>
       )}
     </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -336,6 +364,23 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
   },
   
+  activeBadge: {
+    alignSelf: 'flex-start',
+    marginTop: 8,
+    backgroundColor: 'rgba(245,158,11,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(245,158,11,0.4)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 15,
+  },
+
+  activeBadgeText: {
+    color: '#F59E0B',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+
   tag: {
     alignSelf: 'flex-start',
     marginTop: 8,

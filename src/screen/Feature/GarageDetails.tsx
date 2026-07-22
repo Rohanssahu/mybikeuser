@@ -11,10 +11,11 @@ import {
   Modal,
   Pressable,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import CustomButton from '../../component/CustomButton';
 import ScreenNameEnum from '../../routes/screenName.enum';
-import {useRoute} from '@react-navigation/native';
+import {useIsFocused, useRoute} from '@react-navigation/native';
 import {
   addPickupAddress,
   create_booking,
@@ -22,8 +23,13 @@ import {
   garage_details,
   get_dealer_services,
   get_profile,
-  get_userbooking,
 } from '../../redux/Api/apiRequests';
+import {useUserBookings} from '../../hooks/useUserBookings';
+import {
+  ACTIVE_BOOKING_HINT,
+  ACTIVE_BOOKING_MESSAGE,
+  getBookingStatusLabel,
+} from '../../utils/bookingStatus';
 import MapPickerModal from './MapPicker';
 import Loading from '../../configs/Loader';
 import {errorToast} from '../../configs/customToast';
@@ -76,6 +82,9 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
   const {locationCoords} = useLocation();
   const insets = useSafeAreaInsets();
   const {handleHomePress} = useBookingFlowNav(navigation);
+  const isFocus = useIsFocused();
+  const {findActiveForBike, refetch: refetchBookings} = useUserBookings(isFocus);
+  const activeBooking = findActiveForBike(bike?._id);
 
   const [garageData, setGarageData] = useState<any>(null);
   const [distance, setDistance] = useState<number | null>(null);
@@ -361,27 +370,19 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
     if (quoteLoading || !quote) {
       return errorToast('Please wait for the price to be calculated before confirming.');
     }
+    // Single Active Booking Per Bike — mirrors the server-side guard in
+    // createBooking() (mrbike-backend/controller/booking.js). Checked here
+    // too so the user gets an immediate, bike-specific message instead of
+    // waiting on a round trip.
+    if (activeBooking) {
+      return Alert.alert('Booking Not Allowed', `${ACTIVE_BOOKING_MESSAGE}\n\n${ACTIVE_BOOKING_HINT}`);
+    }
 
     submittingRef.current = true;
     setLoading(true);
 
     try {
       const userId = await AsyncStorage.getItem('user_id');
-
-      // Prevent creating a second pending booking if one is already awaiting
-      // dealer confirmation (e.g. user backed out of the Waiting screen).
-      const existingBookings = await get_userbooking(userId ?? '');
-      const hasPendingBooking = (existingBookings?.data ?? []).some(
-        (b: any) =>
-          b?.status === 'pending' &&
-          b?.dealerResponseStatus !== 'expired' &&
-          b?.dealerResponseStatus !== 'rejected',
-      );
-      if (hasPendingBooking) {
-        return errorToast(
-          'You already have a pending booking. Please wait for it to be resolved before booking again.',
-        );
-      }
 
       const profileRes = await get_profile(userId ?? '');
       if (profileRes?.success) {
@@ -420,6 +421,12 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
         });
       } else if (res?.errorCode === 'PROFILE_INCOMPLETE') {
         goToCompleteProfile(res?.message || 'Please complete your profile before booking a service.');
+      } else if (res?.message === ACTIVE_BOOKING_MESSAGE) {
+        // Race condition: another booking for this bike went active between
+        // our client-side check and this request. Refresh so the screen
+        // flips to the "Service In Progress" view.
+        refetchBookings();
+        Alert.alert('Booking Not Allowed', `${ACTIVE_BOOKING_MESSAGE}\n\n${ACTIVE_BOOKING_HINT}`);
       } else {
         errorToast(res?.message || 'Booking failed. Please try again.');
       }
@@ -818,6 +825,47 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
     </View>
   );
 
+  // ─── Active booking (Single Active Booking Per Bike) ──────────
+
+  const renderActiveBookingCard = () => (
+    <View style={styles.stepContent}>
+      <Text style={styles.sectionTitle}>Your Vehicle</Text>
+      <View style={styles.featureRow}>
+        <Icon source={icon.bikep} size={28} />
+        <View style={styles.featureInfo}>
+          <Text style={styles.featureTitle}>
+            {bike?.name ?? bike?.model ?? 'Your Bike'}
+          </Text>
+          {!!bike?.plate_number && (
+            <Text style={styles.featureDesc}>{bike.plate_number}</Text>
+          )}
+        </View>
+      </View>
+
+      <View style={styles.activeBookingCard}>
+        <Text style={styles.activeBookingTitle}>🟠 Service In Progress</Text>
+        <View style={styles.reviewCard}>
+          <ReviewRow
+            label="Booking ID"
+            value={activeBooking?.bookingId ?? String(activeBooking?._id ?? '')}
+          />
+          <ReviewRow
+            label="Current Status"
+            value={getBookingStatusLabel(activeBooking?.status)}
+          />
+          {!!activeBooking?.scheduleDate && (
+            <ReviewRow label="Expected Delivery" value={String(activeBooking.scheduleDate)} />
+          )}
+        </View>
+        <Text style={styles.activeBookingNote}>
+          This bike already has an active service booking. You can create a
+          new booking for it once the current one is completed, cancelled,
+          or rejected.
+        </Text>
+      </View>
+    </View>
+  );
+
   // ─── Bottom Bar ───────────────────────────────────────────────
 
   const renderBottomBar = () => {
@@ -857,6 +905,18 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
       </View>
     );
   };
+
+  const renderActiveBookingBottomBar = () => (
+    <View style={[styles.bottomBar, {paddingBottom: insets.bottom + 14}]}>
+      <CustomButton
+        title="View Booking"
+        onPress={() =>
+          activeBooking &&
+          navigation.navigate(ScreenNameEnum.SERVICE_SUMMERY, {id: activeBooking._id})
+        }
+      />
+    </View>
+  );
 
   // ─── Render ───────────────────────────────────────────────────
 
@@ -909,22 +969,28 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
             </View>
           </View>
         </View>
-        <View>
-          {/* Step indicator */}
-          <View style={styles.stepWrapper}>
-            <Text style={styles.stepLabel}>{stepTitles[step]}</Text>
-            {renderStepIndicator()}
-          </View>
-        </View>
-        {/* Step content */}
-        <View style={styles.body}>
-          {step === 0 && renderStep0()}
-          {step === 1 && renderStep2()}
-          {step === 2 && renderStep3()}
-        </View>
+        {activeBooking ? (
+          <View style={styles.body}>{renderActiveBookingCard()}</View>
+        ) : (
+          <>
+            <View>
+              {/* Step indicator */}
+              <View style={styles.stepWrapper}>
+                <Text style={styles.stepLabel}>{stepTitles[step]}</Text>
+                {renderStepIndicator()}
+              </View>
+            </View>
+            {/* Step content */}
+            <View style={styles.body}>
+              {step === 0 && renderStep0()}
+              {step === 1 && renderStep2()}
+              {step === 2 && renderStep3()}
+            </View>
+          </>
+        )}
       </ScrollView>
 
-      {renderBottomBar()}
+      {activeBooking ? renderActiveBookingBottomBar() : renderBottomBar()}
 
       <View style={{flex: 1}}>
         <Modal
