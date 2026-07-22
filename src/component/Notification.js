@@ -57,64 +57,13 @@ const getFcmToken = async () => {
 
 };
 
-// Configure notification listeners
-export const notificationListener = () => {
-  messaging().onNotificationOpenedApp(remoteMessage => {
-    console.log("Notification opened from background:", remoteMessage);
-   // Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
-    // Show local notification or navigate to relevant screen
-   const parsedMain = remoteMessage?.data;
-     showLocalNotification(parsedMain);
-  });
-
-  messaging().onMessage(async remoteMessage => {
-    console.log("Foreground message received:", remoteMessage);
-    // Show local notification or process the data
-   // Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
-   const parsedMain = remoteMessage?.data;
-     showLocalNotification(parsedMain);
-  });
-
-  messaging().getInitialNotification().then(remoteMessage => {
-    if (remoteMessage) {
-      console.log("App launched by notification:", remoteMessage);
-     // Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
-      // Show local notification or process the data
-      const parsedMain = remoteMessage?.data;
-     showLocalNotification(parsedMain);
-    } else {
-      console.log("No initial notification data");
-    }
-  });
-};
-
-const showLocalNotification = (value) => {
-  // Ensure the channel is created
-  PushNotification.createChannel(
-    {
-      channelId: 'com.mrbikeuser', // Ensure this matches the created channel
-      channelName: 'mrbikeuser',
-      channelDescription: 'A channel to categorize your notifications',
-      playSound: true,
-      soundName: 'default',
-      importance: 4,
-      vibrate: true,
-    },
-    (created) => console.log(`CreateChannel returned '${created}'`)
-  );
-
-  // Show the local notification
-  PushNotification.localNotification({
-    channelId: 'com.mrbikeuser',
-    title: value?.title || 'Default Title', // Default fallback title
-    message: value?.body || 'Default Message', // Default fallback body
-    playSound: true,
-    soundName: 'default',
-    priority: 'high',
-    badge: true,
-    smallIcon: 'ic_notification',
-  });
-};
+// index.js registers the app's single onMessage/onNotificationOpenedApp/
+// getInitialNotification handlers at startup and builds the local
+// notification there. This used to re-register the same listeners, which
+// made every foreground/opened-app message produce a second, duplicate
+// tray notification. Kept as a no-op so the existing Login.tsx call site
+// doesn't need to change.
+export const notificationListener = () => {};
 
 // Call this function once, e.g., in your App component
 export const initializeNotifications = () => {

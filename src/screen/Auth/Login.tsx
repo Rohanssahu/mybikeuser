@@ -8,7 +8,6 @@ import {
     TextInput,
     Image,
     Alert,
-    Vibration,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -22,7 +21,6 @@ import Loading from '../../configs/Loader';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import messaging from '@react-native-firebase/messaging';
 import { notificationListener, requestUserPermission } from '../../component/Notification';
-import PushNotification from 'react-native-push-notification';
 
 const Login: React.FC = ({ navigation }: any) => {
     const [phoneNumber, setPhoneNumber] = useState<string>('');
@@ -55,6 +53,11 @@ const Login: React.FC = ({ navigation }: any) => {
     }, []);
 
     useEffect(() => {
+        // index.js owns the single onMessage/localNotification pipeline for
+        // FCM messages — this screen used to register a second onMessage
+        // handler that built its own local notification, doubling every
+        // foreground push. Only the launched-from-notification alert stays
+        // here since it isn't a tray notification.
         messaging()
             .getInitialNotification()
             .then(remoteMessage => {
@@ -63,21 +66,6 @@ const Login: React.FC = ({ navigation }: any) => {
                     Alert.alert(title, body);
                 }
             });
-        const unsubscribe = messaging().onMessage(async remoteMessage => {
-            if (remoteMessage) {
-                const { title, body } = remoteMessage.notification;
-                PushNotification.localNotification({
-                    title,
-                    message: body,
-                    playSound: true,
-                    soundName: 'default',
-                    vibrate: true,
-                    vibration: 300,
-                });
-                Vibration.vibrate(300);
-            }
-        });
-        return () => unsubscribe();
     }, []);
 
     return (

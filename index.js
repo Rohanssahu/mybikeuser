@@ -95,6 +95,8 @@ const showLocalNotification = (value) => {
     );
 
     // Show the local notification
+    const imageUrl = value?.android?.imageUrl || value?.imageUrl;
+
     PushNotification.localNotification({
         channelId: 'com.mrbikeuser',
         title: value?.title || 'Default Title',
@@ -104,6 +106,7 @@ const showLocalNotification = (value) => {
         priority: 'high',
         badge: true,
         smallIcon: 'ic_notification',
+        ...(imageUrl && { bigPictureUrl: imageUrl, largeIconUrl: imageUrl }),
     });
 };
 

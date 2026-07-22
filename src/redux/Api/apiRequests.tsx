@@ -905,8 +905,8 @@ const additionalservices = async (id: string, token: string, cc: string) => {
         return { success: false, message: error.message, state: [] };
     }
 };
-const create_booking = async (dealer_id: string, services: string[], transportOption: string, pickupAndDropId: string | null, userBike_id: string, pickupDate: string) => {
-    const requestBody = { dealer_id, services, transportOption, pickupAndDropId, userBike_id, pickupDate };
+const create_booking = async (dealer_id: string, services: string[], transportOption: string, pickupAndDropId: string | null, userBike_id: string, pickupDate: string, promoCode?: string | null) => {
+    const requestBody = { dealer_id, services, transportOption, pickupAndDropId, userBike_id, pickupDate, promoCode: promoCode || undefined };
     const token = await AsyncStorage.getItem('token')
 
     console.log('requestBody',requestBody);
@@ -953,8 +953,9 @@ const get_pricing_quote = async (
     serviceIds: string[],
     transportOption: string,
     bikeCC: string | number,
+    promoCode?: string | null,
 ) => {
-    const requestBody = { dealerId, serviceIds, transportOption, bikeCC };
+    const requestBody = { dealerId, serviceIds, transportOption, bikeCC, promoCode: promoCode || undefined };
     const token = await AsyncStorage.getItem('token');
 
     const apiRequests: ApiRequest[] = [

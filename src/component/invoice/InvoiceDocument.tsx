@@ -20,7 +20,7 @@ const Row = ({ label, value, bold }: { label: string; value: string; bold?: bool
 // the same field order as buildInvoiceHtml.ts (PDF/print) so nothing looks
 // different between the in-app preview and the exported document.
 const InvoiceDocument: React.FC<{ invoice: InvoiceData }> = ({ invoice }) => {
-  const { dealer, customer, bike, services, charges, tax, settlement } = invoice;
+  const { dealer, customer, bike, services, charges, tax, discount, settlement } = invoice;
   const isCancelled = invoice.paymentStatus === 'cancelled';
 
   return (
@@ -73,6 +73,13 @@ const InvoiceDocument: React.FC<{ invoice: InvoiceData }> = ({ invoice }) => {
       <Row label="Subtotal" value={formatCurrency(invoice.subtotal)} />
       {charges.pickupCharge > 0 && <Row label="Pickup Charges" value={formatCurrency(charges.pickupCharge)} />}
       {charges.dropCharge > 0 && <Row label="Drop Charges" value={formatCurrency(charges.dropCharge)} />}
+
+      {discount && (
+        <>
+          <Divider />
+          <Row label={`Promo Discount (${discount.code})`} value={`-${formatCurrency(discount.amount)}`} />
+        </>
+      )}
 
       <Divider />
       <Row label={`GST (${formatGST(tax.rate)})`} value={formatCurrency(tax.amount)} />

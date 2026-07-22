@@ -43,6 +43,11 @@ export interface InvoiceData {
     rate: number;
     amount: number;
   };
+  discount: {
+    code: string;
+    name: string | null;
+    amount: number;
+  } | null;
   totalPaid: number;
   settlement: {
     commissionRate: number;

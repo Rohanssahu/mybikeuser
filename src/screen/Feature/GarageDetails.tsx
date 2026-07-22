@@ -12,6 +12,7 @@ import {
   Pressable,
   ActivityIndicator,
   Alert,
+  TextInput,
 } from 'react-native';
 import CustomButton from '../../component/CustomButton';
 import ScreenNameEnum from '../../routes/screenName.enum';
@@ -108,6 +109,19 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
   const [quote, setQuote] = useState<any>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quoteError, setQuoteError] = useState('');
+
+  // Promo code — kept independent from `quote` (which is never re-priced
+  // with a discount folded in). Only `appliedPromo` carries a validated
+  // discount, and only after the backend confirms it via /pricing/quote.
+  // Never compute the discount amount on the client.
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<{
+    code: string;
+    name: string;
+    discountAmount: number;
+  } | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState('');
 
   const [BookingDate, setBookingDate] = useState(new Date());
   const [BookingTime, setBookingTime] = useState(() => {
@@ -330,6 +344,60 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
     };
   }, [garageData?._id, selectedSvc?.adminServiceId, transportOption, bikeCC]);
 
+  // A previously-applied promo is only valid for the total it was checked
+  // against — if the service/transport/bike changes, that total changes, so
+  // drop the stale discount and make the user re-apply (re-validated fresh
+  // against the new amount).
+  useEffect(() => {
+    setAppliedPromo(null);
+    setPromoError('');
+  }, [garageData?._id, selectedSvc?.adminServiceId, transportOption, bikeCC]);
+
+  const applyPromoCode = async () => {
+    if (!promoCodeInput.trim()) {
+      return;
+    }
+    const dealerId = garageData?._id;
+    const adminServiceId = selectedSvc?.adminServiceId;
+    if (!dealerId || !adminServiceId || !transportOption || !bikeCC) {
+      setPromoError('Please choose a service and transport option first.');
+      return;
+    }
+
+    setPromoLoading(true);
+    setPromoError('');
+    try {
+      const res = await get_pricing_quote(
+        dealerId,
+        [adminServiceId],
+        transportOption,
+        bikeCC,
+        promoCodeInput.trim(),
+      );
+      if (res?.success && res?.data?.promoCode) {
+        setAppliedPromo({
+          code: res.data.promoCode,
+          name: res.data.promoName,
+          discountAmount: res.data.promoDiscountAmount ?? 0,
+        });
+      } else {
+        setAppliedPromo(null);
+        setPromoError(res?.message || 'Invalid promo code');
+      }
+    } catch (error: any) {
+      setAppliedPromo(null);
+      setPromoError('Something went wrong. Please try again.');
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const removePromoCode = () => {
+    setAppliedPromo(null);
+    setPromoCodeInput('');
+    setPromoError('');
+  };
+
   const getServiceName = (svc: any) =>
     (svc?.serviceName ?? svc?.base_service_id?.name ?? '').toUpperCase();
 
@@ -404,6 +472,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
         needsAddress(transportOption) ? PickupLocationId : null,
         bike._id,
         BookingDate.toISOString(),
+        appliedPromo?.code ?? null,
       );
       if (res?.success) {
         showBookingNotification(
@@ -417,7 +486,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
           garageName: garageData?.shopName ?? '',
           serviceName: getServiceName(selectedSvc),
           date: `${formatDate(BookingDate)}, ${formatTime(BookingTime)}`,
-          amount: res?.data?.customerTotal ?? quote?.customerTotal ?? 0,
+          amount: res?.data?.amountDue ?? res?.data?.customerTotal ?? quote?.customerTotal ?? 0,
         });
       } else if (res?.errorCode === 'PROFILE_INCOMPLETE') {
         goToCompleteProfile(res?.message || 'Please complete your profile before booking a service.');
@@ -761,6 +830,56 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
         />
       </View>
 
+      <Text style={styles.sectionTitle}>Promo Code</Text>
+      <View style={styles.chargesCard}>
+        {appliedPromo ? (
+          <View style={styles.promoAppliedRow}>
+            <View style={styles.flex1}>
+              <Text style={styles.promoAppliedText}>
+                ✓ Promo Applied — {appliedPromo.code}
+              </Text>
+              {!!appliedPromo.name && (
+                <Text style={styles.chargeNote}>{appliedPromo.name}</Text>
+              )}
+            </View>
+            <TouchableOpacity onPress={removePromoCode}>
+              <Text style={styles.promoRemoveText}>Remove</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            <View style={styles.promoInputRow}>
+              <TextInput
+                style={styles.promoInput}
+                placeholder="Enter Promo Code"
+                placeholderTextColor={'#fff'}
+                autoCapitalize="characters"
+                value={promoCodeInput}
+                onChangeText={text => {
+                  setPromoCodeInput(text);
+                  if (promoError) setPromoError('');
+                }}
+                editable={!promoLoading}
+              />
+              <TouchableOpacity
+                style={[
+                  styles.promoApplyBtn,
+                  (!promoCodeInput.trim() || promoLoading) && styles.promoApplyBtnDisabled,
+                ]}
+                disabled={!promoCodeInput.trim() || promoLoading}
+                onPress={applyPromoCode}>
+                {promoLoading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.promoApplyBtnText}>Apply</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+            {!!promoError && <Text style={styles.promoErrorText}>{promoError}</Text>}
+          </>
+        )}
+      </View>
+
       <Text style={styles.sectionTitle}>Payment Breakdown</Text>
       <View style={styles.chargesCard}>
         {quoteLoading ? (
@@ -794,6 +913,15 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
               <Text style={styles.chargeLabel}>Subtotal</Text>
               <Text style={styles.chargeValue}>₹{quote.subtotal}</Text>
             </View>
+            {!!appliedPromo && (
+              <>
+                <View style={styles.chargeDivider} />
+                <View style={styles.chargeRow}>
+                  <Text style={styles.chargeLabel}>Promo Discount ({appliedPromo.code})</Text>
+                  <Text style={styles.promoDiscountValue}>-₹{appliedPromo.discountAmount}</Text>
+                </View>
+              </>
+            )}
             <View style={styles.chargeDivider} />
             <View style={styles.chargeRow}>
               <Text style={styles.chargeLabel}>Tax ({quote.taxRate}%)</Text>
@@ -801,8 +929,10 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
             </View>
             <View style={styles.chargeTotalDivider} />
             <View style={styles.chargeRow}>
-              <Text style={styles.chargeTotalLabel}>Customer Total</Text>
-              <Text style={styles.chargeTotalValue}>₹{quote.customerTotal}</Text>
+              <Text style={styles.chargeTotalLabel}>Total Payable</Text>
+              <Text style={styles.chargeTotalValue}>
+                ₹{Math.round((quote.customerTotal - (appliedPromo?.discountAmount ?? 0)) * 100) / 100}
+              </Text>
             </View>
           </>
         ) : (
@@ -1619,6 +1749,66 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   chargeNote: {fontSize: 11, color: '#666', marginTop: 8, marginHorizontal: 2},
+
+  // ── Promo Code ──
+  promoInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  promoInput: {
+    flex: 1,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    color: '#fff',
+    paddingHorizontal: 12,
+    fontSize: 14,
+    marginRight: 10,
+    textTransform: 'uppercase',
+  },
+  promoApplyBtn: {
+    height: 44,
+    paddingHorizontal: 18,
+    borderRadius: 10,
+    backgroundColor: color.buttonColor,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  promoApplyBtnDisabled: {
+    opacity: 0.5,
+  },
+  promoApplyBtnText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  promoErrorText: {
+    fontSize: 12,
+    color: '#ff6b6b',
+    marginTop: 8,
+  },
+  promoAppliedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  promoAppliedText: {
+    fontSize: 14,
+    color: '#22c55e',
+    fontWeight: '700',
+  },
+  promoRemoveText: {
+    fontSize: 13,
+    color: '#A0A3BD',
+    textDecorationLine: 'underline',
+  },
+  promoDiscountValue: {
+    fontSize: 14,
+    color: '#22c55e',
+    fontWeight: '700',
+  },
 
   // ── Disclaimer ──
   disclaimerBox: {

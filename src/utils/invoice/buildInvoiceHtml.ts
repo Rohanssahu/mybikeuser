@@ -100,6 +100,9 @@ export function buildInvoiceHtml(invoice: InvoiceData): string {
     ${invoice.charges.pickupCharge > 0 ? `<div class="row"><span class="label">Pickup Charges</span><span class="value">${esc(formatCurrency(invoice.charges.pickupCharge))}</span></div>` : ''}
     ${invoice.charges.dropCharge > 0 ? `<div class="row"><span class="label">Drop Charges</span><span class="value">${esc(formatCurrency(invoice.charges.dropCharge))}</span></div>` : ''}
 
+    ${invoice.discount ? `<div class="divider"></div>
+    <div class="row"><span class="label">Promo Discount (${esc(invoice.discount.code)})</span><span class="value">-${esc(formatCurrency(invoice.discount.amount))}</span></div>` : ''}
+
     <div class="divider"></div>
     <div class="row"><span class="label">GST (${esc(formatGST(invoice.tax.rate))})</span><span class="value">${esc(formatCurrency(invoice.tax.amount))}</span></div>
 

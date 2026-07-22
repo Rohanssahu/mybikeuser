@@ -144,7 +144,7 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
   const showDelivered = status === 'delivered';
   const showDeliveryOtp = status === 'ready_for_delivery';
 
-  const total = booking?.customerTotal ?? 0;
+  const total = (booking?.customerTotal ?? 0) - (booking?.discountAmount ?? 0);
 
   return (
     <View style={styles.root}>
@@ -414,6 +414,16 @@ const ServiceSummary: React.FC<any> = ({ navigation }) => {
                 <Text style={styles.billItemName}> Drop Charges</Text>
               </View>
               <Text style={styles.billItemPrice}>₹{booking.dropCharges}</Text>
+            </View>
+          )}
+
+          {booking?.promoCode && booking?.promoDiscountAmount > 0 && (
+            <View style={styles.billRow}>
+              <View style={styles.billItemLeft}>
+                <View style={styles.billDotBlue} />
+                <Text style={styles.billItemName}> Promo Discount ({booking.promoCode})</Text>
+              </View>
+              <Text style={styles.billItemPrice}>-₹{booking.promoDiscountAmount}</Text>
             </View>
           )}
 
