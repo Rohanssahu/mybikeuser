@@ -17,7 +17,7 @@ export const endpoint = {
   addUserBike: '/bikedoctor/customers/addUserBike',
   getbikecompanies: '/bikedoctor/bike/get-bike-companies',
   getbikemodels: '/bikedoctor/bike/get-bike-models/:company_id',
-  getbikevariants: '/bikedoctor/bike//get-bike-variants/:model_id',
+  getbikevariants: '/bikedoctor/bike/get-bike-variants/:model_id',
   deleteMyBike: '/bikedoctor/customers/deleteMyBike/:bike_id',
   dealerWithInRange: '/bikedoctor/dealer/dealerWithInRange2',
   garagedetails: '/bikedoctor/dealer/getShopDetails',

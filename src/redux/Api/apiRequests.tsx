@@ -550,14 +550,14 @@ const get_BikeModel = async (id: string) => {
 
     const token = await AsyncStorage.getItem('token')
 
-    console.log(endpoint.getbikemodels?.replace(':company_id', id));
+    console.log(endpoint.getbikemodels?.replace(':company_id', encodeURIComponent(id)));
 
     const apiRequests: ApiRequest[] = [
         {
 
 
 
-            endpoint: endpoint.getbikemodels?.replace(':company_id', id),
+            endpoint: endpoint.getbikemodels?.replace(':company_id', encodeURIComponent(id)),
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -592,12 +592,12 @@ const get_BikeVariant = async (id: string) => {
     const token = await AsyncStorage.getItem('token')
 
 
-    console.log(endpoint.getbikevariants?.replace(':model_id', id));
+    console.log(endpoint.getbikevariants?.replace(':model_id', encodeURIComponent(id)));
 
     const apiRequests: ApiRequest[] = [
         {
 
-            endpoint: endpoint.getbikevariants?.replace(':model_id', id),
+            endpoint: endpoint.getbikevariants?.replace(':model_id', encodeURIComponent(id)),
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
