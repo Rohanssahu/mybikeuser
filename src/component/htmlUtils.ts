@@ -11,31 +11,3 @@ export const recoverDoubleEscapedHtml = (rawHtml: string) => {
   }
   return rawHtml.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
 };
-
-export const wrapHtml = (bodyHtml: string, bodyStyle: string = 'font-family:sans-serif;padding:16px;color:#222;line-height:1.6;') => `
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-body{
-    ${bodyStyle}
-}
-h1,h2,h3{
-    color:#111;
-}
-img{
-    max-width:100%;
-    height:auto;
-}
-table{
-    width:100%;
-}
-</style>
-</head>
-<body>
-
-${bodyHtml}
-
-</body>
-</html>
-`;

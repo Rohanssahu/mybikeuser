@@ -1,4 +1,4 @@
-import React, {memo, useMemo, useState} from 'react';
+import React, {memo, useState} from 'react';
 import {
   LayoutAnimation,
   Platform,
@@ -7,10 +7,11 @@ import {
   TouchableOpacity,
   UIManager,
   View,
+  useWindowDimensions,
 } from 'react-native';
-import {WebView} from 'react-native-webview';
+import YoutubePlayer from 'react-native-youtube-iframe';
 import HelpIcon from './icons';
-import {recoverDoubleEscapedHtml, wrapHtml} from '../htmlUtils';
+import HtmlRenderer from '../common/HtmlRenderer';
 
 if (
   Platform.OS === 'android' &&
@@ -23,55 +24,37 @@ export interface FAQItem {
   id?: string;
   question: string;
   answer: string;
+  videoUrl?: string | null;
 }
 
-// Admin-authored answers are rich text and may contain real HTML markup —
-// render every answer through a WebView so formatting (bold, lists, links)
-// survives, while plain-text answers (e.g. hardcoded fallback content) still
-// display correctly since a browser renders untagged text as-is.
-const ANSWER_BODY_STYLE =
-  'margin:0;padding:0;background:#0D1952;color:#6B7DBE;font-family:sans-serif;font-size:13px;line-height:19px;';
+// Extracts the 11-char video ID out of the canonical
+// https://www.youtube.com/embed/<id> form the backend stores.
+const YOUTUBE_EMBED_ID_PATTERN = /embed\/([\w-]{11})/;
+const extractYoutubeId = (embedUrl?: string | null) => {
+  const match = (embedUrl || '').match(YOUTUBE_EMBED_ID_PATTERN);
+  return match ? match[1] : null;
+};
 
-const INJECTED_HEIGHT_SCRIPT = `
-(function () {
-  function postHeight() {
-    if (window.ReactNativeWebView) {
-      window.ReactNativeWebView.postMessage(String(document.body.scrollHeight));
-    }
-  }
-  postHeight();
-  window.addEventListener('load', postHeight);
-  setTimeout(postHeight, 300);
-})();
-true;
-`;
+// Admin-authored answers are rich text — render every answer through the
+// shared HtmlRenderer (native RN views, no script execution) so formatting
+// (headings, lists, tables, links, images) survives securely.
+const AnswerHtml: React.FC<{html: string; videoUrl?: string | null}> = memo(
+  ({html, videoUrl}) => {
+    const {width} = useWindowDimensions();
+    const videoId = extractYoutubeId(videoUrl);
 
-const AnswerHtml: React.FC<{html: string}> = memo(({html}) => {
-  const [height, setHeight] = useState(40);
-  const source = useMemo(
-    () => ({html: wrapHtml(recoverDoubleEscapedHtml(html), ANSWER_BODY_STYLE)}),
-    [html],
-  );
-
-  return (
-    <WebView
-      source={source}
-      originWhitelist={['*']}
-      style={[styles.answerWebview, {height}]}
-      containerStyle={styles.answerWebviewContainer}
-      scrollEnabled={false}
-      nestedScrollEnabled={false}
-      injectedJavaScript={INJECTED_HEIGHT_SCRIPT}
-      onMessage={event => {
-        const nextHeight = Number(event.nativeEvent.data);
-        if (!Number.isNaN(nextHeight) && nextHeight > 0 && nextHeight !== height) {
-          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-          setHeight(nextHeight);
-        }
-      }}
-    />
-  );
-});
+    return (
+      <View>
+        {videoId && (
+          <View style={styles.videoWrap}>
+            <YoutubePlayer height={(width - 60) * (9 / 16)} videoId={videoId} />
+          </View>
+        )}
+        <HtmlRenderer html={html} variant="dark" containerPadding={0} />
+      </View>
+    );
+  },
+);
 
 interface FAQAccordionProps {
   items: FAQItem[];
@@ -110,7 +93,7 @@ const FAQAccordion: React.FC<FAQAccordionProps> = ({items}) => {
             </TouchableOpacity>
             {isOpen && (
               <View style={styles.answerWrap}>
-                <AnswerHtml html={item.answer} />
+                <AnswerHtml html={item.answer} videoUrl={item.videoUrl} />
               </View>
             )}
           </View>
@@ -144,12 +127,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingBottom: 14,
   },
-  answerWebview: {
-    width: '100%',
-    backgroundColor: '#0D1952',
-  },
-  answerWebviewContainer: {
-    backgroundColor: '#0D1952',
+  videoWrap: {
+    marginBottom: 10,
+    borderRadius: 10,
+    overflow: 'hidden',
   },
 });
 

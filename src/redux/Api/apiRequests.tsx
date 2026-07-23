@@ -1701,7 +1701,7 @@ const get_app_banners = async (bannerType: 'home' | 'popup' | 'announcement') =>
 const get_faqs = async () => {
     const apiRequests: ApiRequest[] = [
         {
-            endpoint: endpoint.faqs,
+            endpoint: `${endpoint.faqs}?appType=user`,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

@@ -18,6 +18,7 @@ interface FaqApiItem {
   _id: string;
   question: string;
   answer: string;
+  videoUrl?: string | null;
 }
 
 const FaqScreen: React.FC = () => {
@@ -37,6 +38,7 @@ const FaqScreen: React.FC = () => {
             id: item._id,
             question: item.question,
             answer: item.answer,
+            videoUrl: item.videoUrl || null,
           })),
         );
       } else {

@@ -1,13 +1,12 @@
 import React, {useCallback, useState} from 'react';
-import {ActivityIndicator, StyleSheet, Text, View} from 'react-native';
+import {ActivityIndicator, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
-import {WebView} from 'react-native-webview';
 
 import {color} from '../../constant';
 import CustomHeader from '../../component/CustomHeaderProps';
+import HtmlRenderer from '../../component/common/HtmlRenderer';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import {get_legal_document} from '../../redux/Api/apiRequests';
-import {recoverDoubleEscapedHtml, wrapHtml} from '../../component/htmlUtils';
 
 // One shared, backend-driven screen for every legal/informational page.
 // route.name decides which docType + title to show — no per-page duplicate screens.
@@ -37,7 +36,7 @@ const LegalPageScreen: React.FC = () => {
     try {
       const res = await get_legal_document(config.docType);
       if (res?.success && res.data?.content) {
-        setHtml(recoverDoubleEscapedHtml(res.data.content));
+        setHtml(res.data.content);
       } else if (res?.success && !res.data?.content) {
         setNotPublished(true);
       } else {
@@ -78,23 +77,12 @@ const LegalPageScreen: React.FC = () => {
           </Text>
         </View>
       ) : (
-        <WebView
-          originWhitelist={['*']}
-          source={{html: wrapHtml(html)}}
-          style={styles.webview}
-          containerStyle={styles.webviewContainer}
-          scrollEnabled
-          nestedScrollEnabled
-          showsVerticalScrollIndicator
-          javaScriptEnabled
-          domStorageEnabled
-          startInLoadingState
-          renderLoading={() => (
-            <View style={[styles.centered, styles.webviewLoader]}>
-              <ActivityIndicator size="large" color={color.buttonColor} />
-            </View>
-          )}
-        />
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}>
+          <HtmlRenderer html={html} variant="light" />
+        </ScrollView>
       )}
     </View>
   );
@@ -107,20 +95,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: color.baground,
   },
-  webview: {
+  scroll: {
     flex: 1,
     backgroundColor: '#fff',
   },
-  webviewContainer: {
-    flex: 1,
-  },
-  webviewLoader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#fff',
+  scrollContent: {
+    paddingVertical: 20,
+    paddingBottom: 40,
   },
   centered: {
     flex: 1,
