@@ -78,9 +78,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.bike_doctor"
+    namespace "com.mrbikedoctor.user"
     defaultConfig {
-        applicationId "com.bike_doctor"
+        applicationId "com.mrbikedoctor.user"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

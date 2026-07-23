@@ -1,4 +1,4 @@
-package com.bike_doctor
+package com.mrbikedoctor.user
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

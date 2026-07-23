@@ -1,4 +1,4 @@
-package com.bike_doctor
+package com.mrbikedoctor.user
 
 import android.app.Application
 import com.facebook.react.PackageList

@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:950098604869:android:39a240402c367005b4c42c",
         "android_client_info": {
-          "package_name": "com.bike_doctor"
+          "package_name": "com.mrbikedoctor.user"
         }
       },
       "oauth_client": [],
@@ -28,7 +28,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:950098604869:android:f2139c6e9dd35190b4c42c",
         "android_client_info": {
-          "package_name": "com.bike_doctor_provider"
+          "package_name": "com.mrbikedoctor.user_provider"
         }
       },
       "oauth_client": [],

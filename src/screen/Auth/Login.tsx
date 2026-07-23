@@ -108,8 +108,8 @@ const Login: React.FC = ({ navigation }: any) => {
                         <View style={styles.logoBg}>
                             <Image source={images.logo} style={styles.logo} resizeMode="contain" />
                         </View>
-                        <Text style={styles.appName}>Mr. Bike</Text>
-                        <Text style={styles.tagline}>🏍️  India's #1 Bike Service App</Text>
+                        <Text style={styles.appName}>Mr.Bike Doctor </Text>
+                        <Text style={styles.tagline}>⭐ Your Bike Our Care ⭐</Text>
                     </View>
 
                     {/* Card */}
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     },
     tagline: {
         fontSize: 13,
-        color: '#6677AA',
+        color: '#fff',
         marginTop: 4,
     },
 
