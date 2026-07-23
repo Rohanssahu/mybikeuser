@@ -30,6 +30,7 @@ import LegalPageScreen from "../screen/profile/LegalPageScreen";
 import SocialLinksScreen from "../screen/profile/SocialLinksScreen";
 import FaqScreen from "../screen/profile/FaqScreen";
 import Vehical from "../screen/profile/Vehical";
+import RewardsReferralScreen from "../screen/profile/RewardsReferralScreen";
 import ScreenNameEnum from "./screenName.enum";
 
 
@@ -126,6 +127,10 @@ const _routes = {
     {
       name: ScreenNameEnum.FAQ_SCREEN,
       Component: FaqScreen,
+    },
+    {
+      name: ScreenNameEnum.REWARDS_REFERRALS,
+      Component: RewardsReferralScreen,
     },
     {
       name: ScreenNameEnum.SELECT_LOCATION,

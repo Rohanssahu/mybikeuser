@@ -44,4 +44,8 @@ export const endpoint = {
   appSettings: '/bikedoctor/app/settings',
   appBanners: '/bikedoctor/app/banners/:bannerType',
   faqs: '/bikedoctor/app/faqs',
+  validateReferralCode: '/bikedoctor/customers/validateReferralCode',
+  myReferralCode: '/bikedoctor/customers/getMyReferralCode',
+  referralSummary: '/bikedoctor/customers/getReferralSummary',
+  referralTransactions: '/bikedoctor/customers/getReferralTransactions',
 };

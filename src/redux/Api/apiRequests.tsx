@@ -1023,9 +1023,9 @@ const get_profile = async (user_id: string) => {
         return { success: false, message: error.message, data: [] };
     }
 };
-const updateProfile = async (user_id: string, phone: string, first_name: string, last_name: string, state: string, city: string, address: string, pincode: string, image: string, email: string) => {
+const updateProfile = async (user_id: string, phone: string, first_name: string, last_name: string, state: string, city: string, address: string, pincode: string, image: string, email: string, referralCode?: string) => {
     // Prepare the request body for login API
-    const requestBody = { first_name, last_name, email, phone, state, city, address, pincode, image };
+    const requestBody = { first_name, last_name, email, phone, state, city, address, pincode, image, ...(referralCode ? { referralCode } : {}) };
 
     const token = await AsyncStorage.getItem('token');
     if (!token) {
@@ -1075,6 +1075,153 @@ const updateProfile = async (user_id: string, phone: string, first_name: string,
         return { success: false, message: error.message, user: null };
     }
 };
+// Validates a referral code entered during registration against the
+// backend — mirrors get_pricing_quote's "enter a code, validate via API"
+// shape. Requires the caller to already be logged in (token issued at
+// OTP verify), since self-referral checks need the current user's id.
+const validate_referral_code = async (referralCode: string) => {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) {
+        return { success: false, message: 'Token not found, please log in again', data: null };
+    }
+
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.validateReferralCode,
+            method: 'POST',
+            data: { referralCode },
+            headers: {
+                'Content-Type': 'application/json',
+                token: token,
+            },
+        },
+    ];
+
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+
+        if (response?.success) {
+            return { success: true, message: response.message, data: response.data };
+        }
+        return { success: false, message: response?.message || 'Invalid referral code', data: null };
+    } catch (error: any) {
+        return {
+            success: false,
+            message: error?.response?.data?.message || error?.message || 'Something went wrong',
+            data: null,
+        };
+    }
+};
+
+// Fetches the logged-in user's own referral code (auto-generated server-side).
+const get_my_referral_code = async () => {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) {
+        return { success: false, message: 'Token not found, please log in again', data: null };
+    }
+
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.myReferralCode,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                token: token,
+            },
+        },
+    ];
+
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+
+        if (response?.success) {
+            return { success: true, data: response.data };
+        }
+        return { success: false, message: response?.message || 'Unable to fetch referral code', data: null };
+    } catch (error: any) {
+        return {
+            success: false,
+            message: error?.response?.data?.message || error?.message || 'Something went wrong',
+            data: null,
+        };
+    }
+};
+
+// Rewards & Referrals screen header — referral code, referral earnings,
+// successful referrals count, and (reused, not a separate settings call)
+// the showRewardsReferralsMenu/enableReferralSystem admin flags so the
+// Profile tab can decide whether to render the menu entry at all.
+const get_referral_summary = async () => {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) {
+        return { success: false, message: 'Token not found, please log in again', data: null };
+    }
+
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.referralSummary,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                token: token,
+            },
+        },
+    ];
+
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+
+        if (response?.success) {
+            return { success: true, data: response.data };
+        }
+        return { success: false, message: response?.message || 'Unable to fetch referral summary', data: null };
+    } catch (error: any) {
+        return {
+            success: false,
+            message: error?.response?.data?.message || error?.message || 'Something went wrong',
+            data: null,
+        };
+    }
+};
+
+// Rewards & Referrals screen's transaction list.
+const get_referral_transactions = async (page: number = 1, limit: number = 20) => {
+    const token = await AsyncStorage.getItem('token');
+    if (!token) {
+        return { success: false, message: 'Token not found, please log in again', data: [] };
+    }
+
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: `${endpoint.referralTransactions}?page=${page}&limit=${limit}`,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                token: token,
+            },
+        },
+    ];
+
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+
+        if (response?.success) {
+            return { success: true, data: response.data || [], pagination: response.pagination };
+        }
+        return { success: false, message: response?.message || 'Unable to fetch referral transactions', data: [] };
+    } catch (error: any) {
+        return {
+            success: false,
+            message: error?.response?.data?.message || error?.message || 'Something went wrong',
+            data: [],
+        };
+    }
+};
+
 const updateProfileImage = async (image: any) => {
     const token = await AsyncStorage.getItem('token');
 
@@ -1575,4 +1722,4 @@ const get_faqs = async () => {
     }
 };
 
-export { additionalservices, updateBooking, get_invoice, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, get_pricing_quote, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist, get_featured_categories, get_bookingTimerStatus, get_Notification, select_payment_method, get_legal_document, get_app_settings, get_app_banners, get_faqs };
+export { additionalservices, updateBooking, get_invoice, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, get_pricing_quote, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist, get_featured_categories, get_bookingTimerStatus, get_Notification, select_payment_method, get_legal_document, get_app_settings, get_app_banners, get_faqs, validate_referral_code, get_my_referral_code, get_referral_summary, get_referral_transactions };

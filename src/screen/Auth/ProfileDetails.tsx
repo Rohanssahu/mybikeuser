@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { color } from '../../constant';
 import CustomHeader from '../../component/CustomHeaderProps';
 import images, { icon } from '../../component/Image';
@@ -11,7 +11,7 @@ import CustomButton from '../../component/CustomButton';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import CustomDropdown from '../../component/CustomDropdown';
-import { get_citys, get_profile, get_states, updateProfile, updateProfileImage } from '../../redux/Api/apiRequests';
+import { get_citys, get_profile, get_states, updateProfile, updateProfileImage, validate_referral_code } from '../../redux/Api/apiRequests';
 import { captureImage, image_url, selectImageFromGallery } from '../../redux/Api';
 import UploadImageModal from '../../component/UploadImageModal';
 import Loading from '../../configs/Loader';
@@ -34,6 +34,16 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
     const [StateData, setStateData] = useState([]);
     const [cityData, setcityData] = useState([]);
     const [image, setImage] = useState('');
+
+    // Referral code — optional, one-time-only. Only a code the backend has
+    // confirmed via validate_referral_code is sent with the profile update;
+    // editing the text after a successful validation resets it so a stale
+    // referrer can't be submitted silently.
+    const [referralCodeInput, setReferralCodeInput] = useState('');
+    const [validatedReferralCode, setValidatedReferralCode] = useState<string | null>(null);
+    const [referrerName, setReferrerName] = useState('');
+    const [referralValidating, setReferralValidating] = useState(false);
+    const [referralError, setReferralError] = useState('');
 
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -142,11 +152,43 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
     };
 
 
+    const handleValidateReferralCode = async () => {
+        if (!referralCodeInput.trim()) {
+            return;
+        }
+        setReferralValidating(true)
+        setReferralError('')
+        try {
+            const res = await validate_referral_code(referralCodeInput.trim())
+            if (res?.success && res?.data?.valid) {
+                setValidatedReferralCode(referralCodeInput.trim())
+                setReferrerName(res?.data?.referrerName || '')
+            } else {
+                setValidatedReferralCode(null)
+                setReferrerName('')
+                setReferralError(res?.message || 'Invalid referral code')
+            }
+        } catch (error) {
+            setValidatedReferralCode(null)
+            setReferrerName('')
+            setReferralError('Something went wrong. Please try again.')
+        } finally {
+            setReferralValidating(false)
+        }
+    }
+
+    const handleReferralCodeChange = (text: string) => {
+        setReferralCodeInput(text)
+        setValidatedReferralCode(null)
+        setReferrerName('')
+        if (referralError) setReferralError('')
+    }
+
     const update_profile = async () => {
         setLoading(true)
         const user_id = await  AsyncStorage.getItem('user_id')
 
-        const res = await updateProfile(User?._id, phone, firstName, lastName, state, city, address, pinCode, image, email)
+        const res = await updateProfile(User?._id, phone, firstName, lastName, state, city, address, pinCode, image, email, validatedReferralCode || undefined)
         if (res?.success) {
             get_profile(user_id)
             navigation.reset({
@@ -281,7 +323,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                         {errors.address ? <Text style={styles.errorText}>{errors.address}</Text> : null}
                     </View>
 
-                    <View style={[styles.field, { marginBottom: 0 }]}>
+                    <View style={styles.field}>
                         <Text style={styles.label}>Pin-code</Text>
                         <View style={styles.inputWrapper}>
                             <Icon source={icon.pin} size={16} tintColor={color.grey} style={styles.inputIcon} />
@@ -293,6 +335,44 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                             />
                         </View>
                         {errors.pinCode ? <Text style={styles.errorText}>{errors.pinCode}</Text> : null}
+                    </View>
+
+                    <View style={[styles.field, { marginBottom: 0 }]}>
+                        <Text style={styles.label}>Referral Code (Optional)</Text>
+                        {validatedReferralCode ? (
+                            <View style={styles.referralAppliedRow}>
+                                <Text style={styles.referralAppliedText}>
+                                    ✓ Referral Applied — {validatedReferralCode}
+                                </Text>
+                                {!!referrerName && <Text style={styles.referralNote}>Referred by {referrerName}</Text>}
+                                <TouchableOpacity onPress={() => handleReferralCodeChange('')}>
+                                    <Text style={styles.referralRemoveText}>Remove</Text>
+                                </TouchableOpacity>
+                            </View>
+                        ) : (
+                            <View style={styles.referralInputRow}>
+                                <TextInput
+                                    style={styles.referralInput}
+                                    placeholder="Enter Referral Code"
+                                    placeholderTextColor={color.grey}
+                                    autoCapitalize="characters"
+                                    value={referralCodeInput}
+                                    onChangeText={handleReferralCodeChange}
+                                    editable={!referralValidating}
+                                />
+                                <TouchableOpacity
+                                    style={[styles.referralApplyBtn, (!referralCodeInput.trim() || referralValidating) && styles.referralApplyBtnDisabled]}
+                                    disabled={!referralCodeInput.trim() || referralValidating}
+                                    onPress={handleValidateReferralCode}>
+                                    {referralValidating ? (
+                                        <ActivityIndicator color="#fff" size="small" />
+                                    ) : (
+                                        <Text style={styles.referralApplyBtnText}>Validate</Text>
+                                    )}
+                                </TouchableOpacity>
+                            </View>
+                        )}
+                        {!!referralError && <Text style={styles.errorText}>{referralError}</Text>}
                     </View>
                 </View>
 
@@ -418,6 +498,59 @@ const styles = StyleSheet.create({
     },
     errorInput: {
         borderColor: 'red',
+    },
+    referralInputRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    referralInput: {
+        flex: 1,
+        height: 44,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.12)',
+        backgroundColor: color.baground,
+        color: color.white,
+        paddingHorizontal: 12,
+        fontSize: 14,
+        marginRight: 10,
+        textTransform: 'uppercase',
+    },
+    referralApplyBtn: {
+        height: 44,
+        paddingHorizontal: 18,
+        borderRadius: 10,
+        backgroundColor: color.buttonColor,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    referralApplyBtnDisabled: {
+        opacity: 0.5,
+    },
+    referralApplyBtnText: {
+        color: '#fff',
+        fontWeight: '700',
+        fontSize: 14,
+    },
+    referralAppliedRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    referralAppliedText: {
+        fontSize: 14,
+        color: '#22c55e',
+        fontWeight: '700',
+    },
+    referralNote: {
+        fontSize: 12,
+        color: color.grey,
+    },
+    referralRemoveText: {
+        fontSize: 13,
+        color: color.grey,
+        textDecorationLine: 'underline',
     },
     errorText: {
         color: 'red',

@@ -17,7 +17,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import {color, TAB_BAR_HEIGHT} from '../../constant';
 import ProfileMenuList from '../../component/ProfileList';
 import ScreenNameEnum from '../../routes/screenName.enum';
-import {get_profile} from '../../redux/Api/apiRequests';
+import {get_profile, get_referral_summary} from '../../redux/Api/apiRequests';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 type RootStackParamList = {Profile: undefined};
@@ -46,11 +46,15 @@ interface ProfileMenuSection {
 
 const Profile: React.FC<Props> = ({navigation}) => {
   const [user, setUser] = useState<UserType>({});
+  // Hidden by default until the admin flag confirms it should show — avoids
+  // a flash of the menu item before the setting is known.
+  const [showRewardsReferrals, setShowRewardsReferrals] = useState(false);
   const insets = useSafeAreaInsets();
 
   useFocusEffect(
     useCallback(() => {
       getUser();
+      loadReferralMenuVisibility();
     }, []),
   );
 
@@ -61,6 +65,15 @@ const Profile: React.FC<Props> = ({navigation}) => {
       if (res?.success) {setUser(res.data || {});}
     } catch (err) {
       console.log('Profile error:', err);
+    }
+  };
+
+  const loadReferralMenuVisibility = async () => {
+    try {
+      const res = await get_referral_summary();
+      setShowRewardsReferrals(!!res?.success && !!res?.data?.enableReferralSystem && !!res?.data?.showRewardsReferralsMenu);
+    } catch (err) {
+      setShowRewardsReferrals(false);
     }
   };
 
@@ -119,7 +132,7 @@ const Profile: React.FC<Props> = ({navigation}) => {
           styles.scrollContent,
           {paddingBottom: insets.bottom + TAB_BAR_HEIGHT},
         ]}>
-        <ProfileMenuList sections={profileSections} />
+        <ProfileMenuList sections={buildProfileSections(showRewardsReferrals)} />
       </ScrollView>
     </View>
   );
@@ -127,13 +140,16 @@ const Profile: React.FC<Props> = ({navigation}) => {
 
 export default Profile;
 
-const profileSections: ProfileMenuSection[] = [
+const buildProfileSections = (showRewardsReferrals: boolean): ProfileMenuSection[] => [
   {
     id: 'activity',
     title: 'Activity',
     data: [
       {id: '2', title: 'My Bikes', icon: 'motorbike', screen: ScreenNameEnum.MY_BIKES},
       {id: '3', title: 'Notifications', icon: 'bell-outline', screen: ScreenNameEnum.NOTIFICATION_SETTING},
+      ...(showRewardsReferrals
+        ? [{id: '3a', title: 'Rewards & Referrals', icon: 'gift-outline', screen: ScreenNameEnum.REWARDS_REFERRALS}]
+        : []),
     ],
   },
   {
