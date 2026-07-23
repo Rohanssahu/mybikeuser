@@ -1,11 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  StatusBar,
-} from 'react-native';
+import {View, Text, StyleSheet, ScrollView, StatusBar} from 'react-native';
 import {color} from '../../constant';
 import CustomTextInput from '../../component/TextInput';
 import CustomDropdown from '../../component/CustomDropdown';
@@ -18,6 +12,7 @@ import {
   get_BikeModel,
   get_BikeVariant,
 } from '../../redux/Api/apiRequests';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const BikeDetails: React.FC<{navigation: any}> = ({navigation}) => {
   const [selectedBikeId, setSelectedBikeId] = useState<string | null>(null);
@@ -37,7 +32,9 @@ const BikeDetails: React.FC<{navigation: any}> = ({navigation}) => {
 
   const fetchCompanies = async () => {
     const res = await get_BikeCompany();
-    if (res?.data?.length > 0) {setBikeCompanies(res.data);}
+    if (res?.data?.length > 0) {
+      setBikeCompanies(res.data);
+    }
   };
 
   const isValidPlate = (plate: string) =>
@@ -45,9 +42,15 @@ const BikeDetails: React.FC<{navigation: any}> = ({navigation}) => {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!selectedBikeId) {newErrors.company = 'Bike brand is required';}
-    if (!selectedModelId) {newErrors.model = 'Model is required';}
-    if (!variantId) {newErrors.variant = 'Variant is required';}
+    if (!selectedBikeId) {
+      newErrors.company = 'Bike brand is required';
+    }
+    if (!selectedModelId) {
+      newErrors.model = 'Model is required';
+    }
+    if (!variantId) {
+      newErrors.variant = 'Variant is required';
+    }
     if (!plateNumber) {
       newErrors.plate = 'Plate number is required';
     } else if (!isValidPlate(plateNumber)) {
@@ -58,15 +61,22 @@ const BikeDetails: React.FC<{navigation: any}> = ({navigation}) => {
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) {return;}
+    if (!validateForm()) {
+      return;
+    }
     const res = await add_Bikes(plateNumber, variantId);
-    if (res?.success) {navigation.goBack();}
+    if (res?.success) {
+      navigation.goBack();
+    }
   };
 
   const fetchModels = async (id: string) => {
     const res = await get_BikeModel(id);
-    if (res?.success) {setBikeModels(res.data);}
-    else {setBikeModels([]);}
+    if (res?.success) {
+      setBikeModels(res.data);
+    } else {
+      setBikeModels([]);
+    }
   };
 
   const fetchVariants = async (id: string) => {
@@ -101,110 +111,139 @@ const BikeDetails: React.FC<{navigation: any}> = ({navigation}) => {
         showHome
       />
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
+      <SafeAreaView style={{flex: 1}}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled">
+          {/* Step indicator */}
+          <View style={styles.stepRow}>
+            {steps.map((step, i) => (
+              <React.Fragment key={i}>
+                <View style={[styles.stepDot, step.done && styles.stepDotDone]}>
+                  <Text
+                    style={[
+                      styles.stepLabel,
+                      step.done && styles.stepLabelDone,
+                    ]}>
+                    {step.label}
+                  </Text>
+                </View>
+                {i < steps.length - 1 && (
+                  <View
+                    style={[
+                      styles.stepLine,
+                      steps[i + 1].done && styles.stepLineDone,
+                    ]}
+                  />
+                )}
+              </React.Fragment>
+            ))}
+          </View>
 
-        {/* Step indicator */}
-        <View style={styles.stepRow}>
-          {steps.map((step, i) => (
-            <React.Fragment key={i}>
-              <View style={[styles.stepDot, step.done && styles.stepDotDone]}>
-                <Text style={[styles.stepLabel, step.done && styles.stepLabelDone]}>
-                  {step.label}
-                </Text>
-              </View>
-              {i < steps.length - 1 && (
-                <View style={[styles.stepLine, steps[i + 1].done && styles.stepLineDone]} />
-              )}
-            </React.Fragment>
-          ))}
-        </View>
+          <View style={styles.form}>
+            {/* Brand */}
+            <Text style={styles.fieldLabel}>Bike Brand</Text>
+            <CustomDropdown
+              data={bikeCompanies}
+              onSelect={(value: any) => {
+                setSelectedBikeId(value?._id);
+                setSelectedModelId(null);
+                setVariantId('');
+                setBikeModels([]);
+                setBikeVariants([]);
+                fetchModels(value._id);
+              }}
+              placeholder="Select brand"
+              label="name"
+              value="_id"
+            />
+            {errors.company ? (
+              <Text style={styles.error}>{errors.company}</Text>
+            ) : null}
 
-        <View style={styles.form}>
-          {/* Brand */}
-          <Text style={styles.fieldLabel}>Bike Brand</Text>
-          <CustomDropdown
-            data={bikeCompanies}
-            onSelect={(value: any) => {
-              setSelectedBikeId(value?._id);
-              setSelectedModelId(null);
-              setVariantId('');
-              setBikeModels([]);
-              setBikeVariants([]);
-              fetchModels(value._id);
-            }}
-            placeholder="Select brand"
-            label="name"
-            value="_id"
-          />
-          {errors.company ? <Text style={styles.error}>{errors.company}</Text> : null}
+            {/* Model */}
+            <Text style={[styles.fieldLabel, styles.fieldLabelGap]}>Model</Text>
+            <CustomDropdown
+              data={bikeModels}
+              onSelect={(value: any) => {
+                setSelectedModelId(value?._id);
+                setVariantId('');
+                setBikeVariants([]);
+                fetchVariants(value._id);
+              }}
+              placeholder="Select model"
+              label="model_name"
+              value="_id"
+            />
+            {errors.model ? (
+              <Text style={styles.error}>{errors.model}</Text>
+            ) : null}
 
-          {/* Model */}
-          <Text style={[styles.fieldLabel, styles.fieldLabelGap]}>Model</Text>
-          <CustomDropdown
-            data={bikeModels}
-            onSelect={(value: any) => {
-              setSelectedModelId(value?._id);
-              setVariantId('');
-              setBikeVariants([]);
-              fetchVariants(value._id);
-            }}
-            placeholder="Select model"
-            label="model_name"
-            value="_id"
-          />
-          {errors.model ? <Text style={styles.error}>{errors.model}</Text> : null}
+            {/* Variant */}
+            <Text style={[styles.fieldLabel, styles.fieldLabelGap]}>
+              Variant
+            </Text>
+            <CustomDropdown
+              data={bikeVariants}
+              onSelect={(value: any) => {
+                setBikeCC(value?.engine_cc?.toString() || '');
+                setVariantName(value?.variant_name?.toString() || '');
+                setVariantId(value?._id?.toString() || '');
+              }}
+              placeholder="Select variant"
+              label="variant_display"
+              value="_id"
+            />
+            {errors.variant ? (
+              <Text style={styles.error}>{errors.variant}</Text>
+            ) : null}
 
-          {/* Variant */}
-          <Text style={[styles.fieldLabel, styles.fieldLabelGap]}>Variant</Text>
-          <CustomDropdown
-            data={bikeVariants}
-            onSelect={(value: any) => {
-              setBikeCC(value?.engine_cc?.toString() || '');
-              setVariantName(value?.variant_name?.toString() || '');
-              setVariantId(value?._id?.toString() || '');
-            }}
-            placeholder="Select variant"
-            label="variant_display"
-            value="_id"
-          />
-          {errors.variant ? <Text style={styles.error}>{errors.variant}</Text> : null}
-
-          {/* Plate Number */}
-          <Text style={[styles.fieldLabel, styles.fieldLabelGap]}>
-            Registration Number
-          </Text>
-          <CustomTextInput
-            editable
-            placeholder="e.g. MH12AB1234"
-            onChangeText={text => {
-              const upper = text.toUpperCase();
-              setPlateNumber(upper);
-              if (upper && !isValidPlate(upper)) {
-                setErrors(prev => ({...prev, plate: 'Enter valid plate (e.g. MH12AB1234)'}));
-              } else {
-                setErrors(prev => {const {plate: _, ...rest} = prev; return rest;});
+            {/* Plate Number */}
+            <Text style={[styles.fieldLabel, styles.fieldLabelGap]}>
+              Registration Number
+            </Text>
+            <CustomTextInput
+              editable
+              placeholder="e.g. MH12AB1234"
+              onChangeText={text => {
+                const upper = text.toUpperCase();
+                setPlateNumber(upper);
+                if (upper && !isValidPlate(upper)) {
+                  setErrors(prev => ({
+                    ...prev,
+                    plate: 'Enter valid plate (e.g. MH12AB1234)',
+                  }));
+                } else {
+                  setErrors(prev => {
+                    const {plate: _, ...rest} = prev;
+                    return rest;
+                  });
+                }
+              }}
+              value={plateNumber}
+              maxLength={11}
+              inputStyle={
+                errors.plate ? styles.inputErrorPlate : styles.plateInput
               }
-            }}
-            value={plateNumber}
-            maxLength={11}
-            inputStyle={errors.plate ? styles.inputErrorPlate : styles.plateInput}
-          />
-          {errors.plate ? <Text style={styles.error}>{errors.plate}</Text> : null}
+            />
+            {errors.plate ? (
+              <Text style={styles.error}>{errors.plate}</Text>
+            ) : null}
 
-          {bikeCC ? (
-            <View style={styles.ccBadge}>
-              <Text style={styles.ccText}>Engine: {bikeCC} CC</Text>
-            </View>
-          ) : null}
+            {bikeCC ? (
+              <View style={styles.ccBadge}>
+                <Text style={styles.ccText}>Engine: {bikeCC} CC</Text>
+              </View>
+            ) : null}
+          </View>
+          <View style={styles.footer}>
+          <CustomButton title="Save Bike" onPress={handleSubmit} />
         </View>
-      </ScrollView>
+        </ScrollView>
 
-      <View style={styles.footer}>
-        <CustomButton title="Save Bike" onPress={handleSubmit} />
-      </View>
+   
+      </SafeAreaView>
     </View>
   );
 };

@@ -18,8 +18,6 @@ import {
   get_mybikes,
   remove_bike,
   get_BikeCompany,
-  get_BikeModel,
-  get_BikeVariant,
 } from '../../redux/Api/apiRequests';
 import {useIsFocused, useRoute} from '@react-navigation/native';
 import ScreenNameEnum from '../../routes/screenName.enum';
@@ -69,49 +67,19 @@ const MyBikes: React.FC<Props> = ({navigation}) => {
     }));
 
   const enrichBikes = async (rawBikes: any[]) => {
-    const companyIds = Array.from(
-      new Set(rawBikes.map((b: any) => b?.name).filter(Boolean)),
-    );
-    const modelIds = Array.from(
-      new Set(rawBikes.map((b: any) => b?.model).filter(Boolean)),
-    );
-
     const companyMap: Record<string, string> = {};
     const companyRes = await get_BikeCompany();
     (companyRes?.data || []).forEach((c: any) => {
       if (c?._id) {companyMap[c._id] = c.name;}
     });
 
-    const modelMap: Record<string, string> = {};
-    await Promise.all(
-      companyIds.map(async (companyId: any) => {
-        const res = await get_BikeModel(companyId);
-        (res?.data || []).forEach((m: any) => {
-          if (m?._id) {modelMap[m._id] = m.model_name;}
-        });
-      }),
-    );
-
-    const variantMap: Record<string, any> = {};
-    await Promise.all(
-      modelIds.map(async (modelId: any) => {
-        const res = await get_BikeVariant(modelId);
-        (res?.data || []).forEach((v: any) => {
-          if (v?._id) {variantMap[v._id] = v;}
-        });
-      }),
-    );
-
-    return rawBikes.map((b: any) => {
-      const variant = variantMap[b?.variant_id];
-      return {
-        ...b,
-        companyName: resolveText(b?.name, companyMap),
-        modelName: resolveText(b?.model, modelMap),
-        variantName: variant?.variant_name || '-',
-        ccDisplay: b?.bike_cc || variant?.engine_cc || '-',
-      };
-    });
+    return rawBikes.map((b: any) => ({
+      ...b,
+      companyName: resolveText(b?.name, companyMap),
+      modelName: resolveText(b?.model, {}),
+      variantName: '-',
+      ccDisplay: b?.bike_cc || '-',
+    }));
   };
 
   const fetchBikes = async () => {
