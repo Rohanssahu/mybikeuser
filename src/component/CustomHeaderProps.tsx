@@ -9,6 +9,7 @@ import { useBookingFlowNav } from '../hooks/useBookingFlowNav';
 interface CustomHeaderProps {
     navigation: NativeStackNavigationProp<any, any>;
     title: string;
+    subtitle?: string; // Optional line rendered under the title. Omit to keep the header unchanged.
     showSkip?: boolean; // Default is false
     onSkipPress?: () => void;
     showHome?: boolean; // Shows a Home icon top-right. Default is false
@@ -20,6 +21,7 @@ interface CustomHeaderProps {
 const CustomHeader: React.FC<CustomHeaderProps> = ({
     navigation,
     title,
+    subtitle,
     showSkip = false,
     onSkipPress,
     showHome = false,
@@ -40,7 +42,10 @@ const CustomHeader: React.FC<CustomHeaderProps> = ({
             </TouchableOpacity>
 
             {/* Title */}
-            <Text style={styles.title}>{title}</Text>
+            <View style={styles.titleCol}>
+                <Text style={styles.title}>{title}</Text>
+                {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+            </View>
 
             <View style={styles.rightRow}>
                 {/* Skip Button (conditionally displayed) */}
@@ -79,10 +84,19 @@ const styles = StyleSheet.create({
     backButton: {
         padding: 10,
     },
+    titleCol: {
+        flexShrink: 1,
+    },
     title: {
         fontSize: 18,
         fontWeight: 'bold',
         color: '#fff',
+    },
+    subtitle: {
+        fontSize: 12.5,
+        color: '#8892C0',
+        marginTop: 2,
+        fontWeight: '500',
     },
     rightRow: {
         flexDirection: 'row',

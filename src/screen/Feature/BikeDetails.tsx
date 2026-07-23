@@ -1,11 +1,25 @@
-import React, {useEffect, useState} from 'react';
-import {View, Text, StyleSheet, ScrollView, StatusBar} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  StatusBar,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  TouchableOpacity,
+} from 'react-native';
 import {color} from '../../constant';
-import CustomTextInput from '../../component/TextInput';
-import CustomDropdown from '../../component/CustomDropdown';
-import CustomButton from '../../component/CustomButton';
 import CustomHeader from '../../component/CustomHeaderProps';
-import ScreenNameEnum from '../../routes/screenName.enum';
+import Icon from '../../component/Icon';
+import {icon} from '../../component/Image';
+import Stepper from '../../component/bikeDetails/Stepper';
+import SelectionField from '../../component/bikeDetails/SelectionField';
+import SearchableSheet from '../../component/bikeDetails/SearchableSheet';
+import FloatingLabelInput from '../../component/bikeDetails/FloatingLabelInput';
+import {successToast, errorToast} from '../../configs/customToast';
 import {
   add_Bikes,
   get_BikeCompany,
@@ -13,6 +27,8 @@ import {
   get_BikeVariant,
 } from '../../redux/Api/apiRequests';
 import {SafeAreaView} from 'react-native-safe-area-context';
+
+type ActiveSheet = 'brand' | 'model' | 'variant' | null;
 
 const BikeDetails: React.FC<{navigation: any}> = ({navigation}) => {
   const [selectedBikeId, setSelectedBikeId] = useState<string | null>(null);
@@ -26,14 +42,36 @@ const BikeDetails: React.FC<{navigation: any}> = ({navigation}) => {
   const [variantId, setVariantId] = useState('');
   const [variantName, setVariantName] = useState<string | null>(null);
 
+  // UI-only state: display labels, loading/saving flags, and which sheet is open.
+  const [selectedBrandName, setSelectedBrandName] = useState<string | null>(null);
+  const [selectedModelName, setSelectedModelName] = useState<string | null>(null);
+  const [loadingCompanies, setLoadingCompanies] = useState(false);
+  const [loadingModels, setLoadingModels] = useState(false);
+  const [loadingVariants, setLoadingVariants] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [activeSheet, setActiveSheet] = useState<ActiveSheet>(null);
+  const plateInputRef = useRef<TextInput>(null);
+  const scrollRef = useRef<ScrollView>(null);
+
+  const scrollToPlateInput = () => {
+    // Android resizes the window on keyboard open (adjustResize) but never
+    // auto-scrolls the ScrollView to reveal the now-hidden field, unlike iOS.
+    setTimeout(() => scrollRef.current?.scrollToEnd({animated: true}), 120);
+  };
+
   useEffect(() => {
     fetchCompanies();
   }, []);
 
   const fetchCompanies = async () => {
-    const res = await get_BikeCompany();
-    if (res?.data?.length > 0) {
-      setBikeCompanies(res.data);
+    setLoadingCompanies(true);
+    try {
+      const res = await get_BikeCompany();
+      if (res?.data?.length > 0) {
+        setBikeCompanies(res.data);
+      }
+    } finally {
+      setLoadingCompanies(false);
     }
   };
 
@@ -64,41 +102,151 @@ const BikeDetails: React.FC<{navigation: any}> = ({navigation}) => {
     if (!validateForm()) {
       return;
     }
-    const res = await add_Bikes(plateNumber, variantId);
-    if (res?.success) {
-      navigation.goBack();
+    setSaving(true);
+    try {
+      const res = await add_Bikes(plateNumber, variantId);
+      if (res?.success) {
+        successToast('Bike added successfully');
+        navigation.goBack();
+      } else {
+        errorToast(res?.message || 'Could not save your bike. Please try again.');
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
   const fetchModels = async (id: string) => {
-    const res = await get_BikeModel(id);
-    if (res?.success) {
-      setBikeModels(res.data);
-    } else {
-      setBikeModels([]);
+    setLoadingModels(true);
+    try {
+      const res = await get_BikeModel(id);
+      if (res?.success) {
+        setBikeModels(res.data);
+      } else {
+        setBikeModels([]);
+      }
+    } finally {
+      setLoadingModels(false);
     }
   };
 
   const fetchVariants = async (id: string) => {
-    const res = await get_BikeVariant(id);
-    if (res?.success) {
-      setBikeVariants(
-        res.data.map((item: any) => ({
-          ...item,
-          variant_display: `${item.variant_name} (${item.engine_cc} CC)`,
-        })),
-      );
-    } else {
-      setBikeVariants([]);
+    setLoadingVariants(true);
+    try {
+      const res = await get_BikeVariant(id);
+      if (res?.success) {
+        setBikeVariants(
+          res.data.map((item: any) => ({
+            ...item,
+            variant_display: `${item.variant_name} (${item.engine_cc} CC)`,
+          })),
+        );
+      } else {
+        setBikeVariants([]);
+      }
+    } finally {
+      setLoadingVariants(false);
     }
   };
 
+  const onSelectBrand = (item: any) => {
+    setSelectedBikeId(item?._id);
+    setSelectedBrandName(item?.name ?? null);
+    setSelectedModelId(null);
+    setSelectedModelName(null);
+    setVariantId('');
+    setVariantName(null);
+    setBikeCC('');
+    setBikeModels([]);
+    setBikeVariants([]);
+    setErrors(prev => {
+      const rest = {...prev};
+      delete rest.company;
+      return rest;
+    });
+    setActiveSheet(null);
+    fetchModels(item._id);
+    setTimeout(() => setActiveSheet('model'), 360);
+  };
+
+  const onSelectModel = (item: any) => {
+    setSelectedModelId(item?._id);
+    setSelectedModelName(item?.model_name ?? null);
+    setVariantId('');
+    setVariantName(null);
+    setBikeCC('');
+    setBikeVariants([]);
+    setErrors(prev => {
+      const rest = {...prev};
+      delete rest.model;
+      return rest;
+    });
+    setActiveSheet(null);
+    fetchVariants(item._id);
+    setTimeout(() => setActiveSheet('variant'), 360);
+  };
+
+  const onSelectVariant = (item: any) => {
+    setBikeCC(item?.engine_cc?.toString() || '');
+    setVariantName(item?.variant_name?.toString() || '');
+    setVariantId(item?._id?.toString() || '');
+    setErrors(prev => {
+      const rest = {...prev};
+      delete rest.variant;
+      return rest;
+    });
+    setActiveSheet(null);
+    setTimeout(() => plateInputRef.current?.focus(), 360);
+    scrollToPlateInput();
+  };
+
+  const onChangePlate = (text: string) => {
+    const upper = text.toUpperCase();
+    setPlateNumber(upper);
+    if (upper && !isValidPlate(upper)) {
+      setErrors(prev => ({
+        ...prev,
+        plate: 'Enter valid plate (e.g. MH12AB1234)',
+      }));
+    } else {
+      setErrors(prev => {
+        const rest = {...prev};
+        delete rest.plate;
+        return rest;
+      });
+    }
+  };
+
+  const getVariantSubtitle = (item: any) => {
+    const parts: string[] = [];
+    if (item?.engine_cc) {parts.push(`${item.engine_cc} CC`);}
+    const fuel = item?.fuel_type || item?.fuelType || item?.fuel;
+    if (fuel) {parts.push(String(fuel));}
+    return parts.length ? parts.join(' • ') : null;
+  };
+
+  const renderLeading = (value?: string | null) => (
+    <View
+      style={[
+        styles.leadingCircle,
+        value ? styles.leadingCircleFilled : styles.leadingCircleEmpty,
+      ]}>
+      {value ? (
+        <Text style={styles.leadingLetter}>{value.charAt(0).toUpperCase()}</Text>
+      ) : (
+        <Icon source={icon.bikep} size={18} tintColor="#7C86B8" />
+      )}
+    </View>
+  );
+
   const steps = [
-    {label: '1', done: !!selectedBikeId},
-    {label: '2', done: !!selectedModelId},
-    {label: '3', done: !!variantId},
-    {label: '4', done: isValidPlate(plateNumber)},
+    {label: 'Brand', done: !!selectedBikeId},
+    {label: 'Model', done: !!selectedModelId},
+    {label: 'Variant', done: !!variantId},
+    {label: 'Number', done: isValidPlate(plateNumber)},
   ];
+
+  const canSave = !saving;
 
   return (
     <View style={styles.container}>
@@ -106,144 +254,133 @@ const BikeDetails: React.FC<{navigation: any}> = ({navigation}) => {
       <CustomHeader
         navigation={navigation}
         title="Add Your Bike"
+        subtitle="Let's register your motorcycle."
         onSkipPress={() => {}}
         showSkip={false}
         showHome
       />
 
-      <SafeAreaView style={{flex: 1}}>
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled">
-          {/* Step indicator */}
-          <View style={styles.stepRow}>
-            {steps.map((step, i) => (
-              <React.Fragment key={i}>
-                <View style={[styles.stepDot, step.done && styles.stepDotDone]}>
-                  <Text
-                    style={[
-                      styles.stepLabel,
-                      step.done && styles.stepLabelDone,
-                    ]}>
-                    {step.label}
-                  </Text>
-                </View>
-                {i < steps.length - 1 && (
-                  <View
-                    style={[
-                      styles.stepLine,
-                      steps[i + 1].done && styles.stepLineDone,
-                    ]}
-                  />
-                )}
-              </React.Fragment>
-            ))}
-          </View>
+      <SafeAreaView style={{flex: 1}} edges={['bottom', 'left', 'right']}>
+        <KeyboardAvoidingView
+          style={{flex: 1}}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}>
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={styles.scroll}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled">
+            <Stepper steps={steps} />
 
-          <View style={styles.form}>
-            {/* Brand */}
-            <Text style={styles.fieldLabel}>Bike Brand</Text>
-            <CustomDropdown
-              data={bikeCompanies}
-              onSelect={(value: any) => {
-                setSelectedBikeId(value?._id);
-                setSelectedModelId(null);
-                setVariantId('');
-                setBikeModels([]);
-                setBikeVariants([]);
-                fetchModels(value._id);
-              }}
-              placeholder="Select brand"
-              label="name"
-              value="_id"
-            />
-            {errors.company ? (
-              <Text style={styles.error}>{errors.company}</Text>
-            ) : null}
+            <View style={styles.form}>
+              <SelectionField
+                label="Bike Brand"
+                placeholder="Select your bike brand"
+                value={selectedBrandName}
+                error={errors.company}
+                onPress={() => setActiveSheet('brand')}
+                leading={renderLeading(selectedBrandName)}
+              />
 
-            {/* Model */}
-            <Text style={[styles.fieldLabel, styles.fieldLabelGap]}>Model</Text>
-            <CustomDropdown
-              data={bikeModels}
-              onSelect={(value: any) => {
-                setSelectedModelId(value?._id);
-                setVariantId('');
-                setBikeVariants([]);
-                fetchVariants(value._id);
-              }}
-              placeholder="Select model"
-              label="model_name"
-              value="_id"
-            />
-            {errors.model ? (
-              <Text style={styles.error}>{errors.model}</Text>
-            ) : null}
-
-            {/* Variant */}
-            <Text style={[styles.fieldLabel, styles.fieldLabelGap]}>
-              Variant
-            </Text>
-            <CustomDropdown
-              data={bikeVariants}
-              onSelect={(value: any) => {
-                setBikeCC(value?.engine_cc?.toString() || '');
-                setVariantName(value?.variant_name?.toString() || '');
-                setVariantId(value?._id?.toString() || '');
-              }}
-              placeholder="Select variant"
-              label="variant_display"
-              value="_id"
-            />
-            {errors.variant ? (
-              <Text style={styles.error}>{errors.variant}</Text>
-            ) : null}
-
-            {/* Plate Number */}
-            <Text style={[styles.fieldLabel, styles.fieldLabelGap]}>
-              Registration Number
-            </Text>
-            <CustomTextInput
-              editable
-              placeholder="e.g. MH12AB1234"
-              onChangeText={text => {
-                const upper = text.toUpperCase();
-                setPlateNumber(upper);
-                if (upper && !isValidPlate(upper)) {
-                  setErrors(prev => ({
-                    ...prev,
-                    plate: 'Enter valid plate (e.g. MH12AB1234)',
-                  }));
-                } else {
-                  setErrors(prev => {
-                    const {plate: _, ...rest} = prev;
-                    return rest;
-                  });
+              <SelectionField
+                label="Bike Model"
+                placeholder={
+                  selectedBikeId ? 'Select model' : 'Select a brand first'
                 }
-              }}
-              value={plateNumber}
-              maxLength={11}
-              inputStyle={
-                errors.plate ? styles.inputErrorPlate : styles.plateInput
-              }
-            />
-            {errors.plate ? (
-              <Text style={styles.error}>{errors.plate}</Text>
-            ) : null}
+                value={selectedModelName}
+                error={errors.model}
+                disabled={!selectedBikeId}
+                onPress={() => setActiveSheet('model')}
+                leading={renderLeading(selectedModelName)}
+              />
 
-            {bikeCC ? (
-              <View style={styles.ccBadge}>
-                <Text style={styles.ccText}>Engine: {bikeCC} CC</Text>
-              </View>
-            ) : null}
-          </View>
+              <SelectionField
+                label="Variant"
+                placeholder={
+                  selectedModelId ? 'Select variant' : 'Select a model first'
+                }
+                value={variantName}
+                subValue={bikeCC ? `${bikeCC} CC` : null}
+                error={errors.variant}
+                disabled={!selectedModelId}
+                onPress={() => setActiveSheet('variant')}
+                leading={renderLeading(variantName)}
+              />
+
+              <FloatingLabelInput
+                ref={plateInputRef}
+                label="Registration Number"
+                value={plateNumber}
+                onChangeText={onChangePlate}
+                error={errors.plate}
+                helperText="Format: MH12AB1234"
+                autoCapitalize="characters"
+                maxLength={11}
+                returnKeyType="done"
+                onFocus={scrollToPlateInput}
+              />
+            </View>
+          </ScrollView>
+
           <View style={styles.footer}>
-          <CustomButton title="Save Bike" onPress={handleSubmit} />
-        </View>
-        </ScrollView>
-
-   
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={canSave ? handleSubmit : undefined}
+              disabled={!canSave}
+              style={[styles.saveButton, !canSave && styles.saveButtonDisabled]}>
+              {saving ? (
+                <ActivityIndicator color="#111827" />
+              ) : (
+                <Text style={styles.saveButtonText}>Save Bike</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
+
+      <SearchableSheet
+        visible={activeSheet === 'brand'}
+        title="Select Bike Brand"
+        onClose={() => setActiveSheet(null)}
+        data={bikeCompanies}
+        labelField="name"
+        keyField="_id"
+        onSelect={onSelectBrand}
+        loading={loadingCompanies}
+        emptyTitle="No brands available"
+        emptyMessage="We couldn't load bike brands right now."
+        onRetry={fetchCompanies}
+      />
+
+      <SearchableSheet
+        visible={activeSheet === 'model'}
+        title="Select Bike Model"
+        onClose={() => setActiveSheet(null)}
+        data={bikeModels}
+        labelField="model_name"
+        keyField="_id"
+        onSelect={onSelectModel}
+        loading={loadingModels}
+        emptyTitle="No models available"
+        emptyMessage={`No models found for ${selectedBrandName || 'this brand'}.`}
+        onRetry={selectedBikeId ? () => fetchModels(selectedBikeId) : undefined}
+      />
+
+      <SearchableSheet
+        visible={activeSheet === 'variant'}
+        title="Select Variant"
+        onClose={() => setActiveSheet(null)}
+        data={bikeVariants}
+        labelField="variant_display"
+        searchFields={['variant_display', 'variant_name']}
+        keyField="_id"
+        getSubtitle={getVariantSubtitle}
+        onSelect={onSelectVariant}
+        loading={loadingVariants}
+        emptyTitle="No variants available"
+        emptyMessage={`No variants found for ${selectedModelName || 'this model'}.`}
+        onRetry={selectedModelId ? () => fetchVariants(selectedModelId) : undefined}
+      />
     </View>
   );
 };
@@ -252,76 +389,39 @@ export default BikeDetails;
 
 const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: color.baground},
-  scroll: {paddingHorizontal: 24, paddingBottom: 100},
-  stepRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 24,
-    marginBottom: 28,
-  },
-  stepDot: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepDotDone: {
-    backgroundColor: color.buttonColor,
-    borderColor: color.buttonColor,
-  },
-  stepLabel: {fontSize: 13, fontWeight: '700', color: 'rgba(255,255,255,0.5)'},
-  stepLabelDone: {color: '#000'},
-  stepLine: {flex: 1, height: 2, backgroundColor: 'rgba(255,255,255,0.15)'},
-  stepLineDone: {backgroundColor: color.buttonColor},
+  scroll: {paddingHorizontal: 24, paddingTop: 20, paddingBottom: 40},
   form: {},
-  fieldLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#B0B8D0',
-    marginBottom: 6,
-    letterSpacing: 0.3,
+  leadingCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  fieldLabelGap: {marginTop: 18},
-  plateInput: {
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 12,
-    padding: 12,
-    color: '#fff',
-    fontSize: 16,
-    letterSpacing: 2,
-  },
-  inputError: {borderColor: '#EF4444'},
-  inputErrorPlate: {
-    borderWidth: 1,
-    borderColor: '#EF4444',
-    borderRadius: 12,
-    padding: 12,
-    color: '#fff',
-    fontSize: 16,
-    letterSpacing: 2,
-  },
-  error: {color: '#EF4444', fontSize: 12, marginTop: 5},
-  ccBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(254,212,40,0.15)',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    marginTop: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(254,212,40,0.3)',
-  },
-  ccText: {color: color.buttonColor, fontSize: 13, fontWeight: '600'},
+  leadingCircleFilled: {backgroundColor: 'rgba(254,212,40,0.14)'},
+  leadingCircleEmpty: {backgroundColor: 'rgba(255,255,255,0.05)'},
+  leadingLetter: {color: color.buttonColor, fontWeight: '700', fontSize: 15},
   footer: {
-    position: 'absolute',
-    bottom: 20,
-    left: 0,
-    right: 0,
     paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === 'ios' ? 8 : 16,
   },
+  saveButton: {
+    backgroundColor: color.buttonColor,
+    borderRadius: 18,
+    height: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: color.buttonColor,
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.28,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  saveButtonDisabled: {
+    backgroundColor: 'rgba(254,212,40,0.5)',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  saveButtonText: {color: '#111827', fontSize: 17, fontWeight: '700'},
 });
