@@ -765,12 +765,20 @@ const garage_details = async (id: string, digitsOnly: string) => {
         if (response?.success) {
             return { success: true, message: "Success", data: response.data };
         } else {
-            return { success: false, message: "Unexpected response", data: [] };
+            return { success: false, message: response?.message || "Unexpected response", data: [] };
         }
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error fetching data:', error);
-        return { success: false, message: error.message, state: [] };
+        // Dealer-unavailable (offline/inactive/blocked) comes back as a non-2xx
+        // status, which axios rejects — the actual "This garage is currently
+        // unavailable." text lives in error.response.data.message, not
+        // error.message (which would just say "Request failed with status code 403").
+        return {
+            success: false,
+            message: error?.response?.data?.message || error.message,
+            data: [],
+        };
     }
 };
 

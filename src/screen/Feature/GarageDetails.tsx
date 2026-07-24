@@ -26,9 +26,11 @@ import {
   get_profile,
 } from '../../redux/Api/apiRequests';
 import {useUserBookings} from '../../hooks/useUserBookings';
+import {useRefreshOnResume} from '../../hooks/useRefreshOnResume';
 import {
   ACTIVE_BOOKING_HINT,
   ACTIVE_BOOKING_MESSAGE,
+  GARAGE_UNAVAILABLE_MESSAGE,
   getBookingStatusLabel,
 } from '../../utils/bookingStatus';
 import MapPickerModal from './MapPicker';
@@ -138,11 +140,6 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
   }, [garageData, locationCoords]);
 
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    fetchGarageDetails();
-  }, [id]);
-
   const calculateDistanceFromSelectedLocation = async () => {
     if (!garageData?.latitude || !garageData?.longitude) {
       return;
@@ -232,10 +229,28 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
           setSelectedService(match.serviceId ?? match._id);
         }
       }
-    } else {
+    } else if (detailsRes?.message === GARAGE_UNAVAILABLE_MESSAGE) {
+      // Dealer went offline/inactive/blocked since this id was fetched —
+      // backend now rejects getShopDetails with 403 in that case. Don't
+      // leave the user stuck on a blank/broken details page: tell them and
+      // back out immediately, whether this is the first load or a
+      // focus/resume refresh of a page they already had open.
       setGarageData(null);
+      errorToast(detailsRes.message);
+      navigation.goBack();
+    } else if (!garageData) {
+      // Some other failure (network/server) on the very first load — surface
+      // it, but don't force navigation; a background refresh hiccup on an
+      // already-loaded page shouldn't wipe out perfectly valid garage data.
+      errorToast(detailsRes?.message || 'Unable to load garage details. Please try again.');
     }
   };
+
+  // Refetch whenever this screen gains focus and whenever the app resumes
+  // to the foreground while it's open — not just once on mount. A dealer can
+  // go offline/inactive at any moment, and this is the only screen the User
+  // App keeps a garage's detail page mounted long enough for that to matter.
+  useRefreshOnResume(fetchGarageDetails);
 
   const addPickupDrop = async (location = PickupLocation) => {
     if (location?.latitude && location?.longitude) {
@@ -496,6 +511,13 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
         // flips to the "Service In Progress" view.
         refetchBookings();
         Alert.alert('Booking Not Allowed', `${ACTIVE_BOOKING_MESSAGE}\n\n${ACTIVE_BOOKING_HINT}`);
+      } else if (res?.message === GARAGE_UNAVAILABLE_MESSAGE) {
+        // Dealer went offline/inactive/blocked between opening this page and
+        // hitting Confirm — the backend is the final authority here even if
+        // this screen's own data looked fine. Don't leave the user on a
+        // booking form for a garage that can no longer accept it.
+        errorToast(res.message);
+        navigation.goBack();
       } else {
         errorToast(res?.message || 'Booking failed. Please try again.');
       }

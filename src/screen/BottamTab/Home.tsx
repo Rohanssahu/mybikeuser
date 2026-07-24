@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   Animated,
   Dimensions,
@@ -13,7 +13,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
@@ -35,6 +35,7 @@ import {
   get_servicelist,
 } from '../../redux/Api/apiRequests';
 import {useLocation} from '../../component/LocationContext';
+import {useRefreshOnResume} from '../../hooks/useRefreshOnResume';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {getCurrentLocation} from '../../component/helperFunction';
 
@@ -263,12 +264,6 @@ const Home: React.FC = () => {
   const [announcementVisible, setAnnouncementVisible] = useState(false);
   const {locationName} = useLocation();
 
-  useFocusEffect(
-    useCallback(() => {
-      loadAll();
-    }, []),
-  );
-
   // Fetched once per app session — not on every tab focus — so a dismissed
   // popup doesn't reappear each time the user switches back to Home.
   useEffect(() => {
@@ -356,6 +351,11 @@ const Home: React.FC = () => {
     await loadAll();
     setRefreshing(false);
   };
+
+  // Refetches on tab focus AND on app resume (foreground) while Home is the
+  // active tab — nearby garages must drop offline/inactive dealers on the
+  // very next look, without needing a manual pull-to-refresh or restart.
+  useRefreshOnResume(loadAll);
 
   return (
     <View style={styles.container}>

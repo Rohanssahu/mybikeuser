@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Text } from 'react-native';
 import CustomHeader from '../../component/CustomHeaderProps';
 import { color } from '../../constant';
@@ -8,6 +8,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useRoute } from '@react-navigation/native';
 import { get_FilterBydeler } from '../../redux/Api/apiRequests';
 import { getCurrentLocation } from '../../component/helperFunction';
+import { useRefreshOnResume } from '../../hooks/useRefreshOnResume';
 
 // Define navigation type
 type RootStackParamList = {
@@ -38,11 +39,6 @@ const NearByShops: React.FC<Props> = ({ navigation }) => {
     const { item, serviceId } = route.params as {item: any; serviceId?: string}
     const [loading, setLoading] = useState(false)
 
-    useEffect(() => {
-        fetchServiceData();
-    }, []);
-
-
     const fetchServiceData = async () => {
         setLoading(true);
                   const { latitude, longitude } = await getCurrentLocation();
@@ -60,6 +56,11 @@ const NearByShops: React.FC<Props> = ({ navigation }) => {
             setLoading(false);
         }
     };
+
+    // Refetch on focus and on app resume — a dealer shown here can go
+    // offline/inactive at any time, and this list must not go stale just
+    // because the screen was left mounted on the navigation stack.
+    useRefreshOnResume(fetchServiceData);
 
     return (
         <View style={styles.container}>

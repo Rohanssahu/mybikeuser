@@ -18,6 +18,13 @@ export const ACTIVE_BOOKING_MESSAGE =
 export const ACTIVE_BOOKING_HINT =
   'Please wait until the current service is completed before creating another booking.';
 
+// Mirrors mrbike-backend/helper/dealerStatus.js isDealerBookable() — the
+// exact message getShopDetails/createBooking return once a dealer goes
+// offline, inactive, unapproved, or blocked. Used to recognize that specific
+// rejection (vs. a generic failure) so the screen can show a clear message
+// and back out instead of leaving the user stuck on a dead garage page.
+export const GARAGE_UNAVAILABLE_MESSAGE = 'This garage is currently unavailable.';
+
 export interface BookingLike {
   _id?: string;
   bookingId?: string;
