@@ -1,5 +1,6 @@
 import React, {createContext, useState, useContext, useCallback} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {get_serviceability} from '../redux/Api/apiRequests';
 
 const LocationContext = createContext();
 
@@ -7,6 +8,37 @@ export const LocationProvider = ({children}) => {
   const [locationName, setLocationName] = useState('');
   const [locationCoords, setLocationCoords] = useState(null);
   const [recentLocations, setRecentLocations] = useState([]);
+
+  // Area-serviceability gate state. `serviceability` stays null until the
+  // first successful check resolves — Home treats null as "not yet
+  // resolved" and fails open (renders normally) rather than gating, so a
+  // transient network failure here never locks a user out of the app.
+  const [serviceability, setServiceability] = useState(null);
+  const [checkingServiceability, setCheckingServiceability] = useState(false);
+
+  const checkServiceability = useCallback(async (lat, lng) => {
+    if (lat == null || lng == null) return;
+    setCheckingServiceability(true);
+    try {
+      const res = await get_serviceability(lat, lng);
+      if (res?.success && res?.data?.status) {
+        setServiceability({
+          status: res.data.status,
+          areaName: res.data.areaName,
+          reason: res.data.reason ?? null,
+          estimatedLiveDate: res.data.estimatedLiveDate ?? null,
+        });
+      }
+      // else: leave serviceability as-is rather than guessing a status.
+    } catch (error) {
+      // Network/transient failure — never hard-fail app boot over this.
+      // Leaving serviceability unresolved lets Home fail open instead of
+      // showing an incorrect gate screen.
+      console.error('checkServiceability error:', error);
+    } finally {
+      setCheckingServiceability(false);
+    }
+  }, []);
 
   const saveLocation = useCallback(async (name, coords) => {
     setLocationName(name);
@@ -43,6 +75,9 @@ export const LocationProvider = ({children}) => {
         recentLocations,
         setRecentLocations,
         saveLocation,
+        serviceability,
+        checkingServiceability,
+        checkServiceability,
       }}>
       {children}
     </LocationContext.Provider>

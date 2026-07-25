@@ -37,6 +37,8 @@ import {useLocation} from '../../component/LocationContext';
 import {useRefreshOnResume} from '../../hooks/useRefreshOnResume';
 import {useUserBookings} from '../../hooks/useUserBookings';
 import {getCurrentLocation} from '../../component/helperFunction';
+import ComingSoonScreen from '../Serviceability/ComingSoonScreen';
+import PausedScreen from '../Serviceability/PausedScreen';
 
 import SectionHeader from '../../component/home/SectionHeader';
 import Shimmer, {SkeletonRow} from '../../component/home/Shimmer';
@@ -113,7 +115,7 @@ const Home: React.FC = () => {
   const navigation = useNavigation<NavigationProps>();
   const insets = useSafeAreaInsets();
   const isFocus = useIsFocused();
-  const {locationName} = useLocation();
+  const {locationName, serviceability, checkingServiceability} = useLocation();
 
   const [serviceList, setServiceList] = useState<ServiceCatalogItem[]>([]);
   const [bannerList, setBannerList] = useState<any[]>([]);
@@ -513,6 +515,37 @@ const Home: React.FC = () => {
     [navigation],
   );
 
+  // Area-serviceability gate. `serviceability` is null until the very first
+  // check resolves (or if it never ran) — that "not yet resolved" case fails
+  // open and renders Home exactly as today, gated only by the pre-existing
+  // `loading`/`checkingServiceability` skeleton. An explicit non-live status
+  // replaces Home's service-discovery/booking content with a full-screen
+  // gate; it does NOT touch the bottom tab bar, so Booking/Support/Alerts
+  // /Profile stay reachable and usable.
+  if (serviceability?.status === 'coming_soon') {
+    return (
+      <View style={styles.container}>
+        <StatusBar backgroundColor={color.baground} barStyle="light-content" />
+        <ComingSoonScreen
+          areaName={serviceability.areaName || 'your area'}
+          estimatedLiveDate={serviceability.estimatedLiveDate}
+        />
+      </View>
+    );
+  }
+
+  if (serviceability?.status === 'paused') {
+    return (
+      <View style={styles.container}>
+        <StatusBar backgroundColor={color.baground} barStyle="light-content" />
+        <PausedScreen
+          areaName={serviceability.areaName || 'your area'}
+          reason={serviceability.reason}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor={color.baground} barStyle="light-content" />
@@ -523,7 +556,7 @@ const Home: React.FC = () => {
         onClose={() => setAnnouncementVisible(false)}
       />
 
-      {loading ? (
+      {loading || checkingServiceability ? (
         <ScrollView showsVerticalScrollIndicator={false}>
           <HomeHeader
             navigation={navigation}

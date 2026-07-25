@@ -56,4 +56,7 @@ export const endpoint = {
   recommendedForYou: '/api/v1/home/recommended',
   mostBookedNearYou: '/api/v1/home/most-booked',
   topGarages: '/api/v1/home/top-garages',
+  // Area-serviceability gate — checked right after location resolves and
+  // before Home's other data loads. Public endpoint, same host/base_url.
+  serviceability: '/api/v1/serviceability',
 };

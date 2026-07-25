@@ -1908,4 +1908,31 @@ const get_top_garages = async (lat?: number, lng?: number) => {
     }
 };
 
-export { additionalservices, updateBooking, get_invoice, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, get_pricing_quote, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist, get_featured_categories, get_bookingTimerStatus, get_Notification, select_payment_method, get_legal_document, get_app_settings, get_app_banners, get_faqs, validate_referral_code, get_my_referral_code, get_referral_summary, get_referral_transactions, get_service_categories, get_services_by_category, get_quick_services, get_recommended_for_you, get_most_booked_near_you, get_top_garages };
+// Area-serviceability gate — public endpoint (no auth needed), called right
+// after location resolves, before Home's other data loads. Never expected to
+// 400 for real-world coordinates (backend falls back to a generic
+// "coming_soon" for unmapped areas) — only a missing lat/lng 400s.
+const get_serviceability = async (lat: number, lng: number) => {
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: `${endpoint.serviceability}?lat=${lat}&lng=${lng}`,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        },
+    ];
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+        if (response?.data) {
+            return { success: true, data: response.data };
+        }
+        return { success: false, message: 'Unexpected response', data: null };
+    } catch (error: any) {
+        console.error('get_serviceability error:', error);
+        return { success: false, message: error.message, data: null };
+    }
+};
+
+export { additionalservices, updateBooking, get_invoice, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, get_pricing_quote, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist, get_featured_categories, get_bookingTimerStatus, get_Notification, select_payment_method, get_legal_document, get_app_settings, get_app_banners, get_faqs, validate_referral_code, get_my_referral_code, get_referral_summary, get_referral_transactions, get_service_categories, get_services_by_category, get_quick_services, get_recommended_for_you, get_most_booked_near_you, get_top_garages, get_serviceability };

@@ -11,7 +11,7 @@ const Stack = createNativeStackNavigator();
 
 const RegistrationRoutes: FunctionComponent = () => {
 
-  const { locationName, setLocationName } = useLocation();
+  const { locationName, setLocationName, checkServiceability } = useLocation();
   const getShortAddress = (geoJson) => {
     if (!geoJson?.results?.length) return '';
   
@@ -57,7 +57,11 @@ const RegistrationRoutes: FunctionComponent = () => {
         // Get current location
         const { latitude, longitude } = await getCurrentLocation();
 
-    
+        // Area-serviceability gate — runs right after location resolves and
+        // before Home mounts/loads its other data. Fire-and-forget here:
+        // checkServiceability manages its own loading/error state in
+        // LocationContext and never throws, so it doesn't block geocoding.
+        checkServiceability(latitude, longitude);
 
         // Fetch geocode
         const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyCM15ry8lewwj6YZ-04_m7Z58dsQo_hBBA`;
