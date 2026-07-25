@@ -15,11 +15,17 @@ import {
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import CustomHeader from '../../component/CustomHeaderProps';
 import {color} from '../../constant';
-import {get_featured_categories} from '../../redux/Api/apiRequests';
+import {
+  get_featured_categories,
+  get_services_by_category,
+  get_mybikes,
+} from '../../redux/Api/apiRequests';
 import {getCurrentLocation} from '../../component/helperFunction';
 import ScreenNameEnum from '../../routes/screenName.enum';
 
-type RootStackParamList = {AllServices: undefined};
+type RootStackParamList = {
+  AllServices: {categoryId?: string; categoryName?: string} | undefined;
+};
 type Props = NativeStackScreenProps<RootStackParamList, 'AllServices'>;
 
 interface FeaturedCategory {
@@ -27,6 +33,22 @@ interface FeaturedCategory {
   categoryName: string;
   categoryImage: string;
   serviceId?: {_id: string; name: string};
+}
+
+interface CategoryServiceItem {
+  serviceId: string;
+  name: string;
+  image?: string;
+}
+
+// Normalized shape both the "nearby featured categories" grid and the
+// "services within a tapped category" grid render through, so the
+// search/sort/list UI below doesn't need to branch on which mode it's in.
+interface DisplayItem {
+  id: string;
+  name: string;
+  image?: string;
+  serviceId?: string;
 }
 
 const {width: SCREEN_WIDTH} = Dimensions.get('window');
@@ -50,13 +72,13 @@ const CategoryCard = ({
   item,
   onPress,
 }: {
-  item: FeaturedCategory;
+  item: DisplayItem;
   onPress: () => void;
 }) => {
   const [imgError, setImgError] = useState(false);
   const imgSrc =
-    !imgError && item.categoryImage
-      ? {uri: item.categoryImage}
+    !imgError && item.image
+      ? {uri: item.image}
       : require('../../assets/images/LOGO2x.png');
 
   return (
@@ -76,7 +98,7 @@ const CategoryCard = ({
             style={styles.cardName}
             numberOfLines={2}
             ellipsizeMode="tail">
-            {item.categoryName}
+            {item.name}
           </Text>
         </View>
       </View>
@@ -84,49 +106,105 @@ const CategoryCard = ({
   );
 };
 
-const AllServices: React.FC<Props> = ({navigation}) => {
-  const [categories, setCategories] = useState<FeaturedCategory[]>([]);
+const AllServices: React.FC<Props> = ({navigation, route}) => {
+  const categoryId = route.params?.categoryId;
+  const categoryName = route.params?.categoryName;
+  const isCategoryMode = !!categoryId;
+
+  const [items, setItems] = useState<DisplayItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('default');
 
   useEffect(() => {
-    loadCategories();
-  }, []);
+    if (isCategoryMode) {
+      loadCategoryServices(categoryId as string);
+    } else {
+      loadFeaturedCategories();
+    }
+  }, [categoryId]);
 
-  const loadCategories = async () => {
+  const loadFeaturedCategories = async () => {
     setLoading(true);
     try {
       const {latitude, longitude} = await getCurrentLocation();
       const res = await get_featured_categories(latitude, longitude);
-      setCategories(res?.data ?? []);
+      const data: FeaturedCategory[] = res?.data ?? [];
+      setItems(
+        data.map(c => ({
+          id: c._id,
+          name: c.categoryName,
+          image: c.categoryImage,
+          serviceId: c.serviceId?._id,
+        })),
+      );
     } catch {
-      setCategories([]);
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Bike-aware, same pattern Home uses for quick/recommended services:
+  // filter to services compatible with the active bike, but fall back to
+  // the full category list when there's no bike, or the bike has zero
+  // compatible services in this category.
+  const loadCategoryServices = async (catId: string) => {
+    setLoading(true);
+    try {
+      let bikeId: string | undefined;
+      try {
+        const myBikes = await get_mybikes();
+        bikeId = myBikes?.data?.[0]?._id;
+      } catch {
+        bikeId = undefined;
+      }
+
+      let services: CategoryServiceItem[] = [];
+      if (bikeId) {
+        const bikeFiltered = await get_services_by_category(catId, bikeId);
+        services = bikeFiltered?.data ?? [];
+      }
+      if (!services.length) {
+        const fullList = await get_services_by_category(catId);
+        services = fullList?.data ?? [];
+      }
+
+      setItems(
+        services.map(s => ({
+          id: s.serviceId,
+          name: s.name,
+          image: s.image,
+          serviceId: s.serviceId,
+        })),
+      );
+    } catch {
+      setItems([]);
     } finally {
       setLoading(false);
     }
   };
 
   const filtered = useMemo(() => {
-    let list = [...categories];
+    let list = [...items];
     const q = search.trim().toLowerCase();
     if (q) {
-      list = list.filter(c => c.categoryName.toLowerCase().includes(q));
+      list = list.filter(c => c.name.toLowerCase().includes(q));
     }
     if (sort === 'az') {
-      list.sort((a, b) => a.categoryName.localeCompare(b.categoryName));
+      list.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sort === 'za') {
-      list.sort((a, b) => b.categoryName.localeCompare(a.categoryName));
+      list.sort((a, b) => b.name.localeCompare(a.name));
     }
     return list;
-  }, [categories, search, sort]);
+  }, [items, search, sort]);
 
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor={color.baground} barStyle="light-content" />
       <CustomHeader
         navigation={navigation}
-        title="Our Services"
+        title={isCategoryMode ? categoryName || 'Services' : 'Our Services'}
         onSkipPress={() => {}}
         showSkip={false}
         showHome
@@ -195,7 +273,7 @@ const AllServices: React.FC<Props> = ({navigation}) => {
       ) : (
         <FlatList
           data={filtered}
-          keyExtractor={item => item._id}
+          keyExtractor={item => item.id}
           numColumns={NUM_COLUMNS}
           columnWrapperStyle={styles.row}
           contentContainerStyle={styles.list}
@@ -215,7 +293,7 @@ const AllServices: React.FC<Props> = ({navigation}) => {
               onPress={() =>
                 (navigation as any).navigate(ScreenNameEnum.MY_BIKES, {
                   profile: false,
-                  serviceId: item.serviceId?._id,
+                  serviceId: item.serviceId,
                 })
               }
             />

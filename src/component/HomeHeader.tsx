@@ -18,6 +18,7 @@ interface HomeHeaderProps {
   hasNotifications?: boolean;
   onLocationPress?: () => void;
   onNotificationPress?: () => void;
+  onProfilePress?: () => void;
   User: any;
 }
 
@@ -26,6 +27,7 @@ const HomeHeader: React.FC<HomeHeaderProps> = ({
   hasNotifications = false,
   onLocationPress,
   onNotificationPress,
+  onProfilePress,
   User,
 }) => {
   const locationAnim = useRef(new Animated.Value(0)).current;
@@ -108,14 +110,18 @@ const HomeHeader: React.FC<HomeHeaderProps> = ({
         </Animated.View>
       </View>
 
-      {/* Notification bell */}
-      <TouchableOpacity
-        onPress={onNotificationPress}
-        style={styles.bellBtn}
-        activeOpacity={0.75}>
-        <Image source={icon.notification} style={styles.bellIcon} />
-        {hasNotifications && <View style={styles.badge} />}
-      </TouchableOpacity>
+      <View style={styles.rightActions}>
+        {/* Notification bell */}
+        <TouchableOpacity
+          onPress={onNotificationPress}
+          style={styles.bellBtn}
+          activeOpacity={0.75}>
+          <Image source={icon.notification} style={styles.bellIcon} />
+          {hasNotifications && <View style={styles.badge} />}
+        </TouchableOpacity>
+
+   
+      </View>
     </View>
   );
 };
@@ -192,6 +198,23 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: color.baground,
   },
+  rightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  profileBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: color.cardSurface,
+    borderWidth: 1,
+    borderColor: 'rgba(254,212,40,0.28)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  profileIcon: {width: 22, height: 22, tintColor: '#FED428'},
 });
 
 export default HomeHeader;

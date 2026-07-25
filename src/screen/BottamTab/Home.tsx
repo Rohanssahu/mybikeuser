@@ -1,279 +1,165 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
-  Animated,
-  Dimensions,
-  FlatList,
-  Image,
-  View,
-  Text,
-  ScrollView,
-  ActivityIndicator,
   RefreshControl,
+  ScrollView,
   StatusBar,
   StyleSheet,
-  TouchableOpacity,
+  Text,
+  View,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {color, TAB_BAR_HEIGHT} from '../../constant';
 import BannerSlider from '../../component/BannerSlider';
 import HomeHeader from '../../component/HomeHeader';
-import images, {icon} from '../../component/Image';
-import HorizontalList from '../../component/HorizontalList';
-import GarageList from '../../component/GarageList';
 import ScreenNameEnum from '../../routes/screenName.enum';
-import AnnouncementPopup, {AnnouncementBanner} from '../modal/AnnouncementPopup';
+import AnnouncementPopup, {
+  AnnouncementBanner,
+} from '../modal/AnnouncementPopup';
 import {
   get_app_banners,
   get_bannerlist,
-  get_featured_categories,
   get_mybikes,
   get_nearyBydeler,
+  get_most_booked_near_you,
   get_profile,
+  get_quick_services,
+  get_recommended_for_you,
+  get_service_categories,
   get_servicelist,
+  get_top_garages,
 } from '../../redux/Api/apiRequests';
 import {useLocation} from '../../component/LocationContext';
 import {useRefreshOnResume} from '../../hooks/useRefreshOnResume';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useUserBookings} from '../../hooks/useUserBookings';
 import {getCurrentLocation} from '../../component/helperFunction';
+
+import SectionHeader from '../../component/home/SectionHeader';
+import Shimmer, {SkeletonRow} from '../../component/home/Shimmer';
+import HomeSearchBar from '../../component/home/HomeSearchBar';
+import MyBikeCarousel from '../../component/home/MyBikeCarousel';
+import QuickServicesRow from '../../component/home/QuickServicesRow';
+import RecommendedForYouSection from '../../component/home/RecommendedForYouSection';
+import PopularNearYouSection from '../../component/home/PopularNearYouSection';
+import ServiceCategoriesGrid from '../../component/home/ServiceCategoriesGrid';
+import TopRatedGaragesSection from '../../component/home/TopRatedGaragesSection';
+import SpecialOffersRow, {
+  OfferTile,
+} from '../../component/home/SpecialOffersRow';
+import RecentBookingsRow, {
+  RecentBookingLike,
+} from '../../component/home/RecentBookingsRow';
+import {
+  BikeItem,
+  DealerItem,
+  MostBookedServiceItem,
+  QuickServiceItem,
+  RecommendedServiceItem,
+  SearchResult,
+  ServiceCatalogItem,
+  ServiceCategoryItem,
+  TopGarageItem,
+  buildSearchIndex,
+} from '../../component/home/homeData';
 
 type RootStackParamList = {
   SELECT_LOCATION: undefined;
-  ALL_SERVICES: undefined;
+  ALL_SERVICES: {categoryId?: string; categoryName?: string} | undefined;
   Notification: undefined;
 };
 
 type NavigationProps = NativeStackNavigationProp<RootStackParamList>;
-
-interface Service {
-  _id: string;
-  name: string;
-  image?: string;
-}
-
-interface Banner {
-  _id: string;
-  name: string;
-  banner_image: string;
-}
-
-interface Dealer {
-  _id: string;
-  shopName: string;
-  fullAddress?: string;
-  address?: string;
-  latitude: string | number;
-  longitude: string | number;
-  shopImages?: any[];
-  averageRating?: number;
-}
-
-interface FeaturedCategory {
-  _id: string;
-  categoryName: string;
-  categoryImage: string;
-  locationName: string;
-  radius: number;
-  serviceId?: {_id: string; name: string};
-}
 
 interface UserCoords {
   latitude: number;
   longitude: number;
 }
 
-const FEAT_CARD_WIDTH = Dimensions.get('window').width * 0.32;
+const resolveObjectId = (value: any): string | undefined =>
+  typeof value === 'string' ? value : value?._id;
 
-const SectionHeader = ({
-  title,
-  onSeeAll,
-}: {
-  title: string;
-  onSeeAll?: () => void;
-}) => (
-  <View style={styles.sectionHeader}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    {onSeeAll && (
-      <TouchableOpacity
-        onPress={onSeeAll}
-        activeOpacity={0.7}
-        style={styles.seeAllBtn}>
-        <Text style={styles.seeAllText}>See All</Text>
-        <Image source={icon.rightarrow} style={styles.seeAllIcon} />
-      </TouchableOpacity>
-    )}
+const HomeSkeleton: React.FC = () => (
+  <View>
+    <SkeletonRow count={1} width={335} height={168} />
+    <SkeletonRow count={5} width={64} height={64} />
+    <SkeletonRow count={3} width={168} height={150} />
+    <View style={{paddingHorizontal: 20, marginTop: 16}}>
+      <Shimmer style={{height: 78, borderRadius: 18, marginBottom: 12}} />
+      <Shimmer style={{height: 78, borderRadius: 18, marginBottom: 12}} />
+    </View>
   </View>
 );
 
-const EmptyState = ({
-  iconSource,
-  title,
-  subtitle,
-}: {
-  iconSource: any;
-  title: string;
-  subtitle?: string;
+const EmptySection: React.FC<{icon: string; message: string}> = ({
+  icon,
+  message,
 }) => (
-  <View style={styles.emptyCard}>
-    <View style={styles.emptyIconWrap}>
-      <Image source={iconSource} style={styles.emptyIcon} />
-    </View>
-    <Text style={styles.emptyTitle}>{title}</Text>
-    {subtitle && <Text style={styles.emptySubtitle}>{subtitle}</Text>}
+  <View style={styles.emptySection}>
+    <MaterialCommunityIcons
+      name={icon}
+      size={22}
+      color={color.textFaint}
+      style={{marginBottom: 6}}
+    />
+    <Text style={styles.emptySectionText}>{message}</Text>
   </View>
 );
-
-const MyVehicleCard: React.FC<{
-  bikes: any[];
-  onManage: () => void;
-  onAdd: () => void;
-}> = ({bikes, onManage, onAdd}) => {
-  if (!bikes || bikes.length === 0) {
-    return (
-      <View style={styles.vehicleCard}>
-        <View style={styles.vehicleIconWrap}>
-          <Image source={images.bikes} style={styles.vehicleIcon} />
-        </View>
-        <View style={styles.vehicleInfo}>
-          <Text style={styles.vehicleTitle} numberOfLines={1}>
-            No vehicle added yet
-          </Text>
-          <Text style={styles.vehicleSubtitle} numberOfLines={1}>
-            Add your bike to book services faster
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={styles.vehicleBtn}
-          onPress={onAdd}
-          activeOpacity={0.85}>
-          <Text style={styles.vehicleBtnText}>Add Bike</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  const primary = bikes[0];
-  const extraCount = bikes.length - 1;
-
-  return (
-    <View style={styles.vehicleCard}>
-      <View style={styles.vehicleIconWrap}>
-        <Image source={icon.bikep} style={styles.vehicleIcon} />
-      </View>
-      <View style={styles.vehicleInfo}>
-        <Text style={styles.vehicleTitle} numberOfLines={1}>
-          {primary?.plate_number ? primary.plate_number.toUpperCase() : 'Your Bike'}
-        </Text>
-        <Text style={styles.vehicleSubtitle} numberOfLines={1}>
-          {primary?.bike_cc ? `${primary.bike_cc} CC` : 'Tap manage to view details'}
-          {extraCount > 0 ? `  ·  +${extraCount} more` : ''}
-        </Text>
-      </View>
-      <TouchableOpacity
-        style={styles.vehicleBtn}
-        onPress={onManage}
-        activeOpacity={0.85}>
-        <Text style={styles.vehicleBtnText}>Manage</Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
-
-const FeaturedCategoryCard: React.FC<{item: FeaturedCategory; onPress: () => void}> = ({item, onPress}) => {
-  const [imgError, setImgError] = useState(false);
-  const imageSource =
-    !imgError && item.categoryImage
-      ? {uri: item.categoryImage}
-      : require('../../assets/images/LOGO2x.png');
-
-  return (
-    <TouchableOpacity activeOpacity={0.85} onPress={onPress} style={featStyles.tile}>
-      <Image
-        source={imageSource}
-        resizeMode="cover"
-        onError={() => setImgError(true)}
-        style={featStyles.tileImage}
-      />
-      <View style={featStyles.tileOverlay} />
-      <View style={featStyles.tileLabelWrap}>
-        <Text numberOfLines={2} style={featStyles.tileLabel}>
-          {item.categoryName}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
-};
-
-const FeaturedCategorySkeleton: React.FC = () => {
-  const shimmer = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const anim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(shimmer, {
-          toValue: 1,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-        Animated.timing(shimmer, {
-          toValue: 0,
-          duration: 900,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    anim.start();
-    return () => anim.stop();
-  }, [shimmer]);
-
-  const opacity = shimmer.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.3, 0.7],
-  });
-
-  return (
-    <View style={featStyles.skeletonRow}>
-      {[0, 1, 2].map(i => (
-        <Animated.View
-          key={i}
-          style={[featStyles.card, featStyles.skeletonCard, {opacity}]}
-        />
-      ))}
-    </View>
-  );
-};
 
 const Home: React.FC = () => {
   const navigation = useNavigation<NavigationProps>();
   const insets = useSafeAreaInsets();
-  const [serviceList, setServiceList] = useState<Service[]>([]);
-  const [bannerList, setBannerList] = useState<Banner[]>([]);
-  const [dealerList, setDealerList] = useState<Dealer[]>([]);
-  const [bikeList, setBikeList] = useState<any[]>([]);
-  const [featuredCategories, setFeaturedCategories] = useState<
-    FeaturedCategory[]
+  const isFocus = useIsFocused();
+  const {locationName} = useLocation();
+
+  const [serviceList, setServiceList] = useState<ServiceCatalogItem[]>([]);
+  const [bannerList, setBannerList] = useState<any[]>([]);
+  const [dealerList, setDealerList] = useState<DealerItem[]>([]);
+  const [bikeList, setBikeList] = useState<BikeItem[]>([]);
+  const [serviceCategories, setServiceCategories] = useState<
+    ServiceCategoryItem[]
   >([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [featuredLoading, setFeaturedLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [userCoords, setUserCoords] = useState<UserCoords | null>(null);
   const [User, setUser] = useState<any>(null);
-  const [announcement, setAnnouncement] = useState<AnnouncementBanner | null>(null);
+  const [announcement, setAnnouncement] = useState<AnnouncementBanner | null>(
+    null,
+  );
   const [announcementVisible, setAnnouncementVisible] = useState(false);
-  const {locationName} = useLocation();
+
+  // Which saved bike the bike-swipe carousel is currently on. Quick Services
+  // and Recommended re-fetch whenever this changes — see the effect below.
+  const [activeBikeIndex, setActiveBikeIndex] = useState(0);
+  const activeBikeId = bikeList[activeBikeIndex]?._id;
+
+  const [quickServices, setQuickServices] = useState<QuickServiceItem[]>([]);
+  const [quickServicesLoading, setQuickServicesLoading] = useState(true);
+  const [recommended, setRecommended] = useState<RecommendedServiceItem[]>([]);
+  const [recommendedLoading, setRecommendedLoading] = useState(true);
+  const [mostBooked, setMostBooked] = useState<MostBookedServiceItem[]>([]);
+  const [mostBookedLoading, setMostBookedLoading] = useState(true);
+  const [topGarages, setTopGarages] = useState<TopGarageItem[]>([]);
+  const [topGaragesLoading, setTopGaragesLoading] = useState(true);
+
+  const {bookings} = useUserBookings(isFocus);
 
   // Fetched once per app session — not on every tab focus — so a dismissed
   // popup doesn't reappear each time the user switches back to Home.
-  useEffect(() => {
+  React.useEffect(() => {
     const loadAnnouncement = async () => {
       try {
         const [popupRes, announcementRes] = await Promise.all([
           get_app_banners('popup'),
           get_app_banners('announcement'),
         ]);
-        const active = [...(popupRes?.data ?? []), ...(announcementRes?.data ?? [])];
+        const active = [
+          ...(popupRes?.data ?? []),
+          ...(announcementRes?.data ?? []),
+        ];
         if (active.length > 0) {
           setAnnouncement(active[0]);
           setAnnouncementVisible(true);
@@ -285,77 +171,347 @@ const Home: React.FC = () => {
     loadAnnouncement();
   }, []);
 
-  const loadFeaturedCategories = async (coords: UserCoords) => {
-    setFeaturedLoading(true);
+  // Admin-managed taxonomy — fetched on mount, and again on every pull-to
+  // -refresh (see onRefresh below) so an admin toggling a category's active
+  // flag shows up without an app restart.
+  const loadCategories = async () => {
     try {
-      const featured = await get_featured_categories(
-        coords.latitude,
-        coords.longitude,
-      );
-      setFeaturedCategories(featured?.data ?? []);
-    } catch {
-      setFeaturedCategories([]);
-    } finally {
-      setFeaturedLoading(false);
+      const res = await get_service_categories();
+      setServiceCategories(res?.data ?? []);
+    } catch (error) {
+      console.error('Home loadCategories error:', error);
     }
   };
 
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
   const loadAll = async () => {
     setLoading(true);
-    let coords: UserCoords | null = null;
     try {
       const [resolvedCoords, user_id] = await Promise.all([
         getCurrentLocation(),
         AsyncStorage.getItem('user_id'),
       ]);
 
-      coords = resolvedCoords;
-      setUserCoords(coords);
+      setUserCoords(resolvedCoords);
 
       const [services, banners, dealers, profile, myBikes] = await Promise.all([
         get_servicelist(),
         get_bannerlist(),
-        coords
-          ? get_nearyBydeler(coords.latitude, coords.longitude)
+        resolvedCoords
+          ? get_nearyBydeler(resolvedCoords.latitude, resolvedCoords.longitude)
           : Promise.resolve(null),
         user_id ? get_profile(user_id) : Promise.resolve(null),
         get_mybikes(),
       ]);
 
-      if (services?.data) {
-        setServiceList(services.data);
-      }
-      if (banners?.data) {
-        setBannerList(banners.data);
-      }
-      if (dealers?.data) {
-        setDealerList(dealers.data);
-      }
-      if (profile?.success) {
-        setUser(profile.data);
-      }
-      setBikeList(myBikes?.data ?? []);
+      if (services?.data) setServiceList(services.data);
+      if (banners?.data) setBannerList(banners.data);
+      if (dealers?.data) setDealerList(dealers.data);
+      if (profile?.success) setUser(profile.data);
+      const bikes = myBikes?.data ?? [];
+      setBikeList(bikes);
+      setActiveBikeIndex(0);
+      return {resolvedCoords, bikes};
     } catch (error) {
       console.error('Home loadAll error:', error);
+      return {resolvedCoords: null, bikes: [] as BikeItem[]};
     } finally {
       setLoading(false);
     }
-
-    if (coords) {
-      loadFeaturedCategories(coords);
-    }
   };
 
+  // Pure fetchers (no state writes) shared between the reactive effects below
+  // and pull-to-refresh, so a manual refresh can force every section fresh
+  // using the just-resolved location/bike instead of whatever's still in
+  // state from before the refresh.
+  const fetchQuickAndRecommended = async (
+    bikeId?: string,
+    lat?: number,
+    lng?: number,
+  ) => {
+    const [qs, rec] = await Promise.all([
+      get_quick_services(bikeId, lat, lng),
+      get_recommended_for_you(bikeId, lat, lng),
+    ]);
+    return {
+      quickServices: (qs?.data ?? []) as QuickServiceItem[],
+      recommended: (rec?.data ?? []) as RecommendedServiceItem[],
+    };
+  };
+
+  const fetchMostBooked = async (lat?: number, lng?: number) => {
+    const res = await get_most_booked_near_you(lat, lng);
+    return (res?.data ?? []) as MostBookedServiceItem[];
+  };
+
+  const fetchTopGarages = async (lat?: number, lng?: number) => {
+    const res = await get_top_garages(lat, lng);
+    return (res?.data ?? []) as TopGarageItem[];
+  };
+
+  // Pull-to-refresh re-resolves location/bikes first, then re-fetches every
+  // other section (categories, quick services, recommended, most-booked, top
+  // garages) with those fresh values — the one place a user can force
+  // everything current without waiting on a bike/location change.
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadAll();
-    setRefreshing(false);
+    try {
+      const {resolvedCoords, bikes} = await loadAll();
+      const bikeId = bikes?.[0]?._id;
+
+      setQuickServicesLoading(true);
+      setRecommendedLoading(true);
+      setMostBookedLoading(true);
+      setTopGaragesLoading(true);
+
+      await Promise.all([
+        loadCategories(),
+        fetchQuickAndRecommended(
+          bikeId,
+          resolvedCoords?.latitude,
+          resolvedCoords?.longitude,
+        )
+          .then(result => {
+            setQuickServices(result.quickServices);
+            setRecommended(result.recommended);
+          })
+          .catch(error =>
+            console.error('Home quick/recommended refresh error:', error),
+          )
+          .finally(() => {
+            setQuickServicesLoading(false);
+            setRecommendedLoading(false);
+          }),
+        fetchMostBooked(resolvedCoords?.latitude, resolvedCoords?.longitude)
+          .then(setMostBooked)
+          .catch(error =>
+            console.error('Home most-booked refresh error:', error),
+          )
+          .finally(() => setMostBookedLoading(false)),
+        resolvedCoords
+          ? fetchTopGarages(resolvedCoords.latitude, resolvedCoords.longitude)
+              .then(setTopGarages)
+              .catch(error =>
+                console.error('Home top-garages refresh error:', error),
+              )
+              .finally(() => setTopGaragesLoading(false))
+          : Promise.resolve().then(() => {
+              setTopGarages([]);
+              setTopGaragesLoading(false);
+            }),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   // Refetches on tab focus AND on app resume (foreground) while Home is the
   // active tab — nearby garages must drop offline/inactive dealers on the
   // very next look, without needing a manual pull-to-refresh or restart.
   useRefreshOnResume(loadAll);
+
+  // Quick Services + Recommended are bike-aware — re-fetch whenever the
+  // active bike (bike-swipe) or the resolved location changes. bikeId is
+  // omitted from the request entirely (not sent as '') when there's no
+  // selected/available bike, so the backend falls back to area popularity.
+  useEffect(() => {
+    let cancelled = false;
+    setQuickServicesLoading(true);
+    setRecommendedLoading(true);
+    fetchQuickAndRecommended(
+      activeBikeId,
+      userCoords?.latitude,
+      userCoords?.longitude,
+    )
+      .then(result => {
+        if (!cancelled) {
+          setQuickServices(result.quickServices);
+          setRecommended(result.recommended);
+        }
+      })
+      .catch(error =>
+        console.error('Home quick/recommended load error:', error),
+      )
+      .finally(() => {
+        if (!cancelled) {
+          setQuickServicesLoading(false);
+          setRecommendedLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeBikeId, userCoords?.latitude, userCoords?.longitude]);
+
+  // Most Booked Near You + Top Rated Garages are location-aware only (not
+  // bike-specific) — re-fetch whenever the resolved location changes.
+  useEffect(() => {
+    let cancelled = false;
+    setMostBookedLoading(true);
+    fetchMostBooked(userCoords?.latitude, userCoords?.longitude)
+      .then(data => {
+        if (!cancelled) {
+          setMostBooked(data);
+        }
+      })
+      .catch(error => console.error('Home most-booked load error:', error))
+      .finally(() => {
+        if (!cancelled) {
+          setMostBookedLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userCoords?.latitude, userCoords?.longitude]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (userCoords?.latitude == null || userCoords?.longitude == null) {
+      setTopGarages([]);
+      setTopGaragesLoading(false);
+      return undefined;
+    }
+    setTopGaragesLoading(true);
+    fetchTopGarages(userCoords?.latitude, userCoords?.longitude)
+      .then(data => {
+        if (!cancelled) {
+          setTopGarages(data);
+        }
+      })
+      .catch(error => console.error('Home top-garages load error:', error))
+      .finally(() => {
+        if (!cancelled) {
+          setTopGaragesLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userCoords?.latitude, userCoords?.longitude]);
+
+  const hasBike = bikeList.length > 0;
+
+  const searchIndex: SearchResult[] = useMemo(
+    () =>
+      buildSearchIndex(serviceList, serviceCategories, dealerList, bikeList),
+    [serviceList, serviceCategories, dealerList, bikeList],
+  );
+
+  const recentBookings: RecentBookingLike[] = useMemo(
+    () =>
+      bookings
+        .filter((b): b is RecentBookingLike => Boolean(b._id))
+        .sort((a: any, b: any) => {
+          const da = new Date(a.create_date || a.createdAt || 0).getTime();
+          const db = new Date(b.create_date || b.createdAt || 0).getTime();
+          return db - da;
+        })
+        .slice(0, 6),
+    [bookings],
+  );
+
+  // ── Navigation helpers ──────────────────────────────────────────────
+  // Garage-first taps (user already picked a specific garage) skip straight
+  // to the bike-select -> GARAGE_DETAILS flow the app already ships.
+  const goToBikeSelect = (params: {serviceId?: string; Grageid?: string}) => {
+    (navigation as any).navigate(ScreenNameEnum.MY_BIKES, {
+      profile: false,
+      ...params,
+    });
+  };
+
+  // Service-first taps (Quick Services, Recommended, Most Booked, search)
+  // open the Service Detail / Compare Garages screen instead — that's the
+  // "service -> compare nearby garages -> book" entry point, not the bike
+  // -> garage flow above. bikeId is the currently active bike from the
+  // swipe carousel (falls back to the user's first saved bike if none is
+  // active yet); the screen itself works fine without one.
+  const goToServiceDetail = (serviceId?: string) => {
+    if (!serviceId) return;
+    (navigation as any).navigate(ScreenNameEnum.SERVICE_DETAIL, {
+      serviceId,
+      bikeId: activeBikeId ?? bikeList[0]?._id,
+    });
+  };
+
+  const handleSearchSelect = (result: SearchResult) => {
+    if (result.type === 'garage') {
+      goToBikeSelect({Grageid: result.dealerId});
+    } else if (result.type === 'service') {
+      goToServiceDetail(result.serviceId);
+    } else if (result.type === 'category') {
+      (navigation as any).navigate(ScreenNameEnum.ALL_SERVICES, {
+        categoryId: result.categoryId,
+      });
+    } else {
+      goToBikeSelect({});
+    }
+  };
+
+  const handleQuickService = (service: QuickServiceItem) =>
+    goToServiceDetail(service.serviceId);
+
+  const handleRecommended = (item: RecommendedServiceItem) =>
+    goToServiceDetail(item.serviceId);
+
+  const handlePopular = (item: MostBookedServiceItem) =>
+    goToServiceDetail(item.serviceId);
+
+  const handleCategory = (cat: ServiceCategoryItem) =>
+    (navigation as any).navigate(ScreenNameEnum.ALL_SERVICES, {
+      categoryId: cat._id,
+      categoryName: cat.name,
+    });
+
+  const handleTopGarage = (garage: TopGarageItem) =>
+    goToBikeSelect({Grageid: garage.dealerId});
+
+  const handleManageBike = () => goToBikeSelect({});
+  const handleAddBike = () =>
+    (navigation as any).navigate(ScreenNameEnum.BIKE_DETAILS);
+
+  const handleTrackBooking = (booking: RecentBookingLike) =>
+    (navigation as any).navigate(ScreenNameEnum.SERVICE_SUMMERY, {
+      id: booking._id,
+    });
+
+  const handleInvoiceBooking = (booking: RecentBookingLike) =>
+    (navigation as any).navigate(ScreenNameEnum.InvoiceScreen, {
+      bookingId: booking._id,
+    });
+
+  const handleRepeatBooking = (booking: RecentBookingLike) => {
+    const dealerId = resolveObjectId((booking as any).dealer_id);
+    const bikeId = resolveObjectId((booking as any).userBike_id);
+    const bike = bikeList.find(b => b._id === bikeId);
+
+    if (bike && dealerId) {
+      (navigation as any).navigate(ScreenNameEnum.GARAGE_DETAILS, {
+        bike,
+        id: dealerId,
+      });
+    } else if (dealerId) {
+      goToBikeSelect({Grageid: dealerId});
+    }
+  };
+
+  const offers: OfferTile[] = useMemo(
+    () => [
+      {
+        key: 'refer',
+        title: 'Refer & Earn',
+        subtitle: 'Invite friends and earn rewards on their first service',
+        icon: 'gift-outline',
+        onPress: () =>
+          (navigation as any).navigate(ScreenNameEnum.REWARDS_REFERRALS),
+      },
+    ],
+    [navigation],
+  );
 
   return (
     <View style={styles.container}>
@@ -368,9 +524,24 @@ const Home: React.FC = () => {
       />
 
       {loading ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={color.buttonColor} />
-        </View>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <HomeHeader
+            navigation={navigation}
+            location={locationName || 'Set your location'}
+            hasNotifications={true}
+            User={User}
+            onLocationPress={() =>
+              navigation.navigate(ScreenNameEnum.SELECT_LOCATION)
+            }
+            onNotificationPress={() =>
+              navigation.navigate(ScreenNameEnum.Notification)
+            }
+            onProfilePress={() =>
+              (navigation as any).navigate(ScreenNameEnum.PROFILE_SCREEN)
+            }
+          />
+          <HomeSkeleton />
+        </ScrollView>
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -396,92 +567,164 @@ const Home: React.FC = () => {
             onNotificationPress={() =>
               navigation.navigate(ScreenNameEnum.Notification)
             }
+            onProfilePress={() =>
+              (navigation as any).navigate(ScreenNameEnum.PROFILE_SCREEN)
+            }
           />
 
-          {/* Banner */}
+          <HomeSearchBar
+            index={searchIndex}
+            onSelectResult={handleSearchSelect}
+          />
+
           {bannerList.length > 0 && (
             <BannerSlider navigation={navigation} data={bannerList} />
           )}
-
-          {/* Search */}
-          <View style={styles.searchBar}>
-            <Image source={icon.search} style={styles.searchIcon} />
-            <Text style={styles.searchPlaceholder}>
-              Search for services, garages...
-            </Text>
-          </View>
-
-          {/* Services */}
+          {/* Service categories — admin-managed, no hardcoded list */}
+          <SectionHeader title="Browse by Category" />
+          {serviceCategories.length > 0 ? (
+            <ServiceCategoriesGrid
+              categories={serviceCategories}
+              onPress={handleCategory}
+            />
+          ) : (
+            <EmptySection
+              icon="shape-outline"
+              message="Categories are being updated"
+            />
+          )}
+          {/* Quick Services — only ones this bike/network actually supports */}
           <SectionHeader
-            title="Our Services"
-            onSeeAll={() => navigation.navigate(ScreenNameEnum.ALL_SERVICES)}
+            title="Quick Services"
+            subtitle="Book in a couple of taps"
           />
 
-          {featuredLoading ? (
-            <FeaturedCategorySkeleton />
-          ) : featuredCategories.length > 0 ? (
-            <FlatList
-              data={featuredCategories}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={item => item._id}
-              contentContainerStyle={featStyles.listContainer}
-              renderItem={({item}) => (
-                <FeaturedCategoryCard
-                  item={item}
-                  onPress={() =>
-                    (navigation as any).navigate(ScreenNameEnum.MY_BIKES, {
-                      profile: false,
-                      serviceId: item.serviceId?._id,
-                    })
-                  }
+          {quickServicesLoading ? (
+            <SkeletonRow count={5} width={64} height={64} />
+          ) : quickServices.length > 0 ? (
+            <QuickServicesRow
+              services={quickServices}
+              onPress={handleQuickService}
+            />
+          ) : (
+            <EmptySection
+              icon="wrench-outline"
+              message="No quick services available right now"
+            />
+          )}
+
+          {mostBooked.length > 0 && (
+            <>
+              {/* Most booked near you */}
+              <SectionHeader
+                title="Most Booked Near You"
+                onSeeAll={() =>
+                  (navigation as any).navigate(ScreenNameEnum.ALL_SERVICES)
+                }
+              />
+              {mostBookedLoading ? (
+                <View style={{paddingHorizontal: 20}}>
+                  <Shimmer
+                    style={{height: 70, borderRadius: 18, marginBottom: 12}}
+                  />
+                  <Shimmer
+                    style={{height: 70, borderRadius: 18, marginBottom: 12}}
+                  />
+                </View>
+              ) : mostBooked.length > 0 ? (
+                <PopularNearYouSection
+                  items={mostBooked}
+                  onSelect={handlePopular}
+                />
+              ) : (
+                <EmptySection
+                  icon="chart-line"
+                  message="No booking activity in your area yet"
                 />
               )}
-            />
-          ) : null}
-          {!featuredLoading &&
-            serviceList.length === 0 &&
-            featuredCategories.length === 0 && (
-              <EmptyState
-                iconSource={icon.booking}
-                title="No services available"
-                subtitle="Please check back again later"
-              />
-            )}
+            </>
+          )}
 
-          {/* My Vehicle */}
+          {/* Top rated garages */}
           <SectionHeader
-            title="My Vehicle"
-            onSeeAll={() =>
-              (navigation as any).navigate(ScreenNameEnum.MY_BIKES, {
-                profile: false,
-              })
+            title="Top Rated Garages"
+            subtitle="Highest rated near you, right now"
+          />
+          {topGaragesLoading ? (
+            <SkeletonRow count={3} width={236} height={180} />
+          ) : topGarages.length > 0 ? (
+            <TopRatedGaragesSection
+              garages={topGarages}
+              onSelect={handleTopGarage}
+            />
+          ) : (
+            <EmptySection
+              icon="store-search-outline"
+              message="No garages found nearby"
+            />
+          )}
+          {recommended.length > 0 && (
+            <>
+              {/* Recommended */}
+              <SectionHeader
+                title="Recommended For Your Bike"
+                subtitle={
+                  hasBike
+                    ? 'Based on your bike & service history'
+                    : 'Popular with riders near you'
+                }
+              />
+              {recommendedLoading ? (
+                <SkeletonRow count={3} width={168} height={150} />
+              ) : recommended.length > 0 ? (
+                <RecommendedForYouSection
+                  items={recommended}
+                  onSelect={handleRecommended}
+                />
+              ) : (
+                <EmptySection
+                  icon="star-outline"
+                  message="No recommendations yet — check back soon"
+                />
+              )}
+            </>
+          )}
+          {/* My Bike(s) */}
+          <SectionHeader
+            title="My Bikes"
+            subtitle={
+              hasBike
+                ? 'Manage your vehicle & service history'
+                : 'Add your bike to unlock quick booking'
             }
           />
-          <View style={styles.vehicleSection}>
-            <MyVehicleCard
-              bikes={bikeList}
-              onManage={() =>
-                (navigation as any).navigate(ScreenNameEnum.MY_BIKES, {
-                  profile: false,
-                })
-              }
-              onAdd={() => (navigation as any).navigate(ScreenNameEnum.BIKE_DETAILS)}
-            />
-          </View>
+          <MyBikeCarousel
+            bikes={bikeList}
+            onManage={handleManageBike}
+            onAdd={handleAddBike}
+            onActiveIndexChange={setActiveBikeIndex}
+          />
 
-          {/* Nearby Garages */}
-          <SectionHeader title="Nearby Garages" />
-          {dealerList.length > 0 ? (
-            <View style={styles.garageSection}>
-              <GarageList data={dealerList} userLocation={userCoords} />
-            </View>
-          ) : (
-            <EmptyState
-              iconSource={icon.pin}
-              title="No garages found nearby"
-              subtitle="Try changing your location to see more results"
-            />
+          {/* Special offers */}
+          <SectionHeader title="Offers For You" />
+          <SpecialOffersRow offers={offers} />
+
+          {/* Recent bookings */}
+          {recentBookings.length > 0 && (
+            <>
+              <SectionHeader
+                title="Recent Bookings"
+                onSeeAll={() =>
+                  (navigation as any).navigate(ScreenNameEnum.BOOKING_SCREEN)
+                }
+              />
+              <RecentBookingsRow
+                bookings={recentBookings}
+                onTrack={handleTrackBooking}
+                onRepeat={handleRepeatBooking}
+                onInvoice={handleInvoiceBooking}
+              />
+            </>
           )}
         </ScrollView>
       )}
@@ -494,250 +737,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: color.baground,
   },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginTop: 28,
-    marginBottom: 4,
-  },
-  sectionTitle: {
-    fontSize: 19,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: 0.2,
-  },
-  seeAllBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  seeAllText: {
-    fontSize: 13,
-    color: color.buttonColor,
-    fontWeight: '700',
-    marginRight: 4,
-  },
-  seeAllIcon: {
-    width: 9,
-    height: 9,
-    tintColor: color.buttonColor,
-  },
-  garageSection: {
-    marginTop: 10,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  emptySection: {
     marginHorizontal: 20,
-    marginTop: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 24,
-    backgroundColor: color.cardSurface,
-    borderWidth: 1,
-    borderColor: color.borderSubtle,
-  },
-  searchIcon: {
-    width: 16,
-    height: 16,
-    tintColor: '#8A93AD',
-    marginRight: 8,
-  },
-  searchPlaceholder: {
-    fontSize: 13,
-    color: '#8A93AD',
-    fontWeight: '500',
-  },
-  emptyText: {
-    textAlign: 'center',
-    marginVertical: 16,
-    color: '#606880',
-    fontSize: 13,
-  },
-  emptyCard: {
-    marginHorizontal: 20,
-    marginTop: 10,
-    paddingVertical: 26,
-    paddingHorizontal: 20,
-    borderRadius: 18,
-    backgroundColor: color.cardSurface,
-    borderWidth: 1,
-    borderColor: color.borderSubtle,
-    alignItems: 'center',
-  },
-  emptyIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(254,212,40,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  emptyIcon: {
-    width: 22,
-    height: 22,
-    tintColor: color.buttonColor,
-  },
-  emptyTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
-  emptySubtitle: {
-    fontSize: 12,
-    color: '#8A93AD',
-    textAlign: 'center',
     marginTop: 4,
-  },
-  vehicleSection: {
-    marginHorizontal: 20,
-    marginTop: 10,
-  },
-  vehicleCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 18,
-    backgroundColor: color.cardSurface,
-    borderWidth: 1,
-    borderColor: color.borderSubtle,
-  },
-  vehicleIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: 'rgba(254,212,40,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  vehicleIcon: {
-    width: 26,
-    height: 26,
-   
-  },
-  vehicleInfo: {
-    flex: 1,
-    marginRight: 10,
-  },
-  vehicleTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  vehicleSubtitle: {
-    fontSize: 12,
-    color: '#8A93AD',
-    marginTop: 3,
-  },
-  vehicleBtn: {
-    backgroundColor: color.buttonColor,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    borderRadius: 20,
-  },
-  vehicleBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: color.baground,
-  },
-});
-
-const featStyles = StyleSheet.create({
-  listContainer: {
-    paddingHorizontal: 14,
-    paddingBottom: 4,
-  },
-  skeletonRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 14,
-  },
-  card: {
-    width: FEAT_CARD_WIDTH,
-    backgroundColor: '#1B2A4A',
-    borderRadius: 16,
-    marginTop: 14,
-    padding: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: 6,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowOffset: {width: 0, height: 3},
-    shadowRadius: 6,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(254,212,40,0.12)',
-  },
-  skeletonCard: {
-    backgroundColor: '#1E2D4A',
-    height: 104,
-  },
-  tile: {
-    width: 104,
-    height: 104,
-    borderRadius: 18,
-    overflow: 'hidden',
-    marginHorizontal: 6,
-    marginTop: 14,
-    backgroundColor: color.cardSurface,
-    borderWidth: 1,
-    borderColor: color.borderSubtle,
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowOffset: {width: 0, height: 4},
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  tileImage: {
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
-  },
-  tileOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(8,16,65,0.45)',
-  },
-  tileLabelWrap: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    padding: 10,
-  },
-  tileLabel: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '700',
-    textAlign: 'center',
-    letterSpacing: 0.2,
-  },
-  imageWrapper: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: 'rgba(254,212,40,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: 8,
-    overflow: 'hidden',
+    paddingVertical: 22,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: color.cardSurface,
+    borderWidth: 1,
+    borderColor: color.borderSubtle,
   },
-  image: {
-    width: 52,
-    height: 52,
-  },
-  name: {
-    fontSize: 11,
+  emptySectionText: {
+    fontSize: 12.5,
     fontWeight: '600',
-    color: '#E8E8E8',
+    color: color.textMuted,
     textAlign: 'center',
-    lineHeight: 15,
   },
 });
 

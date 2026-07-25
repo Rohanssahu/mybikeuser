@@ -48,4 +48,12 @@ export const endpoint = {
   myReferralCode: '/bikedoctor/customers/getMyReferralCode',
   referralSummary: '/bikedoctor/customers/getReferralSummary',
   referralTransactions: '/bikedoctor/customers/getReferralTransactions',
+  // Home screen v2 — live under /api/v1, NOT under /bikedoctor (different
+  // base path convention on the same base_url host). See docs/HOME_REDESIGN.md.
+  serviceCategories: '/api/v1/service-categories',
+  servicesByCategory: '/api/v1/services',
+  quickServices: '/api/v1/home/quick-services',
+  recommendedForYou: '/api/v1/home/recommended',
+  mostBookedNearYou: '/api/v1/home/most-booked',
+  topGarages: '/api/v1/home/top-garages',
 };

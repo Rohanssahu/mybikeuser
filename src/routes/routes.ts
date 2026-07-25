@@ -23,6 +23,7 @@ import InvoiceScreen from "../screen/Feature/InvoiceScreen";
 import MyBikes from "../screen/Feature/MyBikes";
 import NearByShops from "../screen/Feature/NearByShops";
 import PaymentScreen from "../screen/Feature/PaymentScreen";
+import ServiceDetailScreen from "../screen/Feature/ServiceDetailScreen";
 import ServiceSummary from "../screen/Feature/ServiceSummary";
 import EditProfile from "../screen/profile/EditProfile";
 import NotificatioScreen from "../screen/profile/NotificationSetting";
@@ -71,6 +72,10 @@ const _routes = {
     {
       name: ScreenNameEnum.GARAGE_DETAILS,
       Component: GarageDetails,
+    },
+    {
+      name: ScreenNameEnum.SERVICE_DETAIL,
+      Component: ServiceDetailScreen,
     },
     {
       name: ScreenNameEnum.BOOKING_COMPLETE,

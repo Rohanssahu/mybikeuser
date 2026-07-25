@@ -1730,4 +1730,182 @@ const get_faqs = async () => {
     }
 };
 
-export { additionalservices, updateBooking, get_invoice, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, get_pricing_quote, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist, get_featured_categories, get_bookingTimerStatus, get_Notification, select_payment_method, get_legal_document, get_app_settings, get_app_banners, get_faqs, validate_referral_code, get_my_referral_code, get_referral_summary, get_referral_transactions };
+// ── Home screen v2 (backend live under /api/v1, not /bikedoctor) ───────────
+// All numeric/price/rating fields in these responses are server-computed —
+// nothing here sends a client-side price/rating/count back; every call is a
+// GET with only bikeId/lat/lng/categoryId as inputs. See docs/HOME_REDESIGN.md.
+
+const get_service_categories = async () => {
+    const token = await AsyncStorage.getItem('token');
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: endpoint.serviceCategories,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                token: token,
+            },
+        },
+    ];
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+        if (response?.data) {
+            return { success: true, data: response.data };
+        }
+        return { success: false, message: 'Unexpected response', data: [] };
+    } catch (error: any) {
+        console.error('get_service_categories error:', error);
+        return { success: false, message: error.message, data: [] };
+    }
+};
+
+const get_services_by_category = async (categoryId: string, bikeId?: string) => {
+    const token = await AsyncStorage.getItem('token');
+    const params: string[] = [`categoryId=${categoryId}`];
+    if (bikeId) params.push(`bikeId=${bikeId}`);
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: `${endpoint.servicesByCategory}?${params.join('&')}`,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                token: token,
+            },
+        },
+    ];
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+        if (response?.data) {
+            return { success: true, data: response.data, meta: response.meta };
+        }
+        return { success: false, message: 'Unexpected response', data: [] };
+    } catch (error: any) {
+        console.error('get_services_by_category error:', error);
+        return { success: false, message: error.message, data: [] };
+    }
+};
+
+// bikeId is omitted from the query string entirely (not sent as an empty
+// string) when there's no selected/available bike — the backend treats its
+// absence as "no bike selected" and falls back to area/network popularity.
+const get_quick_services = async (bikeId?: string, lat?: number, lng?: number) => {
+    const token = await AsyncStorage.getItem('token');
+    const params: string[] = [];
+    if (bikeId) params.push(`bikeId=${bikeId}`);
+    if (lat != null) params.push(`lat=${lat}`);
+    if (lng != null) params.push(`lng=${lng}`);
+    const qs = params.length ? `?${params.join('&')}` : '';
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: `${endpoint.quickServices}${qs}`,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                token: token,
+            },
+        },
+    ];
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+        if (response?.data) {
+            return { success: true, data: response.data, meta: response.meta };
+        }
+        return { success: false, message: 'Unexpected response', data: [] };
+    } catch (error: any) {
+        console.error('get_quick_services error:', error);
+        return { success: false, message: error.message, data: [] };
+    }
+};
+
+const get_recommended_for_you = async (bikeId?: string, lat?: number, lng?: number) => {
+    const token = await AsyncStorage.getItem('token');
+    const params: string[] = [];
+    if (bikeId) params.push(`bikeId=${bikeId}`);
+    if (lat != null) params.push(`lat=${lat}`);
+    if (lng != null) params.push(`lng=${lng}`);
+    const qs = params.length ? `?${params.join('&')}` : '';
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: `${endpoint.recommendedForYou}${qs}`,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                token: token,
+            },
+        },
+    ];
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+        if (response?.data) {
+            return { success: true, data: response.data, meta: response.meta };
+        }
+        return { success: false, message: 'Unexpected response', data: [] };
+    } catch (error: any) {
+        console.error('get_recommended_for_you error:', error);
+        return { success: false, message: error.message, data: [] };
+    }
+};
+
+const get_most_booked_near_you = async (lat?: number, lng?: number) => {
+    const token = await AsyncStorage.getItem('token');
+    const params: string[] = [];
+    if (lat != null) params.push(`lat=${lat}`);
+    if (lng != null) params.push(`lng=${lng}`);
+    const qs = params.length ? `?${params.join('&')}` : '';
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: `${endpoint.mostBookedNearYou}${qs}`,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                token: token,
+            },
+        },
+    ];
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+        if (response?.data) {
+            return { success: true, data: response.data };
+        }
+        return { success: false, message: 'Unexpected response', data: [] };
+    } catch (error: any) {
+        console.error('get_most_booked_near_you error:', error);
+        return { success: false, message: error.message, data: [] };
+    }
+};
+
+const get_top_garages = async (lat?: number, lng?: number) => {
+    const token = await AsyncStorage.getItem('token');
+    const params: string[] = [];
+    if (lat != null) params.push(`lat=${lat}`);
+    if (lng != null) params.push(`lng=${lng}`);
+    const qs = params.length ? `?${params.join('&')}` : '';
+    const apiRequests: ApiRequest[] = [
+        {
+            endpoint: `${endpoint.topGarages}${qs}`,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                token: token,
+            },
+        },
+    ];
+    try {
+        const results = await callMultipleApis(apiRequests);
+        const response = results[0];
+        if (response?.data) {
+            return { success: true, data: response.data };
+        }
+        return { success: false, message: 'Unexpected response', data: [] };
+    } catch (error: any) {
+        console.error('get_top_garages error:', error);
+        return { success: false, message: error.message, data: [] };
+    }
+};
+
+export { additionalservices, updateBooking, get_invoice, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, get_pricing_quote, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist, get_featured_categories, get_bookingTimerStatus, get_Notification, select_payment_method, get_legal_document, get_app_settings, get_app_banners, get_faqs, validate_referral_code, get_my_referral_code, get_referral_summary, get_referral_transactions, get_service_categories, get_services_by_category, get_quick_services, get_recommended_for_you, get_most_booked_near_you, get_top_garages };
