@@ -63,7 +63,15 @@ export const LocationProvider = ({children}) => {
       const updated = [{name, ...(coords || {})}, ...filtered].slice(0, 5);
       await AsyncStorage.setItem('recentLocations', JSON.stringify(updated));
     } catch {}
-  }, []);
+
+    // A new location may fall in/out of a serviceable area — re-run the
+    // gate check against the picked coordinates so Home reflects the new
+    // location immediately instead of showing stale coming_soon/paused
+    // state (or stale normal content) from the previous location.
+    if (coords) {
+      checkServiceability(coords.latitude, coords.longitude);
+    }
+  }, [checkServiceability]);
 
   return (
     <LocationContext.Provider

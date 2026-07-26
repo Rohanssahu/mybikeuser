@@ -515,17 +515,42 @@ const Home: React.FC = () => {
     [navigation],
   );
 
+  // Rendered identically in the normal-Home branches and the gated
+  // (coming-soon/paused) branches below, so the location pill and
+  // notification bell stay visible and tappable no matter which content
+  // is showing underneath.
+  const homeHeaderElement = (
+    <HomeHeader
+      navigation={navigation}
+      location={locationName || 'Set your location'}
+      hasNotifications={true}
+      User={User}
+      onLocationPress={() =>
+        navigation.navigate(ScreenNameEnum.SELECT_LOCATION)
+      }
+      onNotificationPress={() =>
+        navigation.navigate(ScreenNameEnum.Notification)
+      }
+      onProfilePress={() =>
+        (navigation as any).navigate(ScreenNameEnum.PROFILE_SCREEN)
+      }
+    />
+  );
+
   // Area-serviceability gate. `serviceability` is null until the very first
   // check resolves (or if it never ran) — that "not yet resolved" case fails
   // open and renders Home exactly as today, gated only by the pre-existing
   // `loading`/`checkingServiceability` skeleton. An explicit non-live status
-  // replaces Home's service-discovery/booking content with a full-screen
-  // gate; it does NOT touch the bottom tab bar, so Booking/Support/Alerts
-  // /Profile stay reachable and usable.
+  // replaces Home's service-discovery/booking content (search bar, banners,
+  // sections) with the gate screen, but the header stays put above it so the
+  // user can still switch location or check notifications — it does NOT
+  // touch the bottom tab bar either, so Booking/Support/Alerts/Profile stay
+  // reachable and usable.
   if (serviceability?.status === 'coming_soon') {
     return (
       <View style={styles.container}>
         <StatusBar backgroundColor={color.baground} barStyle="light-content" />
+        {homeHeaderElement}
         <ComingSoonScreen
           areaName={serviceability.areaName || 'your area'}
           estimatedLiveDate={serviceability.estimatedLiveDate}
@@ -538,6 +563,7 @@ const Home: React.FC = () => {
     return (
       <View style={styles.container}>
         <StatusBar backgroundColor={color.baground} barStyle="light-content" />
+        {homeHeaderElement}
         <PausedScreen
           areaName={serviceability.areaName || 'your area'}
           reason={serviceability.reason}
@@ -558,21 +584,7 @@ const Home: React.FC = () => {
 
       {loading || checkingServiceability ? (
         <ScrollView showsVerticalScrollIndicator={false}>
-          <HomeHeader
-            navigation={navigation}
-            location={locationName || 'Set your location'}
-            hasNotifications={true}
-            User={User}
-            onLocationPress={() =>
-              navigation.navigate(ScreenNameEnum.SELECT_LOCATION)
-            }
-            onNotificationPress={() =>
-              navigation.navigate(ScreenNameEnum.Notification)
-            }
-            onProfilePress={() =>
-              (navigation as any).navigate(ScreenNameEnum.PROFILE_SCREEN)
-            }
-          />
+          {homeHeaderElement}
           <HomeSkeleton />
         </ScrollView>
       ) : (
@@ -589,21 +601,7 @@ const Home: React.FC = () => {
               colors={[color.buttonColor]}
             />
           }>
-          <HomeHeader
-            navigation={navigation}
-            location={locationName || 'Set your location'}
-            hasNotifications={true}
-            User={User}
-            onLocationPress={() =>
-              navigation.navigate(ScreenNameEnum.SELECT_LOCATION)
-            }
-            onNotificationPress={() =>
-              navigation.navigate(ScreenNameEnum.Notification)
-            }
-            onProfilePress={() =>
-              (navigation as any).navigate(ScreenNameEnum.PROFILE_SCREEN)
-            }
-          />
+          {homeHeaderElement}
 
           <HomeSearchBar
             index={searchIndex}
