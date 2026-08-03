@@ -22,7 +22,7 @@ import AnnouncementPopup, {
 } from '../modal/AnnouncementPopup';
 import {
   get_app_banners,
-  get_bannerlist,
+  get_home_services,
   get_mybikes,
   get_nearyBydeler,
   get_most_booked_near_you,
@@ -30,7 +30,8 @@ import {
   get_quick_services,
   get_recommended_for_you,
   get_service_categories,
-  get_servicelist,
+  get_Notification,
+  get_referral_summary,
   get_top_garages,
 } from '../../redux/Api/apiRequests';
 import {useLocation} from '../../component/LocationContext';
@@ -111,11 +112,21 @@ const EmptySection: React.FC<{icon: string; message: string}> = ({
   </View>
 );
 
+const ErrorSection: React.FC<{message: string}> = ({message}) => (
+  <EmptySection icon="alert-circle-outline" message={message} />
+);
+
 const Home: React.FC = () => {
   const navigation = useNavigation<NavigationProps>();
   const insets = useSafeAreaInsets();
   const isFocus = useIsFocused();
-  const {locationName, serviceability, checkingServiceability} = useLocation();
+  const {
+    locationName,
+    locationCoords,
+    setLocationCoords,
+    serviceability,
+    checkingServiceability,
+  } = useLocation();
 
   const [serviceList, setServiceList] = useState<ServiceCatalogItem[]>([]);
   const [bannerList, setBannerList] = useState<any[]>([]);
@@ -146,32 +157,42 @@ const Home: React.FC = () => {
   const [mostBookedLoading, setMostBookedLoading] = useState(true);
   const [topGarages, setTopGarages] = useState<TopGarageItem[]>([]);
   const [topGaragesLoading, setTopGaragesLoading] = useState(true);
+  const [sectionErrors, setSectionErrors] = useState<Record<string, string | null>>({});
+  const [referralSummary, setReferralSummary] = useState<any>(null);
+  const [offersLoading, setOffersLoading] = useState(true);
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
-  const {bookings} = useUserBookings(isFocus);
+  const {bookings, loading: bookingsLoading, error: bookingsError} = useUserBookings(isFocus);
+
+  const setSectionError = (section: string, message: string | null) =>
+    setSectionErrors(prev => ({...prev, [section]: message}));
 
   // Fetched once per app session — not on every tab focus — so a dismissed
   // popup doesn't reappear each time the user switches back to Home.
   React.useEffect(() => {
+    if (userCoords?.latitude == null || userCoords?.longitude == null) return;
     const loadAnnouncement = async () => {
       try {
         const [popupRes, announcementRes] = await Promise.all([
-          get_app_banners('popup'),
-          get_app_banners('announcement'),
+          get_app_banners('popup', userCoords?.latitude, userCoords?.longitude),
+          get_app_banners('announcement', userCoords?.latitude, userCoords?.longitude),
         ]);
         const active = [
           ...(popupRes?.data ?? []),
           ...(announcementRes?.data ?? []),
         ];
+        setAnnouncement(null);
+        setAnnouncementVisible(false);
         if (active.length > 0) {
           setAnnouncement(active[0]);
           setAnnouncementVisible(true);
         }
       } catch (error) {
-        console.error('Home loadAnnouncement error:', error);
+        setSectionError('announcement', 'Could not load announcements');
       }
     };
     loadAnnouncement();
-  }, []);
+  }, [userCoords?.latitude, userCoords?.longitude]);
 
   // Admin-managed taxonomy — fetched on mount, and again on every pull-to
   // -refresh (see onRefresh below) so an admin toggling a category's active
@@ -180,45 +201,73 @@ const Home: React.FC = () => {
     try {
       const res = await get_service_categories();
       setServiceCategories(res?.data ?? []);
+      setSectionError('categories', res?.success ? null : 'Could not load categories');
     } catch (error) {
       console.error('Home loadCategories error:', error);
+      setSectionError('categories', 'Could not load categories');
     }
   };
 
   useEffect(() => {
     loadCategories();
+    // loadCategories is intentionally invoked once here and explicitly by
+    // pull-to-refresh; keeping it outside this dependency list avoids a
+    // refetch loop from its state updates.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadAll = async () => {
     setLoading(true);
     try {
       const [resolvedCoords, user_id] = await Promise.all([
-        getCurrentLocation(),
+        locationCoords ? Promise.resolve(locationCoords) : getCurrentLocation(),
         AsyncStorage.getItem('user_id'),
       ]);
 
       setUserCoords(resolvedCoords);
+      if (!locationCoords && resolvedCoords) setLocationCoords(resolvedCoords);
 
-      const [services, banners, dealers, profile, myBikes] = await Promise.all([
-        get_servicelist(),
-        get_bannerlist(),
+      const [services, banners, dealers, profile, myBikes, referral, notifications] = await Promise.all([
+        get_home_services(),
+        get_app_banners('home', resolvedCoords?.latitude, resolvedCoords?.longitude),
         resolvedCoords
           ? get_nearyBydeler(resolvedCoords.latitude, resolvedCoords.longitude)
           : Promise.resolve(null),
         user_id ? get_profile(user_id) : Promise.resolve(null),
         get_mybikes(),
+        get_referral_summary(),
+        user_id ? get_Notification(user_id) : Promise.resolve(null),
       ]);
 
-      if (services?.data) setServiceList(services.data);
-      if (banners?.data) setBannerList(banners.data);
-      if (dealers?.data) setDealerList(dealers.data);
+      setServiceList(services?.data ?? []);
+      setSectionError(
+        'search',
+        services?.success && (dealers?.success || !resolvedCoords)
+          ? null
+          : 'Could not load all search data',
+      );
+      setBannerList(banners?.data ?? []);
+      setSectionError('banners', banners?.success ? null : 'Could not load banners');
+      setDealerList(dealers?.data ?? []);
       if (profile?.success) setUser(profile.data);
       const bikes = myBikes?.data ?? [];
       setBikeList(bikes);
+      setSectionError('bikes', myBikes?.success ? null : 'Could not load your bikes');
+      setReferralSummary(referral?.success ? referral.data : null);
+      setSectionError('offers', referral?.success ? null : 'Could not load offers');
+      setOffersLoading(false);
+      const notificationRows = notifications?.success && Array.isArray(notifications?.data?.data)
+        ? notifications.data.data
+        : [];
+      setHasUnreadNotifications(notificationRows.some((item: any) => item.read !== true));
+      setSectionError('notifications', notifications?.success || !user_id ? null : 'Could not load notifications');
+      setSectionError('home', null);
       setActiveBikeIndex(0);
       return {resolvedCoords, bikes};
     } catch (error) {
       console.error('Home loadAll error:', error);
+      setSectionError('home', 'Could not refresh Home data');
+      setOffersLoading(false);
       return {resolvedCoords: null, bikes: [] as BikeItem[]};
     } finally {
       setLoading(false);
@@ -238,6 +287,8 @@ const Home: React.FC = () => {
       get_quick_services(bikeId, lat, lng),
       get_recommended_for_you(bikeId, lat, lng),
     ]);
+    if (!qs?.success) throw new Error('Could not load quick services');
+    if (!rec?.success) throw new Error('Could not load recommendations');
     return {
       quickServices: (qs?.data ?? []) as QuickServiceItem[],
       recommended: (rec?.data ?? []) as RecommendedServiceItem[],
@@ -246,11 +297,13 @@ const Home: React.FC = () => {
 
   const fetchMostBooked = async (lat?: number, lng?: number) => {
     const res = await get_most_booked_near_you(lat, lng);
+    if (!res?.success) throw new Error('Could not load booking activity');
     return (res?.data ?? []) as MostBookedServiceItem[];
   };
 
   const fetchTopGarages = async (lat?: number, lng?: number) => {
     const res = await get_top_garages(lat, lng);
+    if (!res?.success) throw new Error('Could not load top garages');
     return (res?.data ?? []) as TopGarageItem[];
   };
 
@@ -279,26 +332,27 @@ const Home: React.FC = () => {
           .then(result => {
             setQuickServices(result.quickServices);
             setRecommended(result.recommended);
+            setSectionError('quickServices', null);
+            setSectionError('recommended', null);
           })
-          .catch(error =>
-            console.error('Home quick/recommended refresh error:', error),
-          )
+          .catch(error => {
+            setSectionError('quickServices', error.message);
+            setSectionError('recommended', error.message);
+          })
           .finally(() => {
             setQuickServicesLoading(false);
             setRecommendedLoading(false);
           }),
         fetchMostBooked(resolvedCoords?.latitude, resolvedCoords?.longitude)
           .then(setMostBooked)
-          .catch(error =>
-            console.error('Home most-booked refresh error:', error),
-          )
+          .then(() => setSectionError('mostBooked', null))
+          .catch(error => setSectionError('mostBooked', error.message))
           .finally(() => setMostBookedLoading(false)),
         resolvedCoords
           ? fetchTopGarages(resolvedCoords.latitude, resolvedCoords.longitude)
               .then(setTopGarages)
-              .catch(error =>
-                console.error('Home top-garages refresh error:', error),
-              )
+              .then(() => setSectionError('topGarages', null))
+              .catch(error => setSectionError('topGarages', error.message))
               .finally(() => setTopGaragesLoading(false))
           : Promise.resolve().then(() => {
               setTopGarages([]);
@@ -332,11 +386,14 @@ const Home: React.FC = () => {
         if (!cancelled) {
           setQuickServices(result.quickServices);
           setRecommended(result.recommended);
+          setSectionError('quickServices', null);
+          setSectionError('recommended', null);
         }
       })
-      .catch(error =>
-        console.error('Home quick/recommended load error:', error),
-      )
+      .catch(error => {
+        setSectionError('quickServices', error.message);
+        setSectionError('recommended', error.message);
+      })
       .finally(() => {
         if (!cancelled) {
           setQuickServicesLoading(false);
@@ -357,9 +414,10 @@ const Home: React.FC = () => {
       .then(data => {
         if (!cancelled) {
           setMostBooked(data);
+          setSectionError('mostBooked', null);
         }
       })
-      .catch(error => console.error('Home most-booked load error:', error))
+      .catch(error => setSectionError('mostBooked', error.message))
       .finally(() => {
         if (!cancelled) {
           setMostBookedLoading(false);
@@ -382,9 +440,10 @@ const Home: React.FC = () => {
       .then(data => {
         if (!cancelled) {
           setTopGarages(data);
+          setSectionError('topGarages', null);
         }
       })
-      .catch(error => console.error('Home top-garages load error:', error))
+      .catch(error => setSectionError('topGarages', error.message))
       .finally(() => {
         if (!cancelled) {
           setTopGaragesLoading(false);
@@ -502,17 +561,19 @@ const Home: React.FC = () => {
   };
 
   const offers: OfferTile[] = useMemo(
-    () => [
+    () => referralSummary?.enableReferralSystem && referralSummary?.enableReferrerReward ? [
       {
         key: 'refer',
         title: 'Refer & Earn',
-        subtitle: 'Invite friends and earn rewards on their first service',
+        subtitle: referralSummary.referrerRewardAmount > 0
+          ? `Invite friends and earn ₹${referralSummary.referrerRewardAmount} when they qualify`
+          : 'Invite friends and earn rewards when they qualify',
         icon: 'gift-outline',
         onPress: () =>
           (navigation as any).navigate(ScreenNameEnum.REWARDS_REFERRALS),
       },
-    ],
-    [navigation],
+    ] : [],
+    [navigation, referralSummary],
   );
 
   // Rendered identically in the normal-Home branches and the gated
@@ -523,7 +584,7 @@ const Home: React.FC = () => {
     <HomeHeader
       navigation={navigation}
       location={locationName || 'Set your location'}
-      hasNotifications={true}
+      hasNotifications={hasUnreadNotifications}
       User={User}
       onLocationPress={() =>
         navigation.navigate(ScreenNameEnum.SELECT_LOCATION)
@@ -602,18 +663,26 @@ const Home: React.FC = () => {
             />
           }>
           {homeHeaderElement}
+          {sectionErrors.home && <ErrorSection message={sectionErrors.home} />}
 
           <HomeSearchBar
             index={searchIndex}
             onSelectResult={handleSearchSelect}
           />
+          {sectionErrors.search && <ErrorSection message={sectionErrors.search} />}
 
-          {bannerList.length > 0 && (
+          {sectionErrors.banners ? (
+            <ErrorSection message={sectionErrors.banners} />
+          ) : bannerList.length > 0 ? (
             <BannerSlider navigation={navigation} data={bannerList} />
+          ) : (
+            <EmptySection icon="image-outline" message="No banners available right now" />
           )}
           {/* Service categories — admin-managed, no hardcoded list */}
           <SectionHeader title="Browse by Category" />
-          {serviceCategories.length > 0 ? (
+          {sectionErrors.categories ? (
+            <ErrorSection message={sectionErrors.categories} />
+          ) : serviceCategories.length > 0 ? (
             <ServiceCategoriesGrid
               categories={serviceCategories}
               onPress={handleCategory}
@@ -632,6 +701,8 @@ const Home: React.FC = () => {
 
           {quickServicesLoading ? (
             <SkeletonRow count={5} width={64} height={64} />
+          ) : sectionErrors.quickServices ? (
+            <ErrorSection message={sectionErrors.quickServices} />
           ) : quickServices.length > 0 ? (
             <QuickServicesRow
               services={quickServices}
@@ -644,8 +715,7 @@ const Home: React.FC = () => {
             />
           )}
 
-          {mostBooked.length > 0 && (
-            <>
+          <>
               {/* Most booked near you */}
               <SectionHeader
                 title="Most Booked Near You"
@@ -662,6 +732,8 @@ const Home: React.FC = () => {
                     style={{height: 70, borderRadius: 18, marginBottom: 12}}
                   />
                 </View>
+              ) : sectionErrors.mostBooked ? (
+                <ErrorSection message={sectionErrors.mostBooked} />
               ) : mostBooked.length > 0 ? (
                 <PopularNearYouSection
                   items={mostBooked}
@@ -673,8 +745,7 @@ const Home: React.FC = () => {
                   message="No booking activity in your area yet"
                 />
               )}
-            </>
-          )}
+          </>
 
           {/* Top rated garages */}
           <SectionHeader
@@ -683,6 +754,8 @@ const Home: React.FC = () => {
           />
           {topGaragesLoading ? (
             <SkeletonRow count={3} width={236} height={180} />
+          ) : sectionErrors.topGarages ? (
+            <ErrorSection message={sectionErrors.topGarages} />
           ) : topGarages.length > 0 ? (
             <TopRatedGaragesSection
               garages={topGarages}
@@ -694,19 +767,20 @@ const Home: React.FC = () => {
               message="No garages found nearby"
             />
           )}
-          {recommended.length > 0 && (
-            <>
+          <>
               {/* Recommended */}
               <SectionHeader
                 title="Recommended For Your Bike"
                 subtitle={
                   hasBike
-                    ? 'Based on your bike & service history'
+                    ? 'Popular nearby and compatible with your bike'
                     : 'Popular with riders near you'
                 }
               />
               {recommendedLoading ? (
                 <SkeletonRow count={3} width={168} height={150} />
+              ) : sectionErrors.recommended ? (
+                <ErrorSection message={sectionErrors.recommended} />
               ) : recommended.length > 0 ? (
                 <RecommendedForYouSection
                   items={recommended}
@@ -718,8 +792,7 @@ const Home: React.FC = () => {
                   message="No recommendations yet — check back soon"
                 />
               )}
-            </>
-          )}
+          </>
           {/* My Bike(s) */}
           <SectionHeader
             title="My Bikes"
@@ -729,34 +802,52 @@ const Home: React.FC = () => {
                 : 'Add your bike to unlock quick booking'
             }
           />
-          <MyBikeCarousel
-            bikes={bikeList}
-            onManage={handleManageBike}
-            onAdd={handleAddBike}
-            onActiveIndexChange={setActiveBikeIndex}
-          />
+          {sectionErrors.bikes ? (
+            <ErrorSection message={sectionErrors.bikes} />
+          ) : (
+            <MyBikeCarousel
+              bikes={bikeList}
+              onManage={handleManageBike}
+              onAdd={handleAddBike}
+              onActiveIndexChange={setActiveBikeIndex}
+            />
+          )}
 
           {/* Special offers */}
           <SectionHeader title="Offers For You" />
-          <SpecialOffersRow offers={offers} />
+          {offersLoading ? (
+            <SkeletonRow count={1} width={335} height={108} />
+          ) : sectionErrors.offers ? (
+            <ErrorSection message={sectionErrors.offers} />
+          ) : offers.length > 0 ? (
+            <SpecialOffersRow offers={offers} />
+          ) : (
+            <EmptySection icon="gift-outline" message="No offers available right now" />
+          )}
 
           {/* Recent bookings */}
-          {recentBookings.length > 0 && (
-            <>
+          <>
               <SectionHeader
                 title="Recent Bookings"
                 onSeeAll={() =>
                   (navigation as any).navigate(ScreenNameEnum.BOOKING_SCREEN)
                 }
               />
-              <RecentBookingsRow
-                bookings={recentBookings}
-                onTrack={handleTrackBooking}
-                onRepeat={handleRepeatBooking}
-                onInvoice={handleInvoiceBooking}
-              />
-            </>
-          )}
+              {bookingsLoading ? (
+                <SkeletonRow count={2} width={260} height={130} />
+              ) : bookingsError ? (
+                <ErrorSection message={bookingsError} />
+              ) : recentBookings.length > 0 ? (
+                <RecentBookingsRow
+                  bookings={recentBookings}
+                  onTrack={handleTrackBooking}
+                  onRepeat={handleRepeatBooking}
+                  onInvoice={handleInvoiceBooking}
+                />
+              ) : (
+                <EmptySection icon="calendar-blank-outline" message="No recent bookings" />
+              )}
+          </>
         </ScrollView>
       )}
     </View>

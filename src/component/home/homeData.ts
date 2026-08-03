@@ -11,6 +11,7 @@
 
 export interface ServiceCatalogItem {
   _id: string;
+  serviceId?: string;
   name: string;
   image?: string;
   dealer_id?: {_id?: string; shopName?: string} | string;
@@ -46,6 +47,10 @@ export interface BikeItem {
   name?: string;
   model?: string;
   variant_id?: string;
+  serviceInfo?: {
+    lastServiceDate?: string | null;
+    nextServiceDue?: string | null;
+  };
 }
 
 // ── Home v2 API response shapes ─────────────────────────────────────────
@@ -183,11 +188,11 @@ export function buildSearchIndex(
     seenCategoryNames.add(key);
     index.push({
       type: 'service',
-      id: s._id,
+      id: s.serviceId || s._id,
       title: s.name,
       subtitle: 'Service',
       image: s.image,
-      serviceId: s._id,
+      serviceId: s.serviceId || s._id,
     });
   });
 

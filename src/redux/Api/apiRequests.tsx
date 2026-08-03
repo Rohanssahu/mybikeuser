@@ -370,13 +370,10 @@ const get_servicelist = async () => {
         const results = await callMultipleApis(apiRequests);
         const response = results[0];
 
-        if (response?.data.length > 0) {
-            return { success: true, data: response?.data };
+        if (Array.isArray(response?.data)) {
+            return { success: true, data: response.data };
         }
-        else {
-
-            return { success: false, message: "Unexpected response", data: [] };
-        }
+        return { success: false, message: 'Unexpected response', data: [] };
 
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -401,13 +398,10 @@ const get_nearyBydeler = async (lat: number, long: number) => {
         const results = await callMultipleApis(apiRequests);
         const response = results[0];
 
-        if (response?.data.length > 0) {
-            return { success: true, data: response?.data };
+        if (Array.isArray(response?.data)) {
+            return { success: true, data: response.data };
         }
-        else {
-
-            return { success: false, message: "Unexpected response", data: [] };
-        }
+        return { success: false, message: 'Unexpected response', data: [] };
 
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -475,8 +469,6 @@ const get_userbooking = async (_id: string) => {
     console.log('===============get_userbooking=====================', endpoint.userbooking + `/${_id}?user_type=4`);
     const token = await AsyncStorage.getItem('token')
 
-    console.log(token);
-
     const apiRequests: ApiRequest[] = [
         {
             endpoint: endpoint.userbooking + `/${_id}?user_type=4`,
@@ -495,12 +487,10 @@ const get_userbooking = async (_id: string) => {
 
         const response = results[0];
 
-        if (response?.data.length > 0) {
-            return { success: true, message: "success", data: response?.data };
+        if (Array.isArray(response?.data)) {
+            return { success: true, message: 'success', data: response.data };
         }
-        else {
-            return { success: false, message: "Data Not Found", data: [] };
-        }
+        return { success: false, message: 'Unexpected response', data: [] };
 
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -510,8 +500,6 @@ const get_userbooking = async (_id: string) => {
 const get_mybikes = async () => {
     console.log('===============get_userbooking=====================', endpoint.userbooking);
     const token = await AsyncStorage.getItem('token')
-
-    console.log(token);
 
     const apiRequests: ApiRequest[] = [
         {
@@ -531,12 +519,10 @@ const get_mybikes = async () => {
 
         const response = results[0];
 
-        if (response?.data.length > 0) {
-            return { success: true, message: "success", data: response?.data };
+        if (Array.isArray(response?.data)) {
+            return { success: true, message: 'success', data: response.data };
         }
-        else {
-            return { success: false, message: "Data Not Found", data: [] };
-        }
+        return { success: false, message: 'Unexpected response', data: [] };
 
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -675,8 +661,6 @@ const add_Bikes = async (plate_number: string, variant_id: string) => {
 const get_BikeCompany = async () => {
     console.log('===============getbikecompanies=====================', endpoint.getbikecompanies);
     const token = await AsyncStorage.getItem('token')
-
-    console.log(token);
 
     const apiRequests: ApiRequest[] = [
         {
@@ -999,8 +983,6 @@ const get_profile = async (user_id: string) => {
 
     const token = await AsyncStorage.getItem('token')
 
-    console.log(token);
-
     const apiRequests: ApiRequest[] = [
         {
             endpoint: `${endpoint.getprofile}/${user_id}`,
@@ -1313,6 +1295,7 @@ const bookingdetails = async (id: string) => {
 };
 const cancel_booking = async (bookingId: string, status: string) => {
     const user_id = await AsyncStorage.getItem('user_id')
+    const token = await AsyncStorage.getItem('token')
 
     const requestBody = { user_id, status }
 
@@ -1324,7 +1307,7 @@ const cancel_booking = async (bookingId: string, status: string) => {
 
             headers: {
                 'Content-Type': 'application/json',
-
+                token: token,
             },
         },
     ];
@@ -1354,15 +1337,13 @@ const get_tikit = async (user_id) => {
 
     const token = await AsyncStorage.getItem('token')
 
-    console.log(token);
-
     const apiRequests: ApiRequest[] = [
         {
             endpoint: `${endpoint.gettickets}/${user_id}`,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-
+                token: token,
             },
         },
     ];
@@ -1389,8 +1370,6 @@ const get_tikit = async (user_id) => {
 const get_tikitdetails = async (id: string) => {
     console.log('===============get_tikit===details==================',);
     const token = await AsyncStorage.getItem('token')
-
-    console.log(token);
 
     const apiRequests: ApiRequest[] = [
         {
@@ -1428,6 +1407,7 @@ const create_tikit = async (
     message: string,
     user_id: string,
 ) => {
+    const token = await AsyncStorage.getItem('token');
     const requestBody = {
         sender_id: user_id,
         subject,
@@ -1444,6 +1424,7 @@ const create_tikit = async (
             data: requestBody,
             headers: {
                 'Content-Type': 'application/json',
+                token: token,
             },
         },
     ];
@@ -1466,6 +1447,7 @@ const create_tikit = async (
     }
 };
 const replay_tikit = async (id: string, message: string, sender_id: string) => {
+    const token = await AsyncStorage.getItem('token');
     const requestBody = {
         sender_id: sender_id,
         sender_type: 'user',
@@ -1480,6 +1462,7 @@ const replay_tikit = async (id: string, message: string, sender_id: string) => {
 
             headers: {
                 'Content-Type': 'application/json',
+                token: token,
             },
         },
     ];
@@ -1600,7 +1583,8 @@ const select_payment_method = async (bookingId: string, payment_method: 'ONLINE'
     }
 };
 
-const get_Notification = async (receiverId: string, setIsLoading: (v: boolean) => void) => {
+const get_Notification = async (receiverId: string, setIsLoading: (v: boolean) => void = () => {}) => {
+    const token = await AsyncStorage.getItem('token');
     const resolvedEndpoint = endpoint.notification.replace(':receiverId', receiverId);
     console.log('[get_Notification] endpoint:', resolvedEndpoint);
     console.log('[get_Notification] receiverId:', receiverId);
@@ -1610,6 +1594,7 @@ const get_Notification = async (receiverId: string, setIsLoading: (v: boolean) =
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
+                token: token,
             },
         },
     ];
@@ -1682,10 +1667,18 @@ const get_app_settings = async () => {
     }
 };
 
-const get_app_banners = async (bannerType: 'home' | 'popup' | 'announcement') => {
+const get_app_banners = async (
+    bannerType: 'home' | 'popup' | 'announcement',
+    lat?: number,
+    lng?: number,
+) => {
+    const params: string[] = [];
+    if (lat != null) params.push(`lat=${encodeURIComponent(lat)}`);
+    if (lng != null) params.push(`lng=${encodeURIComponent(lng)}`);
+    const query = params.length ? `?${params.join('&')}` : '';
     const apiRequests: ApiRequest[] = [
         {
-            endpoint: endpoint.appBanners.replace(':bannerType', bannerType),
+            endpoint: `${endpoint.appBanners.replace(':bannerType', bannerType)}${query}`,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -1784,6 +1777,27 @@ const get_services_by_category = async (categoryId: string, bikeId?: string) => 
     } catch (error: any) {
         console.error('get_services_by_category error:', error);
         return { success: false, message: error.message, data: [] };
+    }
+};
+
+// Complete active BaseService catalog used by Home search. This is the same
+// v1 source as category browsing; omitting categoryId is supported by the
+// existing endpoint and avoids the legacy /servicelist collection entirely.
+const get_home_services = async () => {
+    const token = await AsyncStorage.getItem('token');
+    const apiRequests: ApiRequest[] = [{
+        endpoint: endpoint.servicesByCategory,
+        method: 'GET',
+        headers: {'Content-Type': 'application/json', token: token || ''},
+    }];
+    try {
+        const [response] = await callMultipleApis(apiRequests);
+        return response?.data
+            ? {success: true, data: response.data}
+            : {success: false, message: 'Unexpected response', data: []};
+    } catch (error: any) {
+        console.error('get_home_services error:', error);
+        return {success: false, message: error.message, data: []};
     }
 };
 
@@ -1935,4 +1949,4 @@ const get_serviceability = async (lat: number, lng: number) => {
     }
 };
 
-export { additionalservices, updateBooking, get_invoice, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, get_pricing_quote, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist, get_featured_categories, get_bookingTimerStatus, get_Notification, select_payment_method, get_legal_document, get_app_settings, get_app_banners, get_faqs, validate_referral_code, get_my_referral_code, get_referral_summary, get_referral_transactions, get_service_categories, get_services_by_category, get_quick_services, get_recommended_for_you, get_most_booked_near_you, get_top_garages, get_serviceability };
+export { additionalservices, updateBooking, get_invoice, tikitstatus, replay_tikit, get_tikitdetails, create_tikit, get_tikit, cancel_booking, bookingdetails, updateProfileImage, updateProfile, get_profile, addPickupAddress, create_booking, get_pricing_quote, garage_details, get_dealer_services, get_FilterBydeler, remove_bike, get_BikeVariant, get_BikeModel, get_BikeCompany, add_Bikes, get_mybikes, get_userbooking, Login_witPhone, get_nearyBydeler, otp_Verify, get_states, get_citys, resend_Otp, add_Profile, get_servicelist, get_bannerlist, get_featured_categories, get_bookingTimerStatus, get_Notification, select_payment_method, get_legal_document, get_app_settings, get_app_banners, get_faqs, validate_referral_code, get_my_referral_code, get_referral_summary, get_referral_transactions, get_service_categories, get_services_by_category, get_home_services, get_quick_services, get_recommended_for_you, get_most_booked_near_you, get_top_garages, get_serviceability };

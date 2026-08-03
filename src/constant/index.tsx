@@ -54,5 +54,21 @@ export const radius = {
 // `insets.bottom + TAB_BAR_HEIGHT` as bottom padding so content never sits behind the tab bar.
 export const TAB_BAR_HEIGHT = 60;
 
-
-
+// Tokens for the flat-design Notifications ("Alerts") screen — kept separate from
+// `color` since that object is dark-navy-surface oriented and this screen's body
+// is a light surface with per-category tinted icon chips.
+export const notificationColors = {
+    bodySurface: '#F5F6FA',
+    cardSurface: '#FFFFFF',
+    cardBorder: 'rgba(10,20,64,0.08)',
+    groupLabel: '#8A93AD',
+    unreadDot: '#2F6FED',
+    titleText: '#12142B',
+    descText: '#7C8298',
+    wash: { bg: '#E3F7E9', tint: '#1FA34D' },
+    delivery: { bg: '#E3ECFB', tint: '#2F6FED' },
+    booking: { bg: '#FCEEDA', tint: '#C9821A' },
+    payment: { bg: '#FFF3D6', tint: '#B4790A' },
+    otp: { bg: '#F1E4FA', tint: '#6A1B9A' },
+    general: { bg: '#EEF0F5', tint: '#606880' },
+};

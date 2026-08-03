@@ -47,7 +47,7 @@ const HomeSearchBar: React.FC<{
 
   const borderColorAnim = borderAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [color.borderSubtle, 'rgba(254,212,40,0.55)'],
+    outputRange: ['rgba(254,212,40,0.55)', color.buttonColor],
   });
 
   const handleSelect = (result: SearchResult) => {
@@ -60,11 +60,11 @@ const HomeSearchBar: React.FC<{
   return (
     <View style={styles.wrapper}>
       <Animated.View style={[styles.container, {borderColor: borderColorAnim}]}>
-        <MaterialCommunityIcons name="magnify" size={20} color="#6B7DBE" />
+        <MaterialCommunityIcons name="magnify" size={23} color={color.buttonColor} />
         <TextInput
           style={styles.input}
           placeholder={placeholder}
-          placeholderTextColor="#6B7DBE"
+          placeholderTextColor="#D6DCF2"
           value={query}
           onChangeText={setQuery}
           onFocus={() => {
@@ -73,10 +73,11 @@ const HomeSearchBar: React.FC<{
           }}
           onBlur={() => animateFocus(0)}
           returnKeyType="search"
+          accessibilityLabel="Search bike services, categories and garages"
         />
         {query.length > 0 && (
           <TouchableOpacity onPress={() => setQuery('')} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-            <MaterialCommunityIcons name="close-circle" size={18} color="#4A5680" />
+            <MaterialCommunityIcons name="close-circle" size={20} color="#B8C1DE" />
           </TouchableOpacity>
         )}
       </Animated.View>
@@ -132,18 +133,23 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: color.cardSurface,
+    backgroundColor: color.cardSurfaceElevated,
     borderRadius: radius.pill,
     borderWidth: 1.5,
     paddingHorizontal: 16,
-    height: 50,
+    height: 54,
+    shadowColor: color.buttonColor,
+    shadowOpacity: 0.12,
+    shadowOffset: {width: 0, height: 3},
+    shadowRadius: 8,
+    elevation: 3,
   },
   input: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 15,
     color: color.textPrimary,
     marginLeft: 10,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   backdrop: {
     position: 'absolute',

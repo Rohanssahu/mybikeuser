@@ -14,6 +14,7 @@ const POLL_INTERVAL_MS = 15000;
 export function useUserBookings(enabled: boolean) {
   const [bookings, setBookings] = useState<BookingLike[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchBookings = useCallback(async () => {
     const userId = await AsyncStorage.getItem('user_id');
@@ -21,8 +22,14 @@ export function useUserBookings(enabled: boolean) {
       setBookings([]);
       return;
     }
-    const res = await get_userbooking(userId);
-    setBookings(res?.data ?? []);
+    try {
+      const res = await get_userbooking(userId);
+      if (!res?.success) throw new Error(res?.message || 'Unable to load bookings');
+      setBookings(res?.data ?? []);
+      setError(null);
+    } catch (err: any) {
+      setError(err?.message || 'Unable to load bookings');
+    }
   }, []);
 
   useEffect(() => {
@@ -40,5 +47,5 @@ export function useUserBookings(enabled: boolean) {
     [bookings],
   );
 
-  return {bookings, loading, refetch: fetchBookings, findActiveForBike};
+  return {bookings, loading, error, refetch: fetchBookings, findActiveForBike};
 }

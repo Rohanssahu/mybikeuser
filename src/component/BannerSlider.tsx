@@ -3,6 +3,7 @@ import {
   View,
   Text,
   Image,
+  Linking,
   TouchableOpacity,
   FlatList,
   StyleSheet,
@@ -25,6 +26,7 @@ interface Banner {
   description: string;
   banner_image: string;
   baseServiceId?: string | {_id: string} | null;
+  linkUrl?: string;
 }
 
 // baseServiceId may arrive populated ({_id, name, image}) or as a raw id string.
@@ -62,10 +64,11 @@ const BannerSlider: React.FC<BannerSliderProps> = ({navigation, data}) => {
     () =>
       data.map(item => ({
         id: item._id,
-        name: item.name,
+        name: item.title || item.name,
         description: item.description || '',
-        banner_image: item.banner_image,
+        banner_image: item.image || item.banner_image,
         baseServiceId: item.baseServiceId ?? null,
+        linkUrl: item.linkUrl || '',
       })),
     [data],
   );
@@ -88,8 +91,14 @@ const BannerSlider: React.FC<BannerSliderProps> = ({navigation, data}) => {
       : `${image_url}${item.banner_image}`;
 
     const handleBannerPress = () => {
-      const serviceId = getBaseServiceId(item);
+      const linkedId = item.linkUrl?.match(/[a-f\d]{24}/i)?.[0];
+      const serviceId = getBaseServiceId(item) || linkedId;
       if (!serviceId) {
+        if (item.linkUrl && /^https?:\/\//i.test(item.linkUrl)) {
+          Linking.openURL(item.linkUrl).catch(error =>
+            console.error('Unable to open banner link:', error),
+          );
+        }
         return;
       }
       navigation.navigate(ScreenNameEnum.MY_BIKES, {

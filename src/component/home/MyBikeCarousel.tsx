@@ -12,6 +12,12 @@ const CARD_WIDTH = SCREEN_WIDTH - 40;
 const BikeCard: React.FC<{bike: BikeItem; onManage: () => void}> = ({bike, onManage}) => {
   const plate = bike?.plate_number ? bike.plate_number.toUpperCase() : 'Your Bike';
   const cc = bike?.bike_cc ? `${bike.bike_cc} CC` : null;
+  const formatDate = (value?: string | null) =>
+    value ? new Date(value).toLocaleDateString('en-IN', {day: '2-digit', month: 'short', year: 'numeric'}) : 'Not serviced yet';
+  const lastService = formatDate(bike.serviceInfo?.lastServiceDate);
+  const nextDue = bike.serviceInfo?.nextServiceDue
+    ? formatDate(bike.serviceInfo.nextServiceDue)
+    : 'Not scheduled';
 
   return (
     <LinearGradient
@@ -28,7 +34,7 @@ const BikeCard: React.FC<{bike: BikeItem; onManage: () => void}> = ({bike, onMan
           <Text style={styles.plate} numberOfLines={1}>{plate}</Text>
           {cc && <Text style={styles.cc}>· {cc}</Text>}
         </View>
-        <Text style={styles.metaText} numberOfLines={1}>Last service — · Next due —</Text>
+        <Text style={styles.metaText} numberOfLines={1}>Last service {lastService} · Next due {nextDue}</Text>
       </View>
 
       <TouchableOpacity style={styles.manageBtn} onPress={onManage} activeOpacity={0.85}>

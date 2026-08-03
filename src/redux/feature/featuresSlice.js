@@ -246,8 +246,6 @@ export const get_near_by_business= createAsyncThunk(
     try {
       const token = params?.token;
 
-      console.log('token',token);
-      
       const config = {
         method: 'POST',
         url: `${base_url.url}/business/near_by_business`,

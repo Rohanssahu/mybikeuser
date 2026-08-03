@@ -83,7 +83,6 @@ const Login: React.FC = ({ navigation }: any) => {
             {/* Layer 2 — decorative circles + bike, pointerEvents none */}
             <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
                 <View style={styles.circleTopRight} />
-                <View style={styles.circleTopRightSmall} />
                 <View style={styles.circleBottomLeft} />
                 <View style={styles.bikeWrap}>
                     <Image source={images.bikes} style={styles.bikeImg} resizeMode="contain" />
@@ -225,15 +224,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#FED42812',
         top: -70,
         right: -70,
-    },
-    circleTopRightSmall: {
-        position: 'absolute',
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        backgroundColor: '#FED4281A',
-        top: 20,
-        right: 20,
     },
     circleBottomLeft: {
         position: 'absolute',

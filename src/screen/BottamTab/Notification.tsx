@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { View, FlatList, StyleSheet, Text, RefreshControl, Animated } from 'react-native';
+import { View, SectionList, StyleSheet, Text, RefreshControl, Animated } from 'react-native';
 import { useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -10,7 +10,7 @@ import NotificationItem, { resolveNotificationTitle } from '../../component/Noti
 import { get_Notification } from '../../redux/Api/apiRequests';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { color, TAB_BAR_HEIGHT } from '../../constant';
+import { color, notificationColors, TAB_BAR_HEIGHT } from '../../constant';
 
 const BOOKING_NOTIFICATION_TYPES = [
   'service_completed',
@@ -23,10 +23,34 @@ const formatNotificationTime = (value: any) => {
   if (!value) { return ''; }
   const m = moment(value);
   if (!m.isValid()) { return ''; }
-  const now = moment();
-  if (m.isSame(now, 'day')) { return `Today, ${m.format('h:mm A')}`; }
-  if (m.isSame(moment(now).subtract(1, 'day'), 'day')) { return `Yesterday, ${m.format('h:mm A')}`; }
-  return m.format('D MMM YYYY, h:mm A');
+  return m.format('h:mm a');
+};
+
+// Buckets notifications into "Today" / "Yesterday" / calendar-date sections,
+// preserving the API's original (newest-first) ordering within and across groups.
+const buildSections = (list: any[]) => {
+  const todayKey = moment().format('YYYY-MM-DD');
+  const yesterdayKey = moment().subtract(1, 'day').format('YYYY-MM-DD');
+  const order: string[] = [];
+  const groups: Record<string, any[]> = {};
+
+  list.forEach(item => {
+    const m = moment(item?.sentAt);
+    const key = m.isValid() ? m.format('YYYY-MM-DD') : 'unknown';
+    if (!groups[key]) {
+      groups[key] = [];
+      order.push(key);
+    }
+    groups[key].push(item);
+  });
+
+  return order.map(key => {
+    let title = key;
+    if (key === todayKey) { title = 'Today'; }
+    else if (key === yesterdayKey) { title = 'Yesterday'; }
+    else if (key !== 'unknown') { title = moment(key, 'YYYY-MM-DD').format('D MMM YYYY'); }
+    return { title, data: groups[key] };
+  });
 };
 
 // No persistent read/unread field exists on the API payload yet. Only honor
@@ -62,7 +86,6 @@ const NotificationSkeletonRow: React.FC<{ delay: number }> = ({ delay }) => {
       <View style={styles.skeletonTextCol}>
         <Animated.View style={[styles.skeletonLine, { width: '55%', opacity }]} />
         <Animated.View style={[styles.skeletonLine, { width: '90%', opacity, marginTop: 8 }]} />
-        <Animated.View style={[styles.skeletonLine, { width: '70%', opacity, marginTop: 8 }]} />
       </View>
     </View>
   );
@@ -123,26 +146,28 @@ const Notification = ({ navigation }: any) => {
     };
 
     const showSkeleton = isLoading && notifications.length === 0 && !refreshing;
+    const sections = buildSections(notifications);
 
     return (
         <View style={styles.container}>
             <CustomHeader
                 navigation={navigation}
-                title="Notification"
+                title="Notifications"
                 onSkipPress={() => {}}
                 showSkip={false}
             />
 
-            <View style={styles.listWrap}>
+            <View style={styles.body}>
                 {showSkeleton ? (
-                    <View>
+                    <View style={styles.listWrap}>
                         {[0, 1, 2, 3, 4, 5].map(i => (
                             <NotificationSkeletonRow key={i} delay={i * 90} />
                         ))}
                     </View>
                 ) : (
-                    <FlatList
-                        data={notifications}
+                    <SectionList
+                        sections={sections}
+                        style={styles.listWrap}
                         contentContainerStyle={[
                             styles.listContent,
                             { paddingBottom: bottomPad },
@@ -152,6 +177,7 @@ const Notification = ({ navigation }: any) => {
                             item?.id ? item.id.toString() : (item?._id ? item._id.toString() : index.toString())
                         }
                         showsVerticalScrollIndicator={false}
+                        stickySectionHeadersEnabled={false}
                         refreshControl={
                             <RefreshControl
                                 refreshing={refreshing}
@@ -160,6 +186,9 @@ const Notification = ({ navigation }: any) => {
                                 colors={[color.buttonColor]}
                             />
                         }
+                        renderSectionHeader={({ section: { title } }) => (
+                            <Text style={styles.sectionLabel}>{title}</Text>
+                        )}
                         renderItem={({ item, index }) => {
                             const formattedTime = formatNotificationTime(item?.sentAt);
                             const type = item?.type || item?.notification_type || item?.data?.type;
@@ -181,7 +210,7 @@ const Notification = ({ navigation }: any) => {
                         ListEmptyComponent={() => (
                             <View style={styles.empty}>
                                 <View style={styles.emptyIconWrap}>
-                                    <MaterialCommunityIcons name="bell-off-outline" size={44} color="rgba(255,255,255,0.5)" />
+                                    <MaterialCommunityIcons name="bell-off-outline" size={44} color={notificationColors.groupLabel} />
                                 </View>
                                 <Text style={styles.emptyTitle}>No notifications yet</Text>
                                 <Text style={styles.emptySubtitle}>
@@ -201,15 +230,28 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: color.baground,
     },
+    body: {
+        flex: 1,
+        backgroundColor: notificationColors.bodySurface,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        overflow: 'hidden',
+    },
     listWrap: {
         flex: 1,
         paddingHorizontal: 16,
     },
     listContent: {
-        paddingTop: 8,
+        paddingTop: 16,
     },
     listContentEmpty: {
         flexGrow: 1,
+    },
+    sectionLabel: {
+        fontSize: 11,
+        color: notificationColors.groupLabel,
+        marginTop: 14,
+        marginBottom: 8,
     },
     empty: {
         flex: 1,
@@ -221,7 +263,7 @@ const styles = StyleSheet.create({
         width: 96,
         height: 96,
         borderRadius: 48,
-        backgroundColor: 'rgba(255,255,255,0.06)',
+        backgroundColor: notificationColors.general.bg,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 20,
@@ -229,12 +271,12 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#fff',
+        color: notificationColors.titleText,
         textAlign: 'center',
     },
     emptySubtitle: {
         fontSize: 14,
-        color: '#8891B0',
+        color: notificationColors.descText,
         textAlign: 'center',
         marginTop: 8,
         lineHeight: 20,
@@ -242,23 +284,25 @@ const styles = StyleSheet.create({
     skeletonCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
-        borderRadius: 18,
-        padding: 14,
-        marginBottom: 14,
+        backgroundColor: notificationColors.cardSurface,
+        borderRadius: 12,
+        borderWidth: 0.5,
+        borderColor: notificationColors.cardBorder,
+        padding: 10,
+        marginBottom: 8,
     },
     skeletonCircle: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+        width: 42,
+        height: 42,
+        borderRadius: 10,
         backgroundColor: '#E3E6EE',
-        marginRight: 12,
+        marginRight: 10,
     },
     skeletonTextCol: {
         flex: 1,
     },
     skeletonLine: {
-        height: 10,
+        height: 9,
         borderRadius: 5,
         backgroundColor: '#E3E6EE',
     },
