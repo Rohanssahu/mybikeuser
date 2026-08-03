@@ -47,6 +47,7 @@ import {useLocation} from '../../component/LocationContext';
 import {getCurrentLocation as getSavedOrCurrentLocation} from '../../component/helperFunction';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useBookingFlowNav} from '../../hooks/useBookingFlowNav';
+import GarageRatingStrip from '../../component/reviews/GarageRatingStrip';
 
 type Step = 0 | 1 | 2;
 
@@ -134,9 +135,10 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
   const [BookingDateModal, setBookingDateModal] = useState(false);
   const [BookingTimeModal, setBookingTimeModal] = useState(false);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     calculateDistanceFromSelectedLocation();
+    // Intentionally driven only by the garage and selected customer location.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [garageData, locationCoords]);
 
 
@@ -829,6 +831,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
       <Text style={styles.sectionTitle}>Booking Summary</Text>
       <View style={styles.reviewCard}>
         <ReviewRow label="Garage" value={garageData?.shopName ?? ''} />
+        <GarageRatingStrip averageRating={Number(garageData?.averageRating||0)} ratingCount={Number(garageData?.ratingCount||0)} verified={garageData?.isVerified !== false} onViewReviews={() => navigation.navigate(ScreenNameEnum.GARAGE_REVIEWS,{dealerId:garageData?._id,garageName:garageData?.shopName})}/>
         <ReviewRow label="Service" value={getServiceName(selectedSvc)} />
         <ReviewRow
           label="Vehicle"
@@ -1120,6 +1123,7 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
               </Text>
             </View>
           </View>
+          <GarageRatingStrip averageRating={Number(garageData?.averageRating||0)} ratingCount={Number(garageData?.ratingCount||0)} verified={garageData?.isVerified !== false} onViewReviews={() => navigation.navigate(ScreenNameEnum.GARAGE_REVIEWS,{dealerId:garageData?._id,garageName:garageData?.shopName})}/>
         </View>
         {activeBooking ? (
           <View style={styles.body}>{renderActiveBookingCard()}</View>

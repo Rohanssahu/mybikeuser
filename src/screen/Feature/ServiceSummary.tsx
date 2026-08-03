@@ -20,6 +20,7 @@ import {getAddressFromLatLng} from '../../component/helperFunction';
 import OtpBox from './OtpBox';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import GarageRatingStrip from '../../component/reviews/GarageRatingStrip';
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_CFG: Record<string, {color: string; bg: string; label: string}> = {
@@ -359,6 +360,7 @@ const ServiceSummary: React.FC<any> = ({navigation}) => {
 
           {/* ─── Shop + Map Card ─────────────────────────────────────────────────── */}
           <View style={styles.card}>
+            <Text style={styles.servicedBy}>SERVICED BY</Text>
             {/* Shop header row */}
             <View style={styles.shopRow}>
               <Image
@@ -385,6 +387,7 @@ const ServiceSummary: React.FC<any> = ({navigation}) => {
                 <MaterialCommunityIcons name="phone-outline" size={22} color={color.buttonColor} />
               </TouchableOpacity>
             </View>
+            <GarageRatingStrip averageRating={Number(booking?.dealer_id?.averageRating||0)} ratingCount={Number(booking?.dealer_id?.ratingCount||0)} verified={booking?.dealer_id?.status?.isVerified !== false} onViewReviews={() => navigation.navigate(ScreenNameEnum.GARAGE_REVIEWS,{dealerId:booking?.dealer_id?._id,garageName:booking?.dealer_id?.shopName})}/>
 
             {/* Map */}
             {hasCoords ? (
@@ -852,6 +855,7 @@ const styles = StyleSheet.create({
   },
   shopInfo: {flex: 1, marginLeft: 12},
   shopName: {fontSize: 16, fontWeight: '800', color: color.textPrimary},
+  servicedBy:{fontSize:10,fontWeight:'900',letterSpacing:1.3,color:color.textMuted,marginBottom:10},
   shopAddr: {fontSize: 12, color: color.textMuted, marginTop: 3, lineHeight: 17},
   callCircle: {
     width: 40,

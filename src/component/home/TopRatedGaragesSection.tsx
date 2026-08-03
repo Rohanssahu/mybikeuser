@@ -4,6 +4,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import {color, radius} from '../../constant';
 import {image_url} from '../../redux/Api';
 import {TopGarageItem} from './homeData';
+import GarageRatingStrip from '../reviews/GarageRatingStrip';
 
 const resolveImageUri = (path: string) =>
   path.startsWith('http') ? path : `${image_url}${path}`;
@@ -13,7 +14,8 @@ const resolveImageUri = (path: string) =>
 const GarageCard: React.FC<{
   item: TopGarageItem;
   onPress: () => void;
-}> = ({item, onPress}) => {
+  onViewReviews: () => void;
+}> = ({item, onPress, onViewReviews}) => {
   const [imgError, setImgError] = useState(false);
   const distanceLabel =
     item.distanceKm != null
@@ -52,6 +54,7 @@ const GarageCard: React.FC<{
             </View>
           )}
         </View>
+        <GarageRatingStrip averageRating={item.averageRating} ratingCount={item.ratingCount} verified compact onViewReviews={onViewReviews}/>
 
         {address.length > 0 && (
           <Text style={styles.address} numberOfLines={1}>{address}</Text>
@@ -77,7 +80,8 @@ const GarageCard: React.FC<{
 const TopRatedGaragesSection: React.FC<{
   garages: TopGarageItem[];
   onSelect: (garage: TopGarageItem) => void;
-}> = ({garages, onSelect}) => {
+  onViewReviews: (garage: TopGarageItem) => void;
+}> = ({garages, onSelect, onViewReviews}) => {
   if (garages.length === 0) return null;
 
   return (
@@ -87,7 +91,7 @@ const TopRatedGaragesSection: React.FC<{
       showsHorizontalScrollIndicator={false}
       keyExtractor={item => item.dealerId}
       contentContainerStyle={styles.list}
-      renderItem={({item}) => <GarageCard item={item} onPress={() => onSelect(item)} />}
+      renderItem={({item}) => <GarageCard item={item} onPress={() => onSelect(item)} onViewReviews={() => onViewReviews(item)} />}
     />
   );
 };

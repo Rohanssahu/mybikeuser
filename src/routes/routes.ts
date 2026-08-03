@@ -34,6 +34,7 @@ import Vehical from "../screen/profile/Vehical";
 import RewardsReferralScreen from "../screen/profile/RewardsReferralScreen";
 import ScreenNameEnum from "./screenName.enum";
 import RatingScreen from "../screen/Feature/RatingScreen";
+import GarageReviews from "../screen/Feature/GarageReviews";
 
 
 const _routes = {
@@ -167,6 +168,7 @@ const _routes = {
       Component: InvoiceScreen,
     },
     { name: ScreenNameEnum.RATING_SCREEN, Component: RatingScreen },
+    { name: ScreenNameEnum.GARAGE_REVIEWS, Component: GarageReviews },
 
   ],
 

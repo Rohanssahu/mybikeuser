@@ -762,6 +762,7 @@ const Home: React.FC = () => {
             <TopRatedGaragesSection
               garages={topGarages}
               onSelect={handleTopGarage}
+              onViewReviews={garage => (navigation as any).navigate(ScreenNameEnum.GARAGE_REVIEWS, {dealerId: garage.dealerId, garageName: garage.shopName})}
             />
           ) : (
             <EmptySection

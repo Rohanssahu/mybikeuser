@@ -11,6 +11,7 @@ import {
 import {icon} from './Image';
 import ScreenNameEnum from '../routes/screenName.enum';
 import {image_url} from '../redux/Api';
+import GarageRatingStrip from './reviews/GarageRatingStrip';
 
 interface ListItem {
   _id: string;
@@ -18,6 +19,10 @@ interface ListItem {
   shopDescription?: string;
   address?: string;
   rating?: string | number;
+  averageRating?: number;
+  ratingCount?: number;
+  isVerified?: boolean;
+  fullAddress?: string;
   shopImages?: any[];
 }
 
@@ -70,6 +75,7 @@ const ShopCard = ({
         <Text style={styles.title} numberOfLines={1}>
           {item.shopName}
         </Text>
+        <GarageRatingStrip averageRating={Number(item.averageRating || item.rating || 0)} ratingCount={item.ratingCount || 0} verified={item.isVerified !== false} compact onViewReviews={() => navigation.navigate(ScreenNameEnum.GARAGE_REVIEWS, {dealerId:item._id, garageName:item.shopName})}/>
 
         <View style={styles.meta}>
           {item?.fullAddress ? (

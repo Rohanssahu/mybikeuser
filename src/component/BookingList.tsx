@@ -12,20 +12,26 @@ import Icon from './Icon';
 import { icon } from './Image';
 import ScreenNameEnum from '../routes/screenName.enum';
 import { color } from '../constant';
+import GarageRatingStrip from './reviews/GarageRatingStrip';
 interface BookingItem {
   _id: string;
   status: string;
   dealerResponseStatus?: string;
   pickupStatus?: string;
   reviewStatus?: 'ineligible' | 'pending' | 'submitted';
+  reviewId?: {_id:string; rating:number; createdAt?:string};
   create_date: string;
   dealer_id?: {
+    _id?: string;
     shopName?: string;
     address?: string;
     fullAddress?: string;
     city?: string;
     state?: string;
     shopImages?: string[];
+    averageRating?: number;
+    ratingCount?: number;
+    status?: {isVerified?: boolean};
   };
 }
 
@@ -131,6 +137,8 @@ const BookingList: React.FC<BookingListProps> = ({
                 {address}
               </Text>
             </View>
+            <GarageRatingStrip averageRating={item.dealer_id?.averageRating} ratingCount={item.dealer_id?.ratingCount} verified={item.dealer_id?.status?.isVerified !== false} compact onViewReviews={() => navigation.navigate(ScreenNameEnum.GARAGE_REVIEWS,{dealerId:item.dealer_id?._id,garageName:item.dealer_id?.shopName})}/>
+            {item.reviewId?.rating ? <Text style={styles.yourRating}>Your Rating: <Text style={styles.yourStars}>{'★'.repeat(item.reviewId.rating)}</Text></Text> : null}
 
             <View style={styles.infoPanel}>
               <View style={styles.infoItem}>
@@ -198,6 +206,8 @@ const styles = StyleSheet.create({
   },
   rateButton:{height:40,borderRadius:11,backgroundColor:'#FFD54A',marginTop:10,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:6},
   rateButtonText:{fontSize:12,fontWeight:'900',color:'#171717'},
+  yourRating:{color:color.textMuted,fontSize:11,fontWeight:'700',marginTop:7},
+  yourStars:{color:'#FFD54A'},
   card: {
     backgroundColor: color.cardSurfaceElevated,
     borderRadius: 18,

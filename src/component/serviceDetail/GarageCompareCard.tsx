@@ -3,6 +3,7 @@ import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {color, radius, spacing} from '../../constant';
 import {image_url} from '../../redux/Api';
+import GarageRatingStrip from '../reviews/GarageRatingStrip';
 
 const resolveImageUri = (path: string) =>
   path.startsWith('http') ? path : `${image_url}${path}`;
@@ -14,6 +15,8 @@ export interface CompareGarage {
   fullAddress?: string;
   address?: string;
   averageRating?: number;
+  ratingCount?: number;
+  isVerified?: boolean;
   isOpen?: boolean;
   pickupAndDrop?: boolean;
   distanceKm: number | null;
@@ -27,6 +30,7 @@ interface GarageCompareCardProps {
   isBestMatch: boolean;
   onBookNow: () => void;
   onViewDetails: () => void;
+  onViewReviews: () => void;
 }
 
 const formatDistance = (km: number | null) => {
@@ -34,7 +38,7 @@ const formatDistance = (km: number | null) => {
   return `${Math.max(km, 0.1).toFixed(1)} km`;
 };
 
-const GarageCompareCard: React.FC<GarageCompareCardProps> = ({garage, isBestMatch, onBookNow, onViewDetails}) => {
+const GarageCompareCard: React.FC<GarageCompareCardProps> = ({garage, isBestMatch, onBookNow, onViewDetails, onViewReviews}) => {
   const [imgError, setImgError] = useState(false);
 
   const isClosed = garage.isOpen === false;
@@ -78,6 +82,7 @@ const GarageCompareCard: React.FC<GarageCompareCardProps> = ({garage, isBestMatc
 
         <View style={styles.body}>
           <Text style={styles.title} numberOfLines={2}>{garage.shopName}</Text>
+          <GarageRatingStrip averageRating={garage.averageRating} ratingCount={garage.ratingCount} verified={garage.isVerified !== false} compact onViewReviews={onViewReviews}/>
 
           {address.length > 0 && (
             <View style={styles.detailRow}>

@@ -10,8 +10,8 @@ import {
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {icon} from './Image';
-import {image_url} from '../redux/Api';
 import ScreenNameEnum from '../routes/screenName.enum';
+import GarageRatingStrip from './reviews/GarageRatingStrip';
 
 interface GarageItem {
   _id: string;
@@ -23,6 +23,8 @@ interface GarageItem {
   longitude: string | number;
   shopImages?: any[];
   averageRating?: number;
+  ratingCount?: number;
+  isVerified?: boolean;
   isOpen?: boolean;
 }
 
@@ -116,6 +118,7 @@ console.log('image_url',item.shopImages);
         <Text style={styles.title} numberOfLines={1}>
           {item.shopName}
         </Text>
+        <GarageRatingStrip averageRating={item.averageRating} ratingCount={item.ratingCount} verified={item.isVerified !== false} compact onViewReviews={() => (navigation as any).navigate(ScreenNameEnum.GARAGE_REVIEWS,{dealerId:item._id,garageName:item.shopName})}/>
 
         {address.length > 0 && (
           <View style={styles.row}>

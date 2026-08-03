@@ -12,11 +12,12 @@ import {getCurrentLocation} from '../../component/helperFunction';
 import {useRefreshOnResume} from '../../hooks/useRefreshOnResume';
 import {calcDistanceKm} from '../../component/home/homeData';
 
-type SortKey = 'rating' | 'distance';
+type SortKey = 'rating' | 'reviews' | 'distance';
 
 const SORT_OPTIONS: {key: SortKey; label: string}[] = [
   {key: 'distance', label: 'Distance'},
   {key: 'rating', label: 'Rating'},
+  {key: 'reviews', label: 'Most Reviewed'},
 ];
 
 // Same free-text convention GarageDetails.tsx already parses duration out
@@ -120,6 +121,8 @@ const ServiceDetailScreen: React.FC = () => {
             fullAddress: d.fullAddress,
             address: d.address,
             averageRating: d.averageRating,
+            ratingCount: d.ratingCount,
+            isVerified: d.isVerified ?? d.status?.isVerified,
             isOpen: d.isOpen,
             pickupAndDrop: d.pickupAndDrop,
             distanceKm,
@@ -137,6 +140,8 @@ const ServiceDetailScreen: React.FC = () => {
           fullAddress: g.fullAddress,
           address: g.address,
           averageRating: g.averageRating,
+          ratingCount: g.ratingCount,
+          isVerified: g.isVerified,
           isOpen: g.isOpen,
           pickupAndDrop: g.pickupAndDrop,
           distanceKm: g.distanceKm,
@@ -165,6 +170,7 @@ const ServiceDetailScreen: React.FC = () => {
       if (sortKey === 'rating') {
         return (b.averageRating ?? 0) - (a.averageRating ?? 0);
       }
+      if (sortKey === 'reviews') return (b.ratingCount ?? 0) - (a.ratingCount ?? 0);
       if (a.distanceKm == null && b.distanceKm == null) return 0;
       if (a.distanceKm == null) return 1;
       if (b.distanceKm == null) return -1;
@@ -248,6 +254,7 @@ const ServiceDetailScreen: React.FC = () => {
               isBestMatch={index === 0}
               onBookNow={() => goToGarageDetails(garage._id)}
               onViewDetails={() => goToGarageDetails(garage._id)}
+              onViewReviews={() => (navigation as any).navigate(ScreenNameEnum.GARAGE_REVIEWS, {dealerId: garage._id, garageName: garage.shopName})}
             />
           ))
         )}
@@ -277,7 +284,7 @@ const ServiceDetailScreen: React.FC = () => {
               style={styles.sortOptionRow}
               onPress={() => setSortKey(opt.key)}>
               <Text style={[styles.sortOptionText, sortKey === opt.key && styles.sortOptionTextActive]}>
-                {opt.key === 'distance' ? 'Nearest first' : 'Highest rated'}
+                {opt.key === 'distance' ? 'Nearest first' : opt.key === 'rating' ? 'Highest rated' : 'Most reviewed'}
               </Text>
               <MaterialCommunityIcons
                 name={sortKey === opt.key ? 'radiobox-marked' : 'radiobox-blank'}
