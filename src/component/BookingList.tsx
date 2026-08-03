@@ -12,7 +12,6 @@ import Icon from './Icon';
 import { icon } from './Image';
 import ScreenNameEnum from '../routes/screenName.enum';
 import { color } from '../constant';
-import GarageRatingStrip from './reviews/GarageRatingStrip';
 interface BookingItem {
   _id: string;
   status: string;
@@ -133,12 +132,35 @@ const BookingList: React.FC<BookingListProps> = ({
 
             <View style={styles.addrRow}>
               <Icon source={icon.pin} size={13} tintColor={color.buttonColor} />
-              <Text style={styles.shopAddr} numberOfLines={2}>
+              <Text style={styles.shopAddr} numberOfLines={1}>
                 {address}
               </Text>
             </View>
-            <GarageRatingStrip averageRating={item.dealer_id?.averageRating} ratingCount={item.dealer_id?.ratingCount} verified={item.dealer_id?.status?.isVerified !== false} compact onViewReviews={() => navigation.navigate(ScreenNameEnum.GARAGE_REVIEWS,{dealerId:item.dealer_id?._id,garageName:item.dealer_id?.shopName})}/>
-            {item.reviewId?.rating ? <Text style={styles.yourRating}>Your Rating: <Text style={styles.yourStars}>{'★'.repeat(item.reviewId.rating)}</Text></Text> : null}
+            <View style={styles.partnerRow}>
+              <TouchableOpacity
+                style={styles.ratingLink}
+                activeOpacity={0.7}
+                onPress={() => navigation.navigate(ScreenNameEnum.GARAGE_REVIEWS, {
+                  dealerId: item.dealer_id?._id,
+                  garageName: item.dealer_id?.shopName,
+                })}>
+                <MaterialCommunityIcons name="star" size={13} color="#FFD54A" />
+                <Text style={styles.ratingText}>
+                  {item.dealer_id?.ratingCount
+                    ? `${Number(item.dealer_id.averageRating || 0).toFixed(1)} (${item.dealer_id.ratingCount})`
+                    : 'New'}
+                </Text>
+              </TouchableOpacity>
+              {item.dealer_id?.status?.isVerified !== false && (
+                <View style={styles.verifiedChip}>
+                  <MaterialCommunityIcons name="check-decagram" size={12} color="#38D996" />
+                  <Text style={styles.verifiedText}>Verified</Text>
+                </View>
+              )}
+              {item.reviewId?.rating ? (
+                <Text style={styles.yourRating}>Your rating <Text style={styles.yourStars}>{'★'.repeat(item.reviewId.rating)}</Text></Text>
+              ) : null}
+            </View>
 
             <View style={styles.infoPanel}>
               <View style={styles.infoItem}>
@@ -153,10 +175,8 @@ const BookingList: React.FC<BookingListProps> = ({
             </View>
 
             <View style={styles.pickupRow}>
-              <View style={styles.pickupIcon}>
-                <MaterialCommunityIcons name="bike-fast" size={15} color={color.textPrimary} />
-              </View>
-              <Text style={styles.pickupLabel}>Pickup status</Text>
+              <MaterialCommunityIcons name="bike-fast" size={16} color={color.textMuted} />
+              <Text style={styles.pickupLabel}>Pickup</Text>
               <Text style={styles.pickupValue} numberOfLines={1}>{pickupText}</Text>
             </View>
 
@@ -204,69 +224,73 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     paddingTop: 4,
   },
-  rateButton:{height:40,borderRadius:11,backgroundColor:'#FFD54A',marginTop:10,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:6},
+  rateButton:{height:36,borderRadius:10,backgroundColor:'#FFD54A',marginTop:8,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:6},
   rateButtonText:{fontSize:12,fontWeight:'900',color:'#171717'},
-  yourRating:{color:color.textMuted,fontSize:11,fontWeight:'700',marginTop:7},
+  yourRating:{color:color.textMuted,fontSize:9.5,fontWeight:'700',marginLeft:'auto'},
   yourStars:{color:'#FFD54A'},
   card: {
     backgroundColor: color.cardSurfaceElevated,
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 14,
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: color.borderSubtle,
     borderLeftWidth: 3,
   },
   topRow: { flexDirection: 'row', alignItems: 'center' },
   iconChip: {
-    height: 40,
-    width: 40,
-    borderRadius: 12,
+    height: 34,
+    width: 34,
+    borderRadius: 10,
     backgroundColor: 'rgba(254,212,40,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  topText: { flex: 1, marginLeft: 10 },
-  shopName: { fontSize: 16, fontWeight: '800', color: color.textPrimary },
-  addrRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 12 },
-  shopAddr: { fontSize: 12.5, lineHeight: 18, color: color.textMuted, flex: 1 },
+  topText: { flex: 1, marginLeft: 9 },
+  shopName: { fontSize: 15, fontWeight: '800', color: color.textPrimary },
+  addrRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 9 },
+  shopAddr: { fontSize: 11.5, lineHeight: 16, color: color.textMuted, flex: 1 },
+  partnerRow: {flexDirection:'row', alignItems:'center', gap:8, marginTop:7, minHeight:18},
+  ratingLink: {flexDirection:'row', alignItems:'center', gap:3},
+  ratingText: {color:color.textPrimary, fontSize:10.5, fontWeight:'800'},
+  verifiedChip: {flexDirection:'row', alignItems:'center', gap:3},
+  verifiedText: {color:'#70E6B2', fontSize:9.5, fontWeight:'800'},
   infoPanel: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 14,
-    paddingVertical: 11,
-    paddingHorizontal: 12,
-    borderRadius: 12,
+    marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 10,
     backgroundColor: 'rgba(9,17,51,0.28)',
   },
   infoItem: {flex: 0.8},
   dateInfo: {flex: 1.6},
-  infoDivider: {width: 1, height: 30, backgroundColor: color.borderSubtle, marginHorizontal: 12},
+  infoDivider: {width: 1, height: 25, backgroundColor: color.borderSubtle, marginHorizontal: 10},
   infoLabel: {fontSize: 9, letterSpacing: 0.7, fontWeight: '700', color: color.textFaint},
   infoValue: {fontSize: 11.5, marginTop: 3, fontWeight: '700', color: color.textPrimary},
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 5,
     borderRadius: 20,
     marginLeft: 8,
   },
   badgeTxt: { fontSize: 10, fontWeight: '800' },
-  pickupRow: {flexDirection: 'row', alignItems: 'center', marginTop: 12},
-  pickupIcon: {width: 28, height: 28, borderRadius: 9, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center'},
-  pickupLabel: {fontSize: 11.5, color: color.textMuted, marginLeft: 8},
+  pickupRow: {flexDirection: 'row', alignItems: 'center', marginTop: 8},
+  pickupLabel: {fontSize: 11, color: color.textMuted, marginLeft: 6},
   pickupValue: {fontSize: 11.5, fontWeight: '800', color: color.textPrimary, marginLeft: 'auto', maxWidth: '45%'},
   bottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginTop: 14,
+    marginTop: 9,
   },
   cancelBtn: {
     minWidth: 78,
-    height: 44,
+    height: 38,
     paddingHorizontal: 14,
     borderRadius: 12,
     borderWidth: 1,
@@ -275,6 +299,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cancelBtnTxt: { fontSize: 12, fontWeight: '800', color: '#FB7185' },
-  detailButton: {flex: 1, height: 44, borderRadius: 12, backgroundColor: color.buttonColor, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7},
-  detailButtonText: {fontSize: 13, fontWeight: '800', color: color.baground},
+  detailButton: {flex: 1, height: 38, borderRadius: 10, backgroundColor: color.buttonColor, flexDirection: 'row', alignItems: 'center', justifyContent:'center', gap:7},
+  detailButtonText: {fontSize:12, fontWeight:'800', color:color.baground},
 });
