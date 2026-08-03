@@ -10,6 +10,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  Alert,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {color, radius, spacing, TAB_BAR_HEIGHT} from '../../constant';
@@ -130,6 +131,21 @@ const Booking: React.FC<{navigation: any}> = ({navigation}) => {
     setLoading(false);
   };
 
+  const confirmCancelBooking = (id: string) => {
+    Alert.alert(
+      'Cancel this booking?',
+      'The service request will be cancelled and cannot be restored.',
+      [
+        {text: 'Keep booking', style: 'cancel'},
+        {
+          text: 'Yes, cancel',
+          style: 'destructive',
+          onPress: () => cancelBooking(id),
+        },
+      ],
+    );
+  };
+
   const filteredBookings = booking.filter(item => {
     const matchesSearch =
       item?.dealer_id?.shopName
@@ -207,7 +223,7 @@ const Booking: React.FC<{navigation: any}> = ({navigation}) => {
             loading,
             navigation,
             onCallPress: (no: string) => makeCall(no),
-            onCancelPress: (id: string) => cancelBooking(id),
+            onCancelPress: confirmCancelBooking,
             contentBottomPadding: bottomPad,
           })
         : (

@@ -10,8 +10,6 @@ import {
   Platform,
 } from 'react-native';
 import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
-import Icon from '../../component/Icon';
-import {icon} from '../../component/Image';
 import {color} from '../../constant';
 import CustomHeader from '../../component/CustomHeaderProps';
 import ScreenNameEnum from '../../routes/screenName.enum';
@@ -21,6 +19,7 @@ import {image_url} from '../../redux/Api';
 import {getAddressFromLatLng} from '../../component/helperFunction';
 import OtpBox from './OtpBox';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_CFG: Record<string, {color: string; bg: string; label: string}> = {
@@ -240,8 +239,8 @@ const ServiceSummary: React.FC<any> = ({navigation}) => {
           showHome
         />
 
-      <SafeAreaView style={{flex: 1}}>
-   
+      <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+
         <ScrollView
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}>
@@ -259,6 +258,11 @@ const ServiceSummary: React.FC<any> = ({navigation}) => {
                     ? 'Pickup OTP'
                     : 'Delivery OTP'
                 }
+                hint={
+                  booking?.pickupStatus === 'arrived'
+                    ? 'Give this code to the service agent when your bike pickup begins.'
+                    : 'Give this code only when the service agent returns your bike.'
+                }
               />
             </View>
           )}
@@ -269,7 +273,7 @@ const ServiceSummary: React.FC<any> = ({navigation}) => {
               <OtpBox
                 otp={booking?.deliveryOtp}
                 label="Delivery OTP"
-                hint="Share this OTP with dealer"
+                hint="Give this code to the service agent only after receiving your bike."
               />
             </View>
           )}
@@ -300,13 +304,13 @@ const ServiceSummary: React.FC<any> = ({navigation}) => {
 
           {/* Status Banner */}
           <View style={[styles.statusBanner, {backgroundColor: statusCfg.bg}]}>
-            <View
-              style={[styles.statusDot, {backgroundColor: statusCfg.color}]}
-            />
-            <Text style={[styles.statusBannerTxt, {color: statusCfg.color}]}>
-              {'  '}
-              {statusCfg.label}
-            </Text>
+            <View style={[styles.statusIconWrap, {backgroundColor: `${statusCfg.color}20`}]}>
+              <MaterialCommunityIcons name="progress-check" size={21} color={statusCfg.color} />
+            </View>
+            <View style={styles.statusTextWrap}>
+              <Text style={styles.statusEyebrow}>CURRENT BOOKING STATUS</Text>
+              <Text style={[styles.statusBannerTxt, {color: statusCfg.color}]}>{statusCfg.label}</Text>
+            </View>
           </View>
 
           {/* Timeline */}
@@ -360,7 +364,9 @@ const ServiceSummary: React.FC<any> = ({navigation}) => {
               <Image
                 source={{
                   uri: booking?.dealer_id?.shopImages?.[0]
-                    ? image_url + booking.dealer_id.shopImages[0]
+                    ? booking.dealer_id.shopImages[0].startsWith('http')
+                      ? booking.dealer_id.shopImages[0]
+                      : image_url + booking.dealer_id.shopImages[0]
                     : 'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png',
                 }}
                 style={styles.shopAvatar}
@@ -376,7 +382,7 @@ const ServiceSummary: React.FC<any> = ({navigation}) => {
               <TouchableOpacity
                 style={styles.callCircle}
                 onPress={() => makeCall(booking?.dealer_id?.phone)}>
-                <Icon source={icon.phone} size={22} tintColor="#FED428" />
+                <MaterialCommunityIcons name="phone-outline" size={22} color={color.buttonColor} />
               </TouchableOpacity>
             </View>
 
@@ -404,21 +410,29 @@ const ServiceSummary: React.FC<any> = ({navigation}) => {
                 <TouchableOpacity
                   style={styles.directionsBtn}
                   onPress={openMaps}>
-                  <Icon source={icon.googlemaps} size={15} />
-                  <Text style={styles.directionsTxt}> Get Directions</Text>
+                  <MaterialCommunityIcons name="directions" size={17} color={color.buttonColor} />
+                  <Text style={styles.directionsTxt}>Get Directions</Text>
                 </TouchableOpacity>
               </View>
             ) : (
               <TouchableOpacity style={styles.noMapBtn} onPress={openMaps}>
-                <Icon source={icon.pin} size={18} tintColor="#FED428" />
-                <Text style={styles.noMapTxt}> Open in Maps</Text>
+                <MaterialCommunityIcons name="map-marker-outline" size={20} color={color.buttonColor} />
+                <Text style={styles.noMapTxt}>Open in Maps</Text>
               </TouchableOpacity>
             )}
           </View>
 
           {/* ─── Booking Info Card ───────────────────────────────────────────────── */}
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Booking Info</Text>
+            <View style={styles.cardTitleRow}>
+              <View style={styles.cardTitleIcon}>
+                <MaterialCommunityIcons name="clipboard-text-outline" size={19} color={color.buttonColor} />
+              </View>
+              <View>
+                <Text style={styles.cardTitle}>Booking information</Text>
+                <Text style={styles.cardSubtitle}>Your appointment and bike details</Text>
+              </View>
+            </View>
 
             {[
               {label: 'Date', value: formatDT(booking?.pickupDate)},
@@ -649,18 +663,19 @@ export default ServiceSummary;
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   root: {flex: 1, backgroundColor: color.baground},
-  scroll: {paddingBottom: 20},
+  safeArea: {flex: 1},
+  scroll: {paddingBottom: 28, paddingTop: 4},
 
   // OTP
-  otpWrap: {marginHorizontal: 14, marginTop: 10},
+  otpWrap: {marginHorizontal: 16, marginTop: 12},
 
   // Delivered card
   deliveredCard: {
-    marginHorizontal: 14,
+    marginHorizontal: 16,
     marginTop: 12,
     backgroundColor: 'rgba(16,185,129,0.12)',
-    borderRadius: 14,
-    paddingVertical: 20,
+    borderRadius: 18,
+    paddingVertical: 18,
     paddingHorizontal: 16,
     alignItems: 'center',
     borderWidth: 1,
@@ -676,16 +691,16 @@ const styles = StyleSheet.create({
   },
   deliveredSub: {
     fontSize: 13,
-    color: '#6B7DBE',
+    color: color.textMuted,
     textAlign: 'center',
   },
 
   // Cash confirmed card
   cashCard: {
-    marginHorizontal: 14,
+    marginHorizontal: 16,
     marginTop: 12,
-    backgroundColor: '#0D1952',
-    borderRadius: 14,
+    backgroundColor: color.cardSurface,
+    borderRadius: 18,
     paddingVertical: 14,
     paddingHorizontal: 16,
     flexDirection: 'row',
@@ -696,30 +711,37 @@ const styles = StyleSheet.create({
   cashIcon: {fontSize: 26, marginRight: 12},
   cashTextWrap: {flex: 1},
   cashTitle: {fontSize: 14, fontWeight: '700', color: '#FED428'},
-  cashSub: {fontSize: 12, color: '#6B7DBE', marginTop: 2},
+  cashSub: {fontSize: 12, color: color.textMuted, marginTop: 2},
 
   // Status banner
   statusBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 14,
+    marginHorizontal: 16,
     marginTop: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: color.borderSubtle,
   },
-  statusBannerTxt: {fontSize: 14, fontWeight: '600'},
+  statusIconWrap: {width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginRight: 10},
+  statusTextWrap: {flex: 1},
+  statusEyebrow: {fontSize: 9, fontWeight: '800', letterSpacing: 0.7, color: color.textMuted, marginBottom: 2},
+  statusBannerTxt: {fontSize: 15, fontWeight: '800'},
 
   // Timeline
   timelineCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0D1952',
-    marginHorizontal: 14,
+    backgroundColor: color.cardSurface,
+    marginHorizontal: 16,
     marginTop: 12,
-    borderRadius: 14,
+    borderRadius: 18,
     paddingHorizontal: 10,
-    paddingVertical: 16,
+    paddingVertical: 15,
+    borderWidth: 1,
+    borderColor: color.borderSubtle,
   },
   stepItem: {alignItems: 'center', flex: 0},
   stepCircle: {
@@ -731,9 +753,9 @@ const styles = StyleSheet.create({
   },
   stepCircleOn: {backgroundColor: '#FED428'},
   stepCircleOff: {
-    backgroundColor: '#1C2B66',
+    backgroundColor: color.cardSurfaceElevated,
     borderWidth: 1,
-    borderColor: '#2E3F80',
+    borderColor: color.borderSubtle,
   },
   stepDotActive: {
     width: 7,
@@ -745,31 +767,33 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: '#2E3F80',
+    backgroundColor: color.textFaint,
   },
-  stepLbl: {fontSize: 9, marginTop: 4, textAlign: 'center', width: 46},
+  stepLbl: {fontSize: 9, marginTop: 5, textAlign: 'center', width: 46},
   stepLblOn: {color: '#FED428', fontWeight: '700'},
-  stepLblOff: {color: '#3D4F80'},
+  stepLblOff: {color: color.textMuted},
   stepLine: {flex: 1, height: 2, marginBottom: 14},
   stepLineOn: {backgroundColor: '#FED428'},
-  stepLineOff: {backgroundColor: '#1C2B66'},
+  stepLineOff: {backgroundColor: color.borderSubtle},
 
   // Generic card
   card: {
-    backgroundColor: '#0D1952',
-    borderRadius: 16,
+    backgroundColor: color.cardSurface,
+    borderRadius: 18,
     padding: 16,
-    marginHorizontal: 14,
+    marginHorizontal: 16,
     marginTop: 12,
     borderWidth: 1,
-    borderColor: 'rgba(254,212,40,0.06)',
+    borderColor: color.borderSubtle,
   },
   cardTitle: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 14,
+    fontWeight: '800',
+    color: color.textPrimary,
   },
+  cardTitleRow: {flexDirection: 'row', alignItems: 'center', gap: 10, paddingBottom: 14, marginBottom: 5, borderBottomWidth: 1, borderBottomColor: color.borderSubtle},
+  cardTitleIcon: {width: 38, height: 38, borderRadius: 12, backgroundColor: 'rgba(254,212,40,0.1)', alignItems: 'center', justifyContent: 'center'},
+  cardSubtitle: {fontSize: 10.5, color: color.textMuted, marginTop: 2},
 
   // Payment method selection
   methodRow: {
@@ -827,8 +851,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#1A2566',
   },
   shopInfo: {flex: 1, marginLeft: 12},
-  shopName: {fontSize: 16, fontWeight: '700', color: '#fff'},
-  shopAddr: {fontSize: 12, color: '#6B7DBE', marginTop: 3, lineHeight: 17},
+  shopName: {fontSize: 16, fontWeight: '800', color: color.textPrimary},
+  shopAddr: {fontSize: 12, color: color.textMuted, marginTop: 3, lineHeight: 17},
   callCircle: {
     width: 40,
     height: 40,
@@ -837,6 +861,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(254,212,40,0.35)',
   },
 
   // Map
@@ -854,8 +880,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(254,212,40,0.4)',
+    gap: 5,
   },
-  directionsTxt: {fontSize: 12, color: '#fff', fontWeight: '600'},
+  directionsTxt: {fontSize: 12, color: color.textPrimary, fontWeight: '700'},
   noMapBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -865,6 +892,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(254,212,40,0.3)',
+    gap: 6,
   },
   noMapTxt: {fontSize: 14, color: '#FED428', fontWeight: '600'},
 
@@ -875,14 +903,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.04)',
+    borderBottomColor: color.borderSubtle,
   },
-  infoLbl: {fontSize: 13, color: '#6B7DBE', fontWeight: '500'},
+  infoLbl: {fontSize: 12.5, color: color.textMuted, fontWeight: '600'},
   infoVal: {
     fontSize: 13,
-    color: '#C8D0E7',
-    fontWeight: '600',
-    maxWidth: '55%',
+    color: color.textPrimary,
+    fontWeight: '700',
+    maxWidth: '62%',
     textAlign: 'right',
   },
   infoRowTop: {alignItems: 'flex-start'},
