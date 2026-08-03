@@ -303,7 +303,9 @@ const Home: React.FC = () => {
 
   const fetchTopGarages = async (lat?: number, lng?: number) => {
     const res = await get_top_garages(lat, lng);
-    if (!res?.success) throw new Error('Could not load top garages');
+    if (!res?.success) {
+      throw new Error(res?.message || 'Could not load top garages');
+    }
     return (res?.data ?? []) as TopGarageItem[];
   };
 

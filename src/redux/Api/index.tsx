@@ -37,8 +37,14 @@ export const callMultipleApis = async (requests: ApiRequest[]) => {
     );
 
     return responses?.map((res) => res.data);
-  } catch (error) {
-    console.error('API Error:', error);
+  } catch (error: any) {
+    // Axios' default string hides the useful backend validation message.
+    // Keep logs compact while exposing enough context to diagnose a 4xx.
+    console.error('API Error:', {
+      status: error?.response?.status,
+      url: error?.config?.url,
+      message: error?.response?.data?.message || error?.message,
+    });
     throw error;
   }
 };

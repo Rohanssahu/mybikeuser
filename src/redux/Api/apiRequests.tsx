@@ -1896,8 +1896,21 @@ const get_most_booked_near_you = async (lat?: number, lng?: number) => {
 const get_top_garages = async (lat?: number, lng?: number) => {
     const token = await AsyncStorage.getItem('token');
     const params: string[] = [];
-    if (lat != null) params.push(`lat=${lat}`);
-    if (lng != null) params.push(`lng=${lng}`);
+    // GPS providers can emit 15+ decimal places and tiny coordinate changes on
+    // every reading. Six decimals is ~11 cm precision, keeps the URL stable,
+    // and is more than enough for the backend's kilometre-based garage search.
+    const hasValidCoords =
+        Number.isFinite(lat) &&
+        Number.isFinite(lng) &&
+        Math.abs(lat as number) <= 90 &&
+        Math.abs(lng as number) <= 180;
+    if (!hasValidCoords) {
+        return { success: false, message: 'Waiting for a valid location', data: [] };
+    }
+    if (hasValidCoords) {
+        params.push(`lat=${(lat as number).toFixed(6)}`);
+        params.push(`lng=${(lng as number).toFixed(6)}`);
+    }
     const qs = params.length ? `?${params.join('&')}` : '';
     const apiRequests: ApiRequest[] = [
         {
@@ -1917,8 +1930,16 @@ const get_top_garages = async (lat?: number, lng?: number) => {
         }
         return { success: false, message: 'Unexpected response', data: [] };
     } catch (error: any) {
-        console.error('get_top_garages error:', error);
-        return { success: false, message: error.message, data: [] };
+        const serverMessage = error?.response?.data?.message;
+        console.error('get_top_garages error:', {
+            status: error?.response?.status,
+            message: serverMessage || error?.message,
+        });
+        return {
+            success: false,
+            message: serverMessage || error?.message || 'Could not load top garages',
+            data: [],
+        };
     }
 };
 
