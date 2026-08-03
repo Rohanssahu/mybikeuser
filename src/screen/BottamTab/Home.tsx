@@ -491,11 +491,13 @@ const Home: React.FC = () => {
   // -> garage flow above. bikeId is the currently active bike from the
   // swipe carousel (falls back to the user's first saved bike if none is
   // active yet); the screen itself works fine without one.
-  const goToServiceDetail = (serviceId?: string) => {
+  const goToServiceDetail = (serviceId?: string, serviceName?: string, serviceImage?: string) => {
     if (!serviceId) return;
     (navigation as any).navigate(ScreenNameEnum.SERVICE_DETAIL, {
       serviceId,
       bikeId: activeBikeId ?? bikeList[0]?._id,
+      serviceName,
+      serviceImage,
     });
   };
 
@@ -503,7 +505,7 @@ const Home: React.FC = () => {
     if (result.type === 'garage') {
       goToBikeSelect({Grageid: result.dealerId});
     } else if (result.type === 'service') {
-      goToServiceDetail(result.serviceId);
+      goToServiceDetail(result.serviceId, result.title, result.image);
     } else if (result.type === 'category') {
       (navigation as any).navigate(ScreenNameEnum.ALL_SERVICES, {
         categoryId: result.categoryId,
@@ -514,13 +516,13 @@ const Home: React.FC = () => {
   };
 
   const handleQuickService = (service: QuickServiceItem) =>
-    goToServiceDetail(service.serviceId);
+    goToServiceDetail(service.serviceId, service.name, service.image);
 
   const handleRecommended = (item: RecommendedServiceItem) =>
-    goToServiceDetail(item.serviceId);
+    goToServiceDetail(item.serviceId, item.name, item.image);
 
   const handlePopular = (item: MostBookedServiceItem) =>
-    goToServiceDetail(item.serviceId);
+    goToServiceDetail(item.serviceId, item.name, item.image);
 
   const handleCategory = (cat: ServiceCategoryItem) =>
     (navigation as any).navigate(ScreenNameEnum.ALL_SERVICES, {

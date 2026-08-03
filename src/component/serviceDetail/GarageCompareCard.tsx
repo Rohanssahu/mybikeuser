@@ -31,7 +31,7 @@ interface GarageCompareCardProps {
 
 const formatDistance = (km: number | null) => {
   if (km === null) return null;
-  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+  return `${Math.max(km, 0.1).toFixed(1)} km`;
 };
 
 const GarageCompareCard: React.FC<GarageCompareCardProps> = ({garage, isBestMatch, onBookNow, onViewDetails}) => {
@@ -54,8 +54,11 @@ const GarageCompareCard: React.FC<GarageCompareCardProps> = ({garage, isBestMatc
         isClosed && styles.cardClosed,
       ]}>
       {isBestMatch && (
-        <View style={styles.bestMatchBadge}>
-          <Text style={styles.bestMatchBadgeText}>Best match</Text>
+        <View style={styles.bestMatchRow}>
+          <View style={styles.bestMatchBadge}>
+            <MaterialCommunityIcons name="check-decagram" size={14} color={color.success} />
+            <Text style={styles.bestMatchBadgeText}>Best match</Text>
+          </View>
         </View>
       )}
 
@@ -74,34 +77,50 @@ const GarageCompareCard: React.FC<GarageCompareCardProps> = ({garage, isBestMatc
         </View>
 
         <View style={styles.body}>
-          <View style={styles.titleRow}>
-            <Text style={styles.title} numberOfLines={1}>{garage.shopName}</Text>
-            {rating && (
-              <View style={styles.ratingPill}>
-                <MaterialCommunityIcons name="star" size={12} color={color.buttonColor} />
-                <Text style={styles.ratingText}>{rating}</Text>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.metaRow}>
-            {distanceLabel && <Text style={styles.metaText}>{distanceLabel}</Text>}
-            {distanceLabel && <Text style={styles.metaDot}>·</Text>}
-            <Text style={[styles.metaText, isClosed ? styles.metaClosed : styles.metaOpen]}>
-              {garage.isOpen === undefined ? '' : isClosed ? 'Closed' : 'Open now'}
-            </Text>
-          </View>
+          <Text style={styles.title} numberOfLines={2}>{garage.shopName}</Text>
 
           {address.length > 0 && (
-            <Text style={styles.address} numberOfLines={1}>{address}</Text>
+            <View style={styles.detailRow}>
+              <MaterialCommunityIcons name="map-marker-outline" size={14} color={color.textMuted} />
+              <Text style={styles.address} numberOfLines={2}>{address}</Text>
+            </View>
           )}
 
-          {garage.price != null ? (
-            <Text style={styles.price}>₹{garage.price}</Text>
-          ) : (
-            <Text style={styles.priceUnknown}>Select a bike to see price</Text>
-          )}
         </View>
+      </View>
+
+      <View style={styles.chipRow}>
+        {distanceLabel && (
+          <View style={styles.infoChip}>
+            <MaterialCommunityIcons name="map-marker-distance" size={14} color={color.buttonColor} />
+            <Text style={styles.infoChipText}>{distanceLabel} away</Text>
+          </View>
+        )}
+        {garage.isOpen !== undefined && (
+          <View style={styles.infoChip}>
+            <MaterialCommunityIcons name={isClosed ? 'clock-outline' : 'store-check-outline'} size={14} color={isClosed ? color.textFaint : color.success} />
+            <Text style={[styles.infoChipText, isClosed ? styles.metaClosed : styles.metaOpen]}>
+              {isClosed ? 'Closed' : 'Open now'}
+            </Text>
+          </View>
+        )}
+        {rating && (
+          <View style={styles.infoChip}>
+            <MaterialCommunityIcons name="star" size={14} color={color.buttonColor} />
+            <Text style={styles.infoChipText}>{rating}</Text>
+          </View>
+        )}
+        {garage.pickupAndDrop && (
+          <View style={styles.infoChip}>
+            <MaterialCommunityIcons name="truck-fast-outline" size={14} color={color.success} />
+            <Text style={styles.infoChipText}>Pickup & drop</Text>
+          </View>
+        )}
+        {garage.price != null && (
+          <View style={styles.priceChip}>
+            <Text style={styles.price}>₹{garage.price}</Text>
+          </View>
+        )}
       </View>
 
       {showFilledCta ? (
@@ -134,16 +153,19 @@ const styles = StyleSheet.create({
   cardClosed: {
     opacity: 0.55,
   },
+  bestMatchRow: {flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10},
   bestMatchBadge: {
-    position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(34,197,94,0.14)',
     borderRadius: radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(34,197,94,0.55)',
+    paddingHorizontal: 11,
+    paddingVertical: 5,
   },
-  bestMatchBadgeText: {fontSize: 10.5, fontWeight: '800', color: color.buttonColor},
+  bestMatchBadgeText: {fontSize: 11.5, fontWeight: '800', color: color.success},
   topRow: {flexDirection: 'row'},
   imageWrap: {
     width: 52,
@@ -156,27 +178,33 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   image: {width: 52, height: 52},
-  body: {flex: 1, paddingRight: 60},
-  titleRow: {flexDirection: 'row', alignItems: 'center'},
-  title: {fontSize: 15, fontWeight: '700', color: color.textPrimary, flexShrink: 1, marginRight: 6},
-  ratingPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: 'rgba(254,212,40,0.1)',
-    borderRadius: radius.pill,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
-  ratingText: {fontSize: 11, fontWeight: '700', color: color.buttonColor},
-  metaRow: {flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4},
-  metaText: {fontSize: 11.5, color: color.textMuted, fontWeight: '500'},
-  metaDot: {fontSize: 11.5, color: color.textMuted},
+  body: {flex: 1},
+  title: {fontSize: 16, lineHeight: 21, fontWeight: '700', color: color.textPrimary},
   metaOpen: {color: color.success},
   metaClosed: {color: color.textFaint},
-  address: {fontSize: 11.5, color: color.textMuted, marginTop: 2},
-  price: {fontSize: 16, fontWeight: '800', color: color.buttonColor, marginTop: 6},
-  priceUnknown: {fontSize: 11.5, color: color.textFaint, marginTop: 6, fontStyle: 'italic'},
+  detailRow: {flexDirection: 'row', alignItems: 'flex-start', gap: 4, marginTop: 5},
+  address: {fontSize: 11.5, lineHeight: 16, color: color.textMuted, flex: 1},
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 7,
+    marginTop: spacing.md,
+  },
+  infoChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: color.borderSubtle,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  infoChipText: {fontSize: 11, fontWeight: '700', color: color.textPrimary},
+  priceChip: {backgroundColor: 'rgba(254,212,40,0.1)', borderRadius: radius.pill, paddingHorizontal: 11, paddingVertical: 5},
+  price: {fontSize: 12, fontWeight: '800', color: color.buttonColor},
   filledBtn: {
     marginTop: spacing.md,
     backgroundColor: color.buttonColor,

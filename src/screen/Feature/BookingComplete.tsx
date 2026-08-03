@@ -178,7 +178,7 @@ export default BookingComplete;
 
 // ── Styles ───────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#081041',},
+  container: {flex: 1, backgroundColor: color.baground},
   safeArea: {flex: 1},
   homeButton: {
     position: 'absolute',

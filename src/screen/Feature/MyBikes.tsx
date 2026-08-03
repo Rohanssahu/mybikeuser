@@ -10,6 +10,7 @@ import {
   Alert,
   StatusBar,
 } from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {icon, default as images} from '../../component/Image';
 import CustomHeader from '../../component/CustomHeaderProps';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -46,6 +47,8 @@ const MyBikes: React.FC<Props> = ({navigation}) => {
 
   useEffect(() => {
     if (isFocus) {fetchBikes();}
+    // fetchBikes intentionally refreshes from the API only when focus changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocus]);
 
   const isObjectId = (value: any) =>
@@ -233,12 +236,21 @@ const MyBikes: React.FC<Props> = ({navigation}) => {
           contentContainerStyle={styles.list}
           renderItem={renderBike}
           showsVerticalScrollIndicator={false}
-          ListFooterComponent={
-            <View style={styles.addBtnWrapper}>
-              <CustomButton
-                title="Add New Bike"
-                onPress={() => (navigation as any).navigate(ScreenNameEnum.BIKE_DETAILS)}
-              />
+          ListHeaderComponent={
+            <View style={styles.listHeader}>
+              <View>
+                <Text style={styles.listTitle}>Saved bikes</Text>
+                <Text style={styles.listSubtitle}>
+                  {bikes.length} bike{bikes.length !== 1 ? 's' : ''} in your garage
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.compactAddButton}
+                activeOpacity={0.75}
+                onPress={() => (navigation as any).navigate(ScreenNameEnum.BIKE_DETAILS)}>
+                <MaterialCommunityIcons name="plus" size={18} color={color.buttonColor} />
+                <Text style={styles.compactAddText}>Add bike</Text>
+              </TouchableOpacity>
             </View>
           }
         />
@@ -269,9 +281,30 @@ const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: color.baground},
   list: {
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 8,
     paddingBottom: 30,
   },
+  listHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+    paddingHorizontal: 2,
+  },
+  listTitle: {fontSize: 15, fontWeight: '800', color: color.textPrimary},
+  listSubtitle: {fontSize: 11, fontWeight: '500', color: color.textMuted, marginTop: 2},
+  compactAddButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(254,212,40,0.5)',
+    backgroundColor: 'rgba(254,212,40,0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  compactAddText: {fontSize: 12, fontWeight: '800', color: color.buttonColor},
 
   card: {
     backgroundColor: '#101B33',
@@ -281,7 +314,7 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH - 32,
     alignSelf: 'center',
     position: 'relative',
-  
+
     shadowColor: '#000',
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -291,47 +324,47 @@ const styles = StyleSheet.create({
     },
     elevation: 5,
   },
-  
+
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  
+
   bikeImg: {
     width: 95,
     height: 70,
     marginRight: 14,
   },
-  
+
   cardBody: {
     flex: 1,
   },
-  
+
   plateTxt: {
     fontSize: 17,
     fontWeight: '700',
     color: '#FFF',
   },
-  
+
   companyTxt: {
     marginTop: 4,
     fontSize: 15,
     color: '#FFF',
     fontWeight: '600',
   },
-  
+
   modelTxt: {
     marginTop: 2,
     fontSize: 13,
     color: '#C6C8D5',
   },
-  
+
   variantTxt: {
     marginTop: 2,
     fontSize: 12,
     color: '#9CA3AF',
   },
-  
+
   activeBadge: {
     alignSelf: 'flex-start',
     marginTop: 8,
@@ -357,13 +390,13 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 15,
   },
-  
+
   tagText: {
     color: '#FFD54F',
     fontSize: 12,
     fontWeight: '600',
   },
-  
+
   selectBtn: {
     marginTop: 14,
     height: 42,
@@ -372,32 +405,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  
+
   selectBtnText: {
     color: '#000',
     fontWeight: '700',
     fontSize: 14,
   },
-  
+
   deleteBtn: {
     position: 'absolute',
     right: 12,
     top: 12,
     zIndex: 10,
   },
-  
+
   deleteIcon: {
     width: 20,
     height: 20,
-   
+
   },
-  
+
   tagRow: {
     flexDirection: 'row',
     marginTop: 8,
     gap: 6,
   },
- 
+
   tagCC: {backgroundColor: 'rgba(254,212,40,0.12)'},
   tagCCText: {color: '#FED428'},
 

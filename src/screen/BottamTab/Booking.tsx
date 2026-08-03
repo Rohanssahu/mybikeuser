@@ -7,10 +7,12 @@ import {
   Linking,
   TouchableOpacity,
   Image,
+  Modal,
   Platform,
-  ScrollView,
+  Pressable,
 } from 'react-native';
-import {color, TAB_BAR_HEIGHT} from '../../constant';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {color, radius, spacing, TAB_BAR_HEIGHT} from '../../constant';
 import BookingList from '../../component/BookingList';
 import SearchBar from '../../component/SearchBar';
 import {
@@ -67,14 +69,6 @@ const getStatusGroup = (item: ShopItem): string => {
   const group =
     Object.keys(STATUS_GROUPS).find(key => STATUS_GROUPS[key].includes(raw)) ||
     raw;
-  // TEMP DEBUG: verify actual backend field values before removing.
-  console.log('[Booking] item:', item);
-  console.log('[Booking] status field used for filtering ->', {
-    id: item?._id,
-    status: item?.status,
-    dealerResponseStatus: item?.dealerResponseStatus,
-    resolvedGroup: group,
-  });
   return group;
 };
 
@@ -97,6 +91,7 @@ interface ShopItem {
 const Booking: React.FC<{navigation: any}> = ({navigation}) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [filterVisible, setFilterVisible] = useState(false);
   const [booking, setBooking] = useState<ShopItem[]>([]);
   const isFocus = useIsFocused();
   const [loading, setLoading] = useState(false);
@@ -112,8 +107,6 @@ const Booking: React.FC<{navigation: any}> = ({navigation}) => {
       const user_id = await AsyncStorage.getItem('user_id');
       if (!user_id) {return;}
       const response = await get_userbooking(user_id);
-      // TEMP DEBUG: verify raw booking payload shape from backend.
-      console.log('[Booking] get_userbooking response.data:', response?.data);
       setBooking(response?.data?.length > 0 ? response.data : []);
     } catch (error) {
       console.error('Error fetching bookings:', error);
@@ -151,6 +144,11 @@ const Booking: React.FC<{navigation: any}> = ({navigation}) => {
     b => b.status === 'pending' && b.dealerResponseStatus !== 'expired',
   ).length;
 
+  const getFilterCount = (value: string) =>
+    value === 'all'
+      ? booking.length
+      : booking.filter(item => getStatusGroup(item) === value).length;
+
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor={color.baground} barStyle="light-content" />
@@ -175,27 +173,33 @@ const Booking: React.FC<{navigation: any}> = ({navigation}) => {
         />
       </View>
 
-      {/* Filter chips */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterWrapper}
-        contentContainerStyle={styles.filterContent}>
-        {FILTER_CHIPS.map(chip => {
-          const isActive = selectedFilter === chip.value;
-          return (
-            <TouchableOpacity
-              key={chip.value}
-              activeOpacity={0.8}
-              onPress={() => setSelectedFilter(chip.value)}
-              style={[styles.chip, isActive && styles.chipActive]}>
-              <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-                {chip.label}
-              </Text>
+      <View style={styles.listToolbar}>
+        <View>
+          <Text style={styles.resultCount}>
+            {filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''}
+          </Text>
+          <Text style={styles.resultSubtitle}>
+            {FILTER_CHIPS.find(chip => chip.value === selectedFilter)?.label || 'All'} bookings
+          </Text>
+        </View>
+        <View style={styles.toolbarActions}>
+          {selectedFilter !== 'all' && (
+            <TouchableOpacity style={styles.clearFilter} onPress={() => setSelectedFilter('all')}>
+              <MaterialCommunityIcons name="refresh" size={15} color={color.danger} />
+              <Text style={styles.clearFilterText}>Reset</Text>
             </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+          )}
+          <TouchableOpacity style={styles.filterButton} onPress={() => setFilterVisible(true)} activeOpacity={0.75}>
+            <MaterialCommunityIcons name="tune-variant" size={17} color={color.buttonColor} />
+            <Text style={styles.filterButtonText}>Filter</Text>
+            {selectedFilter !== 'all' && (
+              <View style={styles.filterCountBadge}>
+                <Text style={styles.filterCountText}>1</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
 
       {filteredBookings.length > 0
         ? React.createElement(BookingList as any, {
@@ -210,14 +214,14 @@ const Booking: React.FC<{navigation: any}> = ({navigation}) => {
         <View style={[styles.emptyState, {paddingBottom: bottomPad}]}>
           <Image source={icon.booking} style={styles.emptyIcon} />
           <Text style={styles.emptyTitle}>
-            {searchQuery ? 'No matching bookings' : 'No bookings yet'}
+            {searchQuery || selectedFilter !== 'all' ? 'No matching bookings' : 'No bookings yet'}
           </Text>
           <Text style={styles.emptySubtitle}>
-            {searchQuery
-              ? 'Try a different search term'
+            {searchQuery || selectedFilter !== 'all'
+              ? 'Try changing your search or selected filter'
               : 'Book a bike service to see it here'}
           </Text>
-          {!searchQuery && (
+          {!searchQuery && selectedFilter === 'all' && (
             <TouchableOpacity
               style={styles.bookNowBtn}
               onPress={() => navigation.navigate('Home')}
@@ -227,6 +231,53 @@ const Booking: React.FC<{navigation: any}> = ({navigation}) => {
           )}
         </View>
       )}
+
+      <Modal visible={filterVisible} transparent animationType="fade" onRequestClose={() => setFilterVisible(false)}>
+        <Pressable style={styles.modalBackdrop} onPress={() => setFilterVisible(false)} />
+        <View style={styles.filterSheet}>
+          <View style={styles.sheetHeader}>
+            <View>
+              <Text style={styles.sheetTitle}>Filter bookings</Text>
+              <Text style={styles.sheetSubtitle}>Choose a booking status</Text>
+            </View>
+            <TouchableOpacity style={styles.sheetClose} onPress={() => setFilterVisible(false)}>
+              <MaterialCommunityIcons name="close" size={20} color={color.textPrimary} />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.sectionLabel}>BOOKING STATUS</Text>
+          <View style={styles.statusOptions}>
+            {FILTER_CHIPS.map(chip => {
+              const isActive = selectedFilter === chip.value;
+              return (
+                <TouchableOpacity
+                  key={chip.value}
+                  style={[styles.statusOption, isActive && styles.statusOptionActive]}
+                  onPress={() => setSelectedFilter(chip.value)}>
+                  <View style={[styles.statusIcon, isActive && styles.statusIconActive]}>
+                    <MaterialCommunityIcons
+                      name={chip.value === 'all' ? 'format-list-bulleted' : chip.value === 'cancelled' ? 'close-circle-outline' : chip.value === 'completed' ? 'check-circle-outline' : 'clock-outline'}
+                      size={17}
+                      color={isActive ? color.buttonColor : color.textMuted}
+                    />
+                  </View>
+                  <Text style={[styles.statusOptionText, isActive && styles.statusOptionTextActive]}>{chip.label}</Text>
+                  <View style={styles.statusCountChip}>
+                    <Text style={styles.statusCountText}>{getFilterCount(chip.value)}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <View style={styles.sheetActions}>
+            <TouchableOpacity style={styles.sheetClearButton} onPress={() => setSelectedFilter('all')}>
+              <Text style={styles.sheetClearText}>Clear</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.sheetApplyButton} onPress={() => setFilterVisible(false)}>
+              <Text style={styles.sheetApplyText}>Show {filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -266,39 +317,23 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 12,
   },
-  filterWrapper: {
-    flexGrow: 0,
-    marginBottom: 12,
-  },
-  filterContent: {
-    paddingHorizontal: 16,
+  listToolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
     paddingVertical: 8,
-    alignItems: 'center',
+    marginBottom: 6,
   },
-  chip: {
-    height: 40,
-    paddingHorizontal: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 20,
-    backgroundColor: color.cardSurface,
-    borderWidth: 1,
-    borderColor: color.borderSubtle,
-    marginRight: 8,
-  },
-  chipActive: {
-    backgroundColor: color.buttonColor,
-    borderColor: color.buttonColor,
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#6B7DBE',
-  },
-  chipTextActive: {
-    color: color.baground,
-    fontWeight: '700',
-  },
+  resultCount: {fontSize: 14, fontWeight: '800', color: color.textPrimary},
+  resultSubtitle: {fontSize: 10.5, fontWeight: '500', color: color.textMuted, marginTop: 2},
+  toolbarActions: {flexDirection: 'row', alignItems: 'center', gap: 8},
+  clearFilter: {flexDirection: 'row', alignItems: 'center', gap: 3, paddingVertical: 7},
+  clearFilterText: {fontSize: 11, fontWeight: '700', color: color.danger},
+  filterButton: {flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: 'rgba(254,212,40,0.45)', backgroundColor: 'rgba(254,212,40,0.09)', borderRadius: radius.pill, paddingHorizontal: 11, paddingVertical: 8},
+  filterButtonText: {fontSize: 12, fontWeight: '700', color: color.buttonColor},
+  filterCountBadge: {width: 17, height: 17, borderRadius: 9, backgroundColor: color.buttonColor, alignItems: 'center', justifyContent: 'center'},
+  filterCountText: {fontSize: 9.5, fontWeight: '800', color: color.baground},
   emptyState: {
     flex: 1,
     alignItems: 'center',
@@ -319,7 +354,7 @@ const styles = StyleSheet.create({
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#606880',
+    color: color.textMuted,
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 20,
@@ -336,4 +371,25 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 15,
   },
+  modalBackdrop: {flex: 1, backgroundColor: 'rgba(0,0,0,0.5)'},
+  filterSheet: {backgroundColor: color.cardSurface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.xxl},
+  sheetHeader: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg},
+  sheetTitle: {fontSize: 18, fontWeight: '800', color: color.textPrimary},
+  sheetSubtitle: {fontSize: 11.5, color: color.textMuted, marginTop: 3},
+  sheetClose: {width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center'},
+  sectionLabel: {fontSize: 10, fontWeight: '800', letterSpacing: 0.8, color: color.textMuted, marginBottom: 8},
+  statusOptions: {flexDirection: 'row', flexWrap: 'wrap', gap: 8},
+  statusOption: {flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: '47%', flexGrow: 1, borderWidth: 1, borderColor: color.borderSubtle, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: radius.md, padding: 10},
+  statusOptionActive: {borderColor: 'rgba(254,212,40,0.55)', backgroundColor: 'rgba(254,212,40,0.1)'},
+  statusIcon: {width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)'},
+  statusIconActive: {backgroundColor: 'rgba(254,212,40,0.12)'},
+  statusOptionText: {flex: 1, fontSize: 11.5, fontWeight: '700', color: color.textMuted},
+  statusOptionTextActive: {color: color.textPrimary},
+  statusCountChip: {minWidth: 22, height: 22, paddingHorizontal: 5, borderRadius: 11, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center'},
+  statusCountText: {fontSize: 10, fontWeight: '800', color: color.textPrimary},
+  sheetActions: {flexDirection: 'row', gap: 10, marginTop: spacing.lg},
+  sheetClearButton: {flex: 0.8, borderWidth: 1, borderColor: color.borderSubtle, borderRadius: radius.sm, alignItems: 'center', paddingVertical: 12},
+  sheetClearText: {fontSize: 13, fontWeight: '700', color: color.textPrimary},
+  sheetApplyButton: {flex: 1.5, backgroundColor: color.buttonColor, borderRadius: radius.sm, alignItems: 'center', paddingVertical: 12},
+  sheetApplyText: {fontSize: 13, fontWeight: '800', color: color.baground},
 });

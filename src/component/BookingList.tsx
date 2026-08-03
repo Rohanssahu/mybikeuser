@@ -118,8 +118,8 @@ const BookingList: React.FC<BookingListProps> = ({
                   {item?.dealer_id?.shopName || 'Service Center'}
                 </Text>
                 <View style={styles.addrRow}>
-                  <Icon source={icon.pin} size={11} tintColor="#6B7DBE" />
-                  <Text style={styles.shopAddr} numberOfLines={1}>
+                  <Icon source={icon.pin} size={12} tintColor={color.buttonColor} />
+                  <Text style={styles.shopAddr} numberOfLines={2}>
                     {' '}{address}
                   </Text>
                 </View>
@@ -196,21 +196,21 @@ const styles = StyleSheet.create({
     height: 34,
     width: 34,
     borderRadius: 10,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    backgroundColor: 'rgba(254,212,40,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   topText: { flex: 1, marginLeft: 10 },
-  shopName: { fontSize: 13, fontWeight: '700', color: '#fff' },
+  shopName: { fontSize: 14, fontWeight: '800', color: color.textPrimary },
   addrRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
-  shopAddr: { fontSize: 11, color: '#6B7DBE', flex: 1 },
+  shopAddr: { fontSize: 11.5, lineHeight: 16, color: color.textMuted, flex: 1 },
   midRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 10,
   },
-  midInfo: { fontSize: 11, color: '#6B7DBE', flex: 1, marginRight: 8 },
+  midInfo: { fontSize: 11, fontWeight: '600', color: color.textMuted, flex: 1, marginRight: 8 },
   badge: {
     paddingHorizontal: 9,
     paddingVertical: 4,
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 8,
   },
-  pickupTxt: { fontSize: 11, color: '#6B7DBE', flex: 1, marginRight: 8 },
+  pickupTxt: { fontSize: 11, fontWeight: '600', color: color.textMuted, flex: 1, marginRight: 8 },
   bottomRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   cancelBtn: {
     paddingHorizontal: 8,

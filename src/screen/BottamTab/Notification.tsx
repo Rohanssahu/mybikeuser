@@ -233,8 +233,8 @@ const styles = StyleSheet.create({
     body: {
         flex: 1,
         backgroundColor: notificationColors.bodySurface,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
         overflow: 'hidden',
     },
     listWrap: {
@@ -248,7 +248,9 @@ const styles = StyleSheet.create({
         flexGrow: 1,
     },
     sectionLabel: {
-        fontSize: 11,
+        fontSize: 12,
+        fontWeight: '800',
+        letterSpacing: 0.4,
         color: notificationColors.groupLabel,
         marginTop: 14,
         marginBottom: 8,
@@ -286,10 +288,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: notificationColors.cardSurface,
         borderRadius: 12,
-        borderWidth: 0.5,
+        borderWidth: 1,
         borderColor: notificationColors.cardBorder,
         padding: 10,
         marginBottom: 8,
+        shadowColor: '#1D4A8F',
+        shadowOffset: {width: 0, height: 3},
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 2,
     },
     skeletonCircle: {
         width: 42,

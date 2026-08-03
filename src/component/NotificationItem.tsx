@@ -99,7 +99,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 
         <View style={styles.textContainer}>
           <Text style={styles.name} numberOfLines={1}>{name}</Text>
-          <Text style={styles.message} numberOfLines={1} ellipsizeMode="tail">{message}</Text>
+          <Text style={styles.message} numberOfLines={2} ellipsizeMode="tail">{message}</Text>
         </View>
 
         <Text style={styles.time}>{time}</Text>
@@ -110,16 +110,21 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 
 const styles = StyleSheet.create({
   wrap: {
-    marginBottom: 8,
+    marginBottom: 10,
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
-    borderWidth: 0.5,
+    borderRadius: 14,
+    borderWidth: 1,
     borderColor: notificationColors.cardBorder,
     backgroundColor: notificationColors.cardSurface,
-    padding: 10,
+    padding: 12,
+    shadowColor: '#1D4A8F',
+    shadowOffset: {width: 0, height: 3},
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   cardPressed: {
     opacity: 0.85,
@@ -141,9 +146,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -3,
     left: -3,
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
     backgroundColor: notificationColors.unreadDot,
     zIndex: 1,
   },
@@ -152,17 +157,19 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   name: {
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '700',
     color: notificationColors.titleText,
     marginBottom: 2,
   },
   message: {
-    fontSize: 11,
+    fontSize: 12,
+    lineHeight: 17,
     color: notificationColors.descText,
   },
   time: {
-    fontSize: 10,
+    fontSize: 10.5,
+    fontWeight: '600',
     color: notificationColors.descText,
   },
 });

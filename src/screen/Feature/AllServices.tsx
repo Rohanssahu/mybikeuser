@@ -1,10 +1,10 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
   FlatList,
   Image,
-  Platform,
+  Modal,
+  Pressable,
   StatusBar,
   StyleSheet,
   Text,
@@ -12,9 +12,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import CustomHeader from '../../component/CustomHeaderProps';
-import {color} from '../../constant';
+import {color, radius, spacing} from '../../constant';
 import {
   get_featured_categories,
   get_services_by_category,
@@ -51,21 +52,12 @@ interface DisplayItem {
   serviceId?: string;
 }
 
-const {width: SCREEN_WIDTH} = Dimensions.get('window');
-const NUM_COLUMNS = 3;
-const GRID_PADDING = 16;
-const CARD_GAP = 10;
-const CARD_WIDTH =
-  (SCREEN_WIDTH - GRID_PADDING * 2 - CARD_GAP * (NUM_COLUMNS - 1)) /
-  NUM_COLUMNS;
-const CARD_IMAGE_HEIGHT = CARD_WIDTH;
-
 type SortKey = 'default' | 'az' | 'za';
 
 const SORT_OPTIONS: {label: string; value: SortKey}[] = [
-  {label: 'All', value: 'default'},
-  {label: 'A → Z', value: 'az'},
-  {label: 'Z → A', value: 'za'},
+  {label: 'Recommended order', value: 'default'},
+  {label: 'Name: A to Z', value: 'az'},
+  {label: 'Name: Z to A', value: 'za'},
 ];
 
 const CategoryCard = ({
@@ -86,21 +78,24 @@ const CategoryCard = ({
       style={styles.card}
       activeOpacity={0.8}
       onPress={onPress}>
-      <View style={styles.cardInner}>
+      <View style={styles.imageWrap}>
         <Image
           source={imgSrc}
           style={styles.cardImg}
           resizeMode="cover"
           onError={() => setImgError(true)}
         />
-        <View style={styles.cardNameWrapper}>
-          <Text
-            style={styles.cardName}
-            numberOfLines={2}
-            ellipsizeMode="tail">
-            {item.name}
-          </Text>
+      </View>
+      <View style={styles.cardContent}>
+        <Text style={styles.cardEyebrow}>SERVICE</Text>
+        <Text style={styles.cardName} numberOfLines={2}>{item.name}</Text>
+        <View style={styles.cardHintRow}>
+          <MaterialCommunityIcons name="map-marker-radius-outline" size={14} color={color.textMuted} />
+          <Text style={styles.cardHint}>View nearby garages</Text>
         </View>
+      </View>
+      <View style={styles.cardArrow}>
+        <MaterialCommunityIcons name="chevron-right" size={22} color={color.buttonColor} />
       </View>
     </TouchableOpacity>
   );
@@ -115,9 +110,10 @@ const AllServices: React.FC<Props> = ({navigation, route}) => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('default');
+  const [filterVisible, setFilterVisible] = useState(false);
 
   useEffect(() => {
-    if (isCategoryMode) {
+    if (categoryId) {
       loadCategoryServices(categoryId as string);
     } else {
       loadFeaturedCategories();
@@ -213,11 +209,11 @@ const AllServices: React.FC<Props> = ({navigation, route}) => {
       {/* Search bar */}
       <View style={styles.searchWrapper}>
         <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <MaterialCommunityIcons name="magnify" size={21} color={color.buttonColor} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search services..."
-            placeholderTextColor="#666"
+            placeholderTextColor={color.textMuted}
             value={search}
             onChangeText={setSearch}
             returnKeyType="search"
@@ -227,33 +223,19 @@ const AllServices: React.FC<Props> = ({navigation, route}) => {
             <TouchableOpacity
               onPress={() => setSearch('')}
               hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-              <Text style={styles.clearIcon}>✕</Text>
+              <MaterialCommunityIcons name="close-circle" size={19} color={color.textMuted} />
             </TouchableOpacity>
           )}
         </View>
       </View>
 
-      {/* Sort filter chips */}
-      <View style={styles.filterRow}>
-        {SORT_OPTIONS.map(opt => (
-          <TouchableOpacity
-            key={opt.value}
-            style={[
-              styles.filterChip,
-              sort === opt.value && styles.filterChipActive,
-            ]}
-            onPress={() => setSort(opt.value)}
-            activeOpacity={0.8}>
-            <Text
-              style={[
-                styles.filterChipText,
-                sort === opt.value && styles.filterChipTextActive,
-              ]}>
-              {opt.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-        {(search.length > 0 || sort !== 'default') && (
+      <View style={styles.listToolbar}>
+        <View>
+          <Text style={styles.resultCount}>{filtered.length} service{filtered.length !== 1 ? 's' : ''}</Text>
+          {search.length > 0 && <Text style={styles.resultSubtitle}>Results for “{search}”</Text>}
+        </View>
+        <View style={styles.toolbarActions}>
+          {(search.length > 0 || sort !== 'default') && (
           <TouchableOpacity
             style={styles.resetBtn}
             onPress={() => {
@@ -261,9 +243,16 @@ const AllServices: React.FC<Props> = ({navigation, route}) => {
               setSort('default');
             }}
             activeOpacity={0.8}>
+            <MaterialCommunityIcons name="refresh" size={16} color={color.danger} />
             <Text style={styles.resetBtnText}>Reset</Text>
           </TouchableOpacity>
-        )}
+          )}
+          <TouchableOpacity style={styles.filterButton} onPress={() => setFilterVisible(true)} activeOpacity={0.75}>
+            <MaterialCommunityIcons name="tune-variant" size={17} color={color.buttonColor} />
+            <Text style={styles.filterButtonText}>Filter</Text>
+            {sort !== 'default' && <View style={styles.activeFilterDot} />}
+          </TouchableOpacity>
+        </View>
       </View>
 
       {loading ? (
@@ -274,19 +263,9 @@ const AllServices: React.FC<Props> = ({navigation, route}) => {
         <FlatList
           data={filtered}
           keyExtractor={item => item.id}
-          numColumns={NUM_COLUMNS}
-          columnWrapperStyle={styles.row}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          ListHeaderComponent={
-            filtered.length > 0 ? (
-              <Text style={styles.resultCount}>
-                {filtered.length} service{filtered.length !== 1 ? 's' : ''}
-                {search ? ` for "${search}"` : ''}
-              </Text>
-            ) : null
-          }
           renderItem={({item}) => (
             <CategoryCard
               item={item}
@@ -315,6 +294,38 @@ const AllServices: React.FC<Props> = ({navigation, route}) => {
           }
         />
       )}
+
+      <Modal visible={filterVisible} transparent animationType="fade" onRequestClose={() => setFilterVisible(false)}>
+        <Pressable style={styles.modalBackdrop} onPress={() => setFilterVisible(false)} />
+        <View style={styles.filterSheet}>
+          <View style={styles.sheetHeader}>
+            <View>
+              <Text style={styles.sheetTitle}>Sort services</Text>
+              <Text style={styles.sheetSubtitle}>Choose how the list is arranged</Text>
+            </View>
+            <TouchableOpacity style={styles.sheetClose} onPress={() => setFilterVisible(false)}>
+              <MaterialCommunityIcons name="close" size={20} color={color.textPrimary} />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.sectionLabel}>SORT BY</Text>
+          {SORT_OPTIONS.map(option => (
+            <TouchableOpacity key={option.value} style={styles.sortRow} onPress={() => setSort(option.value)}>
+              <View style={styles.sortLabelRow}>
+                <MaterialCommunityIcons
+                  name={option.value === 'default' ? 'format-list-bulleted' : option.value === 'az' ? 'sort-alphabetical-ascending' : 'sort-alphabetical-descending'}
+                  size={19}
+                  color={sort === option.value ? color.buttonColor : color.textMuted}
+                />
+                <Text style={[styles.sortText, sort === option.value && styles.sortTextActive]}>{option.label}</Text>
+              </View>
+              <MaterialCommunityIcons name={sort === option.value ? 'radiobox-marked' : 'radiobox-blank'} size={20} color={sort === option.value ? color.buttonColor : color.textMuted} />
+            </TouchableOpacity>
+          ))}
+          <TouchableOpacity style={styles.applyButton} onPress={() => setFilterVisible(false)}>
+            <Text style={styles.applyButtonText}>Show {filtered.length} service{filtered.length !== 1 ? 's' : ''}</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -329,91 +340,75 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 6,
+    backgroundColor: color.cardSurface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: color.borderSubtle,
+    paddingHorizontal: 14,
+    minHeight: 52,
     gap: 8,
   },
-  searchIcon: {fontSize: 14},
-  searchInput: {flex: 1, fontSize: 14, color: '#fff'},
-  clearIcon: {fontSize: 13, color: '#888'},
-  filterRow: {
+  searchInput: {flex: 1, fontSize: 14, color: color.textPrimary, paddingVertical: 0},
+  listToolbar: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 16,
-    gap: 8,
+    paddingVertical: 10,
   },
-  filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  filterChipActive: {
-    backgroundColor: color.buttonColor,
-    borderColor: color.buttonColor,
-  },
-  filterChipText: {fontSize: 13, color: '#aaa', fontWeight: '600'},
-  filterChipTextActive: {color: '#000'},
+  toolbarActions: {flexDirection: 'row', alignItems: 'center', gap: 8},
+  filterButton: {flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: 1, borderColor: 'rgba(254,212,40,0.45)', backgroundColor: 'rgba(254,212,40,0.09)', borderRadius: radius.pill, paddingHorizontal: 11, paddingVertical: 8},
+  filterButtonText: {fontSize: 12, fontWeight: '700', color: color.buttonColor},
+  activeFilterDot: {width: 7, height: 7, borderRadius: 4, backgroundColor: color.success},
   resetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255,80,80,0.4)',
+    borderColor: 'rgba(239,68,68,0.4)',
   },
-  resetBtnText: {fontSize: 12, color: '#ff6b6b', fontWeight: '600'},
+  resetBtnText: {fontSize: 11, color: color.danger, fontWeight: '700'},
   resultCount: {
-    fontSize: 13,
-    color: '#8a90a8',
-    marginBottom: 14,
-    paddingHorizontal: 2,
-    fontWeight: '600',
+    fontSize: 14,
+    color: color.textPrimary,
+    fontWeight: '800',
   },
+  resultSubtitle: {fontSize: 10.5, color: color.textMuted, marginTop: 2, maxWidth: 170},
   list: {
-    paddingHorizontal: GRID_PADDING,
+    paddingHorizontal: spacing.lg,
     paddingBottom: 30,
-    paddingTop: 4,
-  },
-  row: {
-    justifyContent: 'space-between',
-    marginBottom: CARD_GAP,
+    paddingTop: spacing.sm,
   },
   card: {
-    width: CARD_WIDTH,
-    borderRadius: 16,
-    backgroundColor: '#101B3D',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 3},
-    shadowOpacity: 0.22,
-    shadowRadius: 6,
-    elevation: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: radius.lg,
+    backgroundColor: color.cardSurface,
+    borderWidth: 1,
+    borderColor: color.borderSubtle,
+    padding: spacing.md,
+    marginBottom: spacing.md,
   },
-  cardInner: {
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
+  imageWrap: {width: 72, height: 72, borderRadius: radius.md, overflow: 'hidden', backgroundColor: color.cardSurfaceElevated},
   cardImg: {
     width: '100%',
-    height: CARD_IMAGE_HEIGHT,
+    height: '100%',
   },
-  cardNameWrapper: {
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-  },
+  cardContent: {flex: 1, paddingHorizontal: spacing.md},
+  cardEyebrow: {fontSize: 9, letterSpacing: 0.7, fontWeight: '800', color: color.buttonColor},
   cardName: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '700',
-    lineHeight: 16,
-    textAlign: 'center',
+    color: color.textPrimary,
+    fontSize: 15,
+    fontWeight: '800',
+    lineHeight: 20,
+    marginTop: 3,
   },
+  cardHintRow: {flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 7},
+  cardHint: {fontSize: 11, color: color.textMuted, fontWeight: '600'},
+  cardArrow: {width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(254,212,40,0.1)', alignItems: 'center', justifyContent: 'center'},
   loader: {flex: 1, justifyContent: 'center', alignItems: 'center'},
   emptyBox: {
     paddingTop: 80,
@@ -421,7 +416,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   emptyEmoji: {fontSize: 36},
-  emptyTitle: {fontSize: 14, color: '#666', textAlign: 'center'},
+  emptyTitle: {fontSize: 14, color: color.textMuted, textAlign: 'center'},
   clearBtn: {
     marginTop: 6,
     paddingHorizontal: 20,
@@ -432,6 +427,19 @@ const styles = StyleSheet.create({
     borderColor: color.buttonColor,
   },
   clearBtnText: {fontSize: 13, color: color.buttonColor, fontWeight: '700'},
+  modalBackdrop: {flex: 1, backgroundColor: 'rgba(0,0,0,0.5)'},
+  filterSheet: {backgroundColor: color.cardSurface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.xxl},
+  sheetHeader: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg},
+  sheetTitle: {fontSize: 18, fontWeight: '800', color: color.textPrimary},
+  sheetSubtitle: {fontSize: 11.5, color: color.textMuted, marginTop: 3},
+  sheetClose: {width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center'},
+  sectionLabel: {fontSize: 10, fontWeight: '800', letterSpacing: 0.8, color: color.textMuted, marginBottom: 5},
+  sortRow: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, borderTopWidth: 1, borderTopColor: color.borderSubtle},
+  sortLabelRow: {flexDirection: 'row', alignItems: 'center', gap: 10},
+  sortText: {fontSize: 14, fontWeight: '600', color: color.textMuted},
+  sortTextActive: {color: color.buttonColor},
+  applyButton: {backgroundColor: color.buttonColor, borderRadius: radius.sm, alignItems: 'center', paddingVertical: 13, marginTop: spacing.lg},
+  applyButtonText: {fontSize: 14, fontWeight: '800', color: color.baground},
 });
 
 export default AllServices;

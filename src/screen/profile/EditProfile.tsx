@@ -1,17 +1,15 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { color } from '../../constant';
 import CustomHeader from '../../component/CustomHeaderProps';
-import images, { icon } from '../../component/Image';
-import Icon from '../../component/Icon';
+import images from '../../component/Image';
 import CustomTextInput from '../../component/TextInput';
 import { hp } from '../../component/utils/Constant';
 import CustomButton from '../../component/CustomButton';
-import ScreenNameEnum from '../../routes/screenName.enum';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import CustomDropdown from '../../component/CustomDropdown';
-import { get_citys, get_profile, get_states, updateProfile, updateProfileImage } from '../../redux/Api/apiRequests';
+import {get_profile, updateProfile, updateProfileImage} from '../../redux/Api/apiRequests';
 import { captureImage, image_url, selectImageFromGallery } from '../../redux/Api';
 import UploadImageModal from '../../component/UploadImageModal';
 import Loading from '../../configs/Loader';
@@ -27,20 +25,17 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
     const [lastName, setLastName] = useState('');
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
-    const [state, setState] = useState('');
+    const [state] = useState('');
     const [city, setCity] = useState('');
     const [address, setAddress] = useState('');
     const [pinCode, setPinCode] = useState('');
-    const [StateData, setStateData] = useState([]);
-    const [cityData, setcityData] = useState([]);
-    const [image, setImage] = useState('');
+    const [image, setImage] = useState<any>('');
 
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [loading, setLoading] = useState(false);
     useEffect(() => {
-        get_states_list()
-        getUser()
-    }, [])
+        getUser();
+    }, []);
 
 
     useEffect(() => {
@@ -58,8 +53,8 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
 
 
     const getUser = async () => {
-        setLoading(true)
-        const user_id = await AsyncStorage.getItem('user_id')
+        setLoading(true);
+        const user_id = await AsyncStorage.getItem('user_id');
 
         const res = await get_profile(user_id);
         if (res.success) {
@@ -68,40 +63,12 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
         } else {
             setUser('');
         }
-        setLoading(false)
+        setLoading(false);
     };
 
 
-    const get_states_list = async () => {
-
-
-        const state = await get_states()
-
-        if (state.success) {
-
-            setStateData(state.state)
-        } else {
-            setStateData([])
-        }
-
-
-    }
-    const get_citys_list = async (city) => {
-
-
-        const state = await get_citys(city)
-
-        if (state.success) {
-
-            setcityData(state.state)
-        } else {
-            setcityData([])
-        }
-
-
-    }
     // Error states
-    const [errors, setErrors] = useState({
+    const [errors] = useState({
         firstName: '',
         lastName: '',
         state: '',
@@ -109,30 +76,30 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
         address: '',
         pinCode: '',
         email: '',
-        phone: ''
+        phone: '',
     });
 
 
     const handleCapture = async () => {
-        const image = await captureImage();
-        if (image) {
-            console.log('Captured Image:', image);
+    const pickedImage = await captureImage();
+    if (pickedImage) {
+      console.log('Captured Image:', pickedImage);
             // Handle the captured image (e.g., upload, display, save, etc.)
-            setImage(image)
-            await update_image(image?.path)
-            setIsModalVisible(false)
+      setImage(pickedImage);
+      await update_image(pickedImage?.path);
+            setIsModalVisible(false);
         } else {
             console.log('Image capture canceled or failed.');
         }
     };
 
     const selectFromGallery = async () => {
-        const image = await selectImageFromGallery();
-        if (image) {
-            console.log('Captured Image:', image);
-            setImage(image)
-            await update_image(image?.path)
-            setIsModalVisible(false)
+    const pickedImage = await selectImageFromGallery();
+    if (pickedImage) {
+      console.log('Captured Image:', pickedImage);
+      setImage(pickedImage);
+      await update_image(pickedImage?.path);
+            setIsModalVisible(false);
         } else {
             console.log('Image capture canceled or failed.');
         }
@@ -144,52 +111,56 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
 
 
     const update_profile = async () => {
-        setLoading(true)
-        const res = await updateProfile(User?._id, phone, firstName, lastName, state, city, address, pinCode, image, email)
+        setLoading(true);
+        const res = await updateProfile(User?._id, phone, firstName, lastName, state, city, address, pinCode, image, email);
         if (res?.success) {
-            const user_id = await AsyncStorage.getItem('user_id')
+            const user_id = await AsyncStorage.getItem('user_id');
 
-            get_profile(user_id)
+            get_profile(user_id);
         }
-        setLoading(false)
-    }
+        setLoading(false);
+    };
     const update_image = async (uri: string) => {
-        setLoading(true)
-        const res = await updateProfileImage({ uri: uri })
+        setLoading(true);
+        const res = await updateProfileImage({ uri: uri });
         if (res?.success) {
-            setImage(res?.image_base_url)
+            setImage(res?.image_base_url);
 
         }
-        setLoading(false)
-    }
+        setLoading(false);
+    };
 
     const fullName = `${firstName} ${lastName}`.trim();
+    const rawImageUri = typeof image === 'string' ? image : image?.path;
+    const profileImageUri = rawImageUri
+        ? rawImageUri.startsWith('http') || rawImageUri.startsWith('file:')
+            ? rawImageUri
+            : `${image_url}${rawImageUri}`
+        : '';
 
     return (
         <View style={{ flex: 1, backgroundColor: color.baground }}>
             {/* Header */}
-            <CustomHeader navigation={navigation} title='Profile' showSkip={false} />
+            <CustomHeader navigation={navigation} title="Profile" showSkip={false} showHome />
             {loading && <Loading />}
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Profile Image Section */}
                 <TouchableOpacity
 
                     onPress={() => {
-                        setIsModalVisible(true)
+                        setIsModalVisible(true);
                     }}
                     activeOpacity={0.85}
                     style={styles.profileImageContainer}>
                     <View style={styles.avatarWrapper}>
                         <Image
-                            source={image?.path ? { uri: image?.path } : images.profileUpdate}
-
-                            // source={{ uri: 'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png' }}
-                            style={image?.path ? styles.profileImage : styles.profileImagePlaceholder}
-                            resizeMode={image?.path ? 'cover' : 'contain'}
+                            source={profileImageUri ? {uri: profileImageUri} : images.profileUpdate}
+                            style={profileImageUri ? styles.profileImage : styles.profileImagePlaceholder}
+                            resizeMode={profileImageUri ? 'cover' : 'contain'}
                         />
                     </View>
                     <View style={styles.addIcon}>
-                        <Icon source={icon.add} size={14} tintColor={color.baground} />
+                        <MaterialCommunityIcons name="camera" size={17} color={color.baground} />
                     </View>
                 </TouchableOpacity>
 
@@ -204,9 +175,9 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                         <View style={styles.halfField}>
                             <Text style={styles.label}>First Name</Text>
                             <View style={styles.inputWrapper}>
-                                <Icon source={icon.profile} size={16} tintColor={color.grey} style={styles.inputIcon} />
+                                <MaterialCommunityIcons name="account-outline" size={18} color={color.buttonColor} style={styles.inputIcon} />
                                 <CustomTextInput
-                                    placeholder='Enter first name'
+                                    placeholder="Enter first name"
                                     onChangeText={setFirstName}
                                     value={firstName}
                                     inputStyle={[styles.input, errors.firstName && styles.errorInput]}
@@ -218,9 +189,9 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                         <View style={styles.halfField}>
                             <Text style={styles.label}>Last Name</Text>
                             <View style={styles.inputWrapper}>
-                                <Icon source={icon.profile} size={16} tintColor={color.grey} style={styles.inputIcon} />
+                                <MaterialCommunityIcons name="account-outline" size={18} color={color.buttonColor} style={styles.inputIcon} />
                                 <CustomTextInput
-                                    placeholder='Enter last name'
+                                    placeholder="Enter last name"
                                     onChangeText={setLastName}
                                     value={lastName}
                                     inputStyle={[styles.input, errors.lastName && styles.errorInput]}
@@ -233,9 +204,9 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                     <View style={styles.field}>
                         <Text style={styles.label}>Email</Text>
                         <View style={styles.inputWrapper}>
-                            <Icon source={icon.send} size={16} tintColor={color.grey} style={styles.inputIcon} />
+                            <MaterialCommunityIcons name="email-outline" size={19} color={color.buttonColor} style={styles.inputIcon} />
                             <CustomTextInput
-                                placeholder='Enter email'
+                                placeholder="Enter email"
                                 onChangeText={setEmail}
                                 value={email}
                                 inputStyle={[styles.input, errors.email && styles.errorInput]}
@@ -247,9 +218,9 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                     <View style={styles.field}>
                         <Text style={styles.label}>Phone Number</Text>
                         <View style={styles.inputWrapper}>
-                            <Icon source={icon.phone} size={16} tintColor={color.grey} style={styles.inputIcon} />
+                            <MaterialCommunityIcons name="phone-outline" size={19} color={color.buttonColor} style={styles.inputIcon} />
                             <CustomTextInput
-                                placeholder='Enter phone number'
+                                placeholder="Enter phone number"
                                 onChangeText={setPhone}
                                 value={phone}
                                 inputStyle={[styles.input, errors.phone && styles.errorInput]}
@@ -261,9 +232,9 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                     <View style={[styles.field, { marginBottom: 0 }]}>
                         <Text style={styles.label}>Address</Text>
                         <View style={styles.inputWrapper}>
-                            <Icon source={icon.pin} size={16} tintColor={color.grey} style={styles.inputIcon} />
+                            <MaterialCommunityIcons name="map-marker-outline" size={19} color={color.buttonColor} style={styles.inputIcon} />
                             <CustomTextInput
-                                placeholder='Enter address'
+                                placeholder="Enter address"
                                 onChangeText={setAddress}
                                 value={address}
                                 inputStyle={[styles.input, errors.address && styles.errorInput]}
@@ -278,7 +249,7 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
                 <View style={styles.buttonContainer}>
                     <CustomButton
                         title="Update profile"
-                        onPress={() => { update_profile() }}
+                        onPress={() => { update_profile(); }}
                         buttonStyle={styles.button}
                     />
                 </View>
@@ -299,6 +270,8 @@ const EditProfile: React.FC<ProfileDetailsProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
     profileImageContainer: {
         marginTop: 24,
+        width: 100,
+        alignSelf: 'center',
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -324,11 +297,11 @@ const styles = StyleSheet.create({
     },
     addIcon: {
         position: 'absolute',
-        bottom: 0,
-        right: '32%',
-        height: 26,
-        width: 26,
-        borderRadius: 13,
+        bottom: -1,
+        right: 1,
+        height: 30,
+        width: 30,
+        borderRadius: 15,
         backgroundColor: color.buttonColor,
         borderWidth: 3,
         borderColor: color.baground,
@@ -347,7 +320,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     summaryPhone: {
-        color: color.grey,
+        color: color.textMuted,
         fontSize: 12,
         marginTop: 2,
     },
@@ -371,8 +344,9 @@ const styles = StyleSheet.create({
         marginBottom: 14,
     },
     label: {
-        color: color.grey,
-        fontSize: 12,
+        color: color.textMuted,
+        fontSize: 12.5,
+        fontWeight: '700',
         marginBottom: 6,
         marginLeft: 2,
     },
@@ -392,7 +366,7 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         paddingLeft: 38,
         paddingRight: 12,
-        color: color.white,
+        color: color.textPrimary,
         fontSize: 14,
     },
     errorInput: {
