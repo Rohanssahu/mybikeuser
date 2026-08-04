@@ -95,16 +95,11 @@ export const callApi = async (
 export const requestCameraPermissions = async () => {
   if (Platform.OS === 'android') {
     try {
-      const granted = await PermissionsAndroid.requestMultiple([
+      const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.CAMERA,
-        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
-      ]);
-
-      return (
-        granted['android.permission.CAMERA'] === PermissionsAndroid.RESULTS.GRANTED &&
-        granted['android.permission.READ_EXTERNAL_STORAGE'] === PermissionsAndroid.RESULTS.GRANTED
       );
+
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
     } catch (error) {
       console.warn('Permission request error:', error);
       return false;
@@ -135,9 +130,6 @@ export const captureImage = async () => {
 
 
 export const selectImageFromGallery = async () => {
-  const hasPermissions = await requestCameraPermissions();
-  
-
   try {
     const image = await ImagePicker.openPicker({
       cropping: false, // Enable cropping if needed
