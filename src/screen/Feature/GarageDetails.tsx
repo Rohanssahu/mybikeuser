@@ -106,6 +106,8 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
 
   const [selectedService, setSelectedService] = useState('');
   const [serviceModalVisible, setServiceModalVisible] = useState(false);
+  const [serviceDetailVisible, setServiceDetailVisible] = useState(false);
+  const [serviceDetailItem, setServiceDetailItem] = useState<any>(null);
 
   // Live price preview from the backend — the only source of any money value
   // rendered on this screen. Never computed locally.
@@ -540,38 +542,6 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
   const stepTitles: string[] = ['Choose Service', 'Schedule', 'Bill Details'];
 
   // ─── Step Indicator ───────────────────────────────────────────
-  const parseDescription = (desc: string) => {
-    const lines = desc
-      .split('\n')
-      .map(l => l.trim())
-      .filter(Boolean);
-    const includes: string[] = [];
-    let duration = '';
-
-    for (const line of lines) {
-      if (
-        line.startsWith('Service Includes:') ||
-        line.startsWith('Estimated Duration:')
-      )
-        continue;
-      if (
-        line.includes('Estimated Duration:') ||
-        line.includes('Minutes') ||
-        line.includes('minutes')
-      ) {
-        duration = line.replace('Estimated Duration:', '').trim();
-      } else {
-        includes.push(line);
-      }
-    }
-    return {includes, duration};
-  };
-
-  // In your component:
-  const {includes, duration} = parseDescription(
-    getServiceDescription(selectedSvc) || '',
-  );
-
   const renderStepIndicator = () => (
     <View style={styles.stepRow}>
       {([0, 1, 2] as const).map(i => (
@@ -666,63 +636,52 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
       </TouchableOpacity>
 
       {selectedSvc ? (
-        <View style={styles.svcCard}>
+        <View style={styles.selectedSvcCard}>
           {/* Top row: image + name/price/bike */}
-    
-          <View style={styles.svcCardTop}>
+
+          <View style={styles.selectedSvcTop}>
             {selectedSvc.serviceImage ? (
               <Image
                 source={{uri: selectedSvc.serviceImage}}
-                style={styles.svcThumb}
+                style={styles.selectedSvcImg}
                 resizeMode="cover"
               />
             ) : (
-              <View style={[styles.svcThumb, styles.svcThumbEmpty]}>
-                <Text style={styles.svcFallbackIcon}>⚙</Text>
+              <View style={[styles.selectedSvcImg, styles.selectedSvcImgEmpty]}>
+                <Text style={styles.serviceFallbackIcon}>⚙</Text>
               </View>
             )}
-            <View style={styles.svcMeta}>
-              <View style={styles.svcNameRow}>
-                <Text style={styles.svcName} numberOfLines={2}>
-                  {getServiceName(selectedSvc)}
-                </Text>
-                {selectedSvc.type === 'base' && (
-                  <View style={styles.typeBadge}>
-                    <Text style={styles.typeBadgeText}>Base</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={styles.svcPrice}>₹{servicePrice}</Text>
-              <Text style={styles.svcBikeLabel} numberOfLines={1}>
+            <View style={styles.selectedSvcBody}>
+            <View style={styles.svcNameRow}>
+              <Text style={styles.selectedSvcName} numberOfLines={2}>
+                {getServiceName(selectedSvc)}
+              </Text>
+            </View>
+              <Text style={styles.selectedSvcPrice}>₹{servicePrice}</Text>
+              <Text style={styles.selectedSvcBikeLabel} numberOfLines={1}>
                 {selectedSvc.bikeName} • {selectedSvc.cc}cc
               </Text>
             </View>
           </View>
 
-          {/* Description: checklist + duration */}
-          {includes.length > 0 && (
-            <View style={styles.descBox}>
-              <Text style={styles.descBoxTitle}>What's included</Text>
-              {includes.map((item, i) => (
-                <View key={i} style={styles.descItem}>
-                  <Text style={styles.checkIcon}>✓</Text>
-                  <Text style={styles.descItemText}>{item}</Text>
-                </View>
-              ))}
-              {!!duration && (
-                <View style={styles.durationRow}>
-                  <Text style={styles.durationText}>⏱ {duration}</Text>
-                </View>
-              )}
-            </View>
-          )}
+          <View style={styles.svcActionRow}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => {
+                setServiceDetailItem(selectedSvc);
+                setServiceDetailVisible(true);
+              }}
+              style={styles.viewDetailBtn}>
+              <Text style={styles.viewDetailBtnText}>View Detail</Text>
+            </TouchableOpacity>
 
-          {/* Remove */}
-             <TouchableOpacity
-            style={styles.removeBtn}
-            onPress={() => setSelectedService('')}>
-            <Text style={styles.removeBtnText}>Remove</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={styles.removeBtn}
+              onPress={() => setSelectedService('')}>
+              <Text style={styles.removeBtnText}>Remove</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       ) : null}
     </View>
@@ -1084,21 +1043,26 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
       />
       {loading && <Loading />}
 
-      <TouchableOpacity
-        onPress={handleBack}
-        style={styles.backBtn}
-        activeOpacity={0.8}>
-        <Icon source={icon.back} size={30} />
-      </TouchableOpacity>
+      <View style={[styles.fixedHeader, {paddingTop: insets.top + 8}]}>
+        <TouchableOpacity
+          onPress={handleBack}
+          style={styles.headerBtn}
+          activeOpacity={0.8}>
+          <Icon source={icon.back} size={28} />
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        onPress={handleHomePress}
-        style={styles.homeBtn}
-        activeOpacity={0.8}>
-        <Icon source={icon.home1} size={24} />
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleHomePress}
+          style={styles.headerBtn}
+          activeOpacity={0.8}>
+          <Icon source={icon.home1} size={22} />
+        </TouchableOpacity>
+      </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+        contentContainerStyle={{paddingTop: insets.top + 58}}>
         <GarageImage shopImages={garageData?.shopImages} />
 
         {/* Garage info below hero */}
@@ -1185,19 +1149,13 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
                 garageData.services.map((svc: any) => {
                   const itemId = svc.serviceId ?? svc._id;
                   const active = selectedService === itemId;
-                  const includes = getServiceIncludes(svc);
                   return (
-                    <TouchableOpacity
+                    <View
                       key={itemId}
-                      activeOpacity={0.9}
                       style={[
                         styles.serviceSheetCard,
                         active && styles.serviceSheetCardActive,
-                      ]}
-                      onPress={() => {
-                        setSelectedService(itemId);
-                        setServiceModalVisible(false);
-                      }}>
+                      ]}>
                       <View style={styles.sheetServiceTop}>
                         {svc.serviceImage ? (
                           <Image
@@ -1230,44 +1188,43 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
                         </View>
                       </View>
 
-                      {includes.length > 0 && (
-                        <View style={styles.serviceBullets}>
-                          {includes
-                            .slice(0, 7)
-                            .map((item: string, idx: number) => (
-                              <View
-                                key={`${item}-${idx}`}
-                                style={styles.bulletRow}>
-                                <View style={styles.bulletDot} />
-                                <Text
-                                  style={styles.bulletText}
-                                  numberOfLines={1}>
-                                  {item}
-                                </Text>
-                              </View>
-                            ))}
-                        </View>
-                      )}
-
                       <View style={styles.sheetServiceFooter}>
                         <Text style={styles.sheetPrice}>
                           ₹{getServicePrice(svc)}
                         </Text>
-                        <View
-                          style={[
-                            styles.addBtn,
-                            active && styles.addBtnActive,
-                          ]}>
-                          <Text
+                        <View style={styles.sheetActions}>
+                          <TouchableOpacity
+                            activeOpacity={0.8}
+                            onPress={() => {
+                              setServiceDetailItem(svc);
+                              setServiceDetailVisible(true);
+                            }}
+                            style={styles.viewDetailBtnSmall}>
+                            <Text style={styles.viewDetailBtnSmallText}>
+                              View Detail
+                            </Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            activeOpacity={0.9}
+                            onPress={() => {
+                              setSelectedService(itemId);
+                              setServiceModalVisible(false);
+                            }}
                             style={[
-                              styles.addBtnText,
-                              active && styles.addBtnTextActive,
+                              styles.addBtn,
+                              active && styles.addBtnActive,
                             ]}>
-                            {active ? 'Added' : 'Add'}
-                          </Text>
+                            <Text
+                              style={[
+                                styles.addBtnText,
+                                active && styles.addBtnTextActive,
+                              ]}>
+                              {active ? 'Added' : 'Add'}
+                            </Text>
+                          </TouchableOpacity>
                         </View>
                       </View>
-                    </TouchableOpacity>
+                    </View>
                   );
                 })
               )}
@@ -1275,6 +1232,47 @@ const GarageDetails: React.FC<{navigation: any}> = ({navigation}) => {
           </View>
         </Modal>
       </View>
+      <Modal
+        visible={serviceDetailVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setServiceDetailVisible(false);
+          setServiceDetailItem(null);
+        }}>
+        <Pressable
+          style={styles.detailModalBackdrop}
+          onPress={() => {
+            setServiceDetailVisible(false);
+            setServiceDetailItem(null);
+          }}
+        />
+        <View style={styles.detailModalWrap}>
+          <View style={styles.detailModalCard}>
+            <View style={styles.detailModalHeader}>
+              <Text style={styles.detailModalTitle}>Service Detail</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setServiceDetailVisible(false);
+                  setServiceDetailItem(null);
+                }}
+                style={styles.detailModalCloseBtn}>
+                <Text style={styles.detailModalCloseText}>×</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.detailModalName}>
+              {getServiceName(serviceDetailItem)}
+            </Text>
+            <Text style={styles.detailModalPrice}>
+              ₹{getServicePrice(serviceDetailItem)}
+            </Text>
+            <Text style={styles.detailModalDescLabel}>Description</Text>
+            <Text style={styles.detailModalDesc}>
+              {getServiceDescription(serviceDetailItem) || 'No description available.'}
+            </Text>
+          </View>
+        </View>
+      </Modal>
       {BookingDateModal && (
         <DateTimePicker
           value={BookingDate}
@@ -1340,17 +1338,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   removeBtn: {
-
-    margin: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: 'red',
-    height: 32,
+    marginHorizontal: 12,
+    marginBottom: 12,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#FFE8E8',
+    borderWidth: 1,
+    borderColor: '#FFB8B8',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 8,
   },
-  removeBtnText: {fontSize: 16, color: '#fff', fontWeight: '600'},
+  removeBtnText: {fontSize: 14, color: '#D92D20', fontWeight: '700'},
   svcCardTop: {
     flexDirection: 'row',
     gap: 12,
@@ -1377,28 +1375,21 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   svcName: {fontSize: 15, fontWeight: '600', flex: 1, color: '#111'},
-  typeBadge: {
-    backgroundColor: '#EAF3DE',
-    borderRadius: 20,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  typeBadgeText: {fontSize: 11, color: '#3B6D11'},
-  svcPrice: {fontSize: 20, fontWeight: '600', color: '#111', marginTop: 4},
-  svcBikeLabel: {fontSize: 12, color: '#888', marginTop: 2},
+  svcPrice: {fontSize: 20, fontWeight: '800', color: '#fff', marginTop: 4},
+  svcBikeLabel: {fontSize: 12, color: '#A0A3BD', marginTop: 2},
 
   // Description box
   descBox: {
     marginHorizontal: 12,
     marginBottom: 0,
-    backgroundColor: '#F8F8F6',
-    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 12,
     padding: 10,
   },
   descBoxTitle: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#999',
+    color: '#C7CBDD',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 6,
@@ -1409,38 +1400,38 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 4,
   },
-  checkIcon: {fontSize: 13, color: '#1D9E75', marginTop: 1},
-  descItemText: {fontSize: 13, color: '#333', flex: 1},
+  checkIcon: {fontSize: 13, color: '#F8D64E', marginTop: 1},
+  descItemText: {fontSize: 13, color: '#fff', flex: 1},
   durationRow: {
     borderTopWidth: 0.5,
-    borderTopColor: '#E5E5E5',
+    borderTopColor: 'rgba(255,255,255,0.12)',
     marginTop: 8,
     paddingTop: 8,
   },
-  durationText: {fontSize: 12, color: '#888'},
+  durationText: {fontSize: 12, color: '#C7CBDD'},
 
 
-  backBtn: {
+  fixedHeader: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 24) + 8,
-    left: 10,
-    zIndex: 10,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.38)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingBottom: 12,
+    backgroundColor: 'rgba(15, 23, 42, 0.88)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
   },
-  homeBtn: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight ?? 24) + 8,
-    right: 10,
-    zIndex: 10,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.38)',
+  headerBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1586,7 +1577,7 @@ const styles = StyleSheet.create({
   },
   serviceCardActive: {
     borderColor: color.buttonColor,
-    backgroundColor: 'rgba(254,212,40,0.06)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   serviceCardBadge: {
     position: 'absolute',
@@ -1712,29 +1703,72 @@ const styles = StyleSheet.create({
 
   // ── Selected service card (Step 1) ──
   selectedSvcCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(254,212,40,0.06)',
-    borderRadius: 14,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    backgroundColor: '#16204F',
+    borderRadius: 18,
     borderWidth: 1.5,
-    borderColor: 'rgba(254,212,40,0.28)',
-    padding: 12,
-    gap: 12,
+    borderColor: 'rgba(255,255,255,0.08)',
+    paddingTop: 14,
+    paddingHorizontal: 14,
+    paddingBottom: 0,
   },
-  selectedSvcImg: {width: 60, height: 60, borderRadius: 10},
+  selectedSvcImg: {width: 64, height: 64, borderRadius: 12},
   selectedSvcImgEmpty: {
     backgroundColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   selectedSvcBody: {flex: 1},
-  selectedSvcName: {fontSize: 13, fontWeight: '700', color: '#fff'},
+  selectedSvcName: {fontSize: 15, fontWeight: '800', color: '#fff'},
   selectedSvcPrice: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '800',
-    color: color.buttonColor,
-    marginTop: 4,
+    color: '#F8D64E',
+    marginTop: 6,
   },
+  selectedSvcBikeLabel: {fontSize: 12, color: '#A0A3BD', marginTop: 2},
+  selectedSvcTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 14,
+    width: '100%',
+  },
+  viewDetailBtn: {
+    flex: 1,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    backgroundColor: 'rgba(254,212,40,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(254,212,40,0.22)',
+  },
+  viewDetailBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#F8D64E',
+  },
+  svcActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    width: '100%',
+  },
+  removeBtn: {
+    flex: 1,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,99,99,0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,99,99,0.28)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removeBtnText: {fontSize: 14, color: '#FFB4B4', fontWeight: '800'},
   changeBtn: {
     paddingHorizontal: 14,
     paddingVertical: 7,
@@ -1951,10 +1985,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    maxHeight: '82%',
-    backgroundColor: '#F2F5F6',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    height: '82%',
+    minHeight: '80%',
+    maxHeight: '90%',
+    backgroundColor: '#16204F',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: Platform.OS === 'ios' ? 28 : 18,
@@ -1963,7 +1999,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#C9D0D3',
+    backgroundColor: 'rgba(255,255,255,0.28)',
     alignSelf: 'center',
     marginBottom: 14,
   },
@@ -1974,12 +2010,12 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   sheetTitle: {
-    color: '#18212A',
+    color: '#fff',
     fontSize: 20,
     fontWeight: '800',
   },
   sheetSubtitle: {
-    color: '#6B7280',
+    color: '#A0A3BD',
     fontSize: 15,
     marginTop: 3,
   },
@@ -1987,110 +2023,167 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: '#E0E6E8',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   sheetCloseText: {
-    color: '#1F2937',
+    color: '#fff',
     fontSize: 24,
     lineHeight: 28,
   },
   serviceSheetCard: {
-    backgroundColor: '#DDE6E8',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: '#2B315B',
+    borderRadius: 18,
+    padding: 14,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#CFD9DC',
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    shadowOffset: {width: 0, height: 3},
-    elevation: 3,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   serviceSheetCardActive: {
-    borderColor: '#F05245',
-    backgroundColor: '#EAF0F1',
+    borderColor: 'rgba(254,212,40,0.5)',
+    backgroundColor: '#32386A',
   },
   sheetServiceTop: {
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
   sheetServiceImg: {
-    width: 42,
-    height: 42,
-    borderRadius: 8,
+    width: 48,
+    height: 48,
+    borderRadius: 10,
     marginRight: 12,
   },
   sheetServiceBody: {
     flex: 1,
   },
   sheetServiceName: {
-    color: '#1F2937',
-    fontSize: 16,
+    color: '#fff',
+    fontSize: 17,
     fontWeight: '800',
   },
   sheetServiceDesc: {
-    color: '#4B5563',
+    color: '#C7CBDD',
     fontSize: 12,
     lineHeight: 17,
     marginTop: 4,
-  },
-  serviceBullets: {
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.72)',
-    marginTop: 12,
-    paddingTop: 10,
-  },
-  bulletRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  bulletDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#F05245',
-    marginRight: 8,
-  },
-  bulletText: {
-    flex: 1,
-    color: '#374151',
-    fontSize: 12,
   },
   sheetServiceFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.72)',
+    borderTopColor: 'rgba(255,255,255,0.1)',
     marginTop: 10,
     paddingTop: 10,
   },
   sheetPrice: {
-    color: '#F05245',
-    fontSize: 16,
+    color: '#F8D64E',
+    fontSize: 17,
     fontWeight: '800',
   },
   addBtn: {
-    minWidth: 72,
-    height: 34,
-    borderRadius: 8,
-    backgroundColor: '#F05245',
+    minWidth: 78,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#22C55E',
     alignItems: 'center',
     justifyContent: 'center',
   },
   addBtnActive: {
-    backgroundColor: color.buttonColor,
+    backgroundColor: '#16A34A',
   },
   addBtnText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
   },
   addBtnTextActive: {
-    color: '#111827',
+    color: '#fff',
+  },
+  sheetActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  viewDetailBtnSmall: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: 'rgba(254,212,40,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(254,212,40,0.22)',
+    marginRight: 8,
+  },
+  viewDetailBtnSmallText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#F8D64E',
+  },
+  detailModalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  detailModalWrap: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  detailModalCard: {
+    backgroundColor: '#16204F',
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    padding: 18,
+    minHeight: '44%',
+    maxHeight: '58%',
+  },
+  detailModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  detailModalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  detailModalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailModalCloseText: {
+    fontSize: 22,
+    lineHeight: 24,
+    fontWeight: '500',
+    color: '#fff',
+  },
+  detailModalName: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  detailModalPrice: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#F8D64E',
+    marginTop: 6,
+  },
+  detailModalDescLabel: {
+    marginTop: 14,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#A0A3BD',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  detailModalDesc: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#fff',
+    lineHeight: 22,
+    flexShrink: 1,
   },
 });
