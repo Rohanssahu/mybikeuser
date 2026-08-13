@@ -19,7 +19,7 @@ import AddressAutocomplete from '../../component/AddressAutocomplete';
 import images, {icon} from '../../component/Image';
 import {hp, wp} from '../../component/utils/Constant';
 
-Geocoder.init('AIzaSyCM15ry8lewwj6YZ-04_m7Z58dsQo_hBBA');
+Geocoder.init('AIzaSyD-wpc72_cdZesSpttpE2tXHbqlpp84JJA');
 
 interface Coordinates {
   latitude: number;

@@ -37,11 +37,15 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
   return (
     <GooglePlacesAutocomplete
       placeholder="Search for area, street name..."
-      
       fetchDetails={true}
       onPress={(data, details = null) => {
         if (!details?.geometry?.location) {
-          Alert.alert('Location', 'No location details available');
+          Alert.alert(
+            'Location',
+            details?.formatted_address
+              ? 'Could not read coordinates for this place.'
+              : 'No location details available',
+          );
           return;
         }
 
@@ -56,18 +60,29 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
       textInputProps={{
         placeholderTextColor: '#fff',
         selectionColor: '#fff',
+        autoCorrect: false,
+        autoCapitalize: 'none',
         autoFocus: true,   // keyboard opens immediately when search view appears
+        onFocus,
+        onBlur,
       }}
       enablePoweredByContainer={false}
       query={{
-        key: 'AIzaSyCM15ry8lewwj6YZ-04_m7Z58dsQo_hBBA',
+        key: 'AIzaSyD-wpc72_cdZesSpttpE2tXHbqlpp84JJA',
         language: 'en',
+        components: 'country:in',
       }}
-      
+      debounce={250}
+      minLength={2}
+      requestUrl={{
+        useOnPlatform: 'web',
+        url: 'https://maps.googleapis.com/maps/api',
+      }}
+      onFail={error => {
+        console.warn('Google Places autocomplete failed:', error);
+      }}
       styles={autocompleteStyles}
       listViewDisplayed="auto"
-      onFocus={onFocus}
-      onBlur={onBlur}
     />
   );
 };

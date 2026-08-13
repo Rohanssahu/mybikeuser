@@ -16,7 +16,7 @@ import {icon} from './Image';
 import {locationPermission} from './helperFunction';
 import {color} from '../constant';
 
-const GOOGLE_API = 'AIzaSyCM15ry8lewwj6YZ-04_m7Z58dsQo_hBBA';
+const GOOGLE_API = 'AIzaSyD-wpc72_cdZesSpttpE2tXHbqlpp84JJA';
 const {width: W, height: H} = Dimensions.get('window');
 const STATUS_H = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
 const CARD_H = 220;
@@ -244,7 +244,13 @@ const SelectLocation = () => {
       const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(text)}&key=${GOOGLE_API}&language=en&components=country:in`;
       const res  = await fetch(url);
       const data = await res.json();
-      setSuggestions(data.predictions || []);
+      console.log('[SelectLocation][autocomplete] input=', text, 'status=', data.status, 'predictions=', data.predictions?.length ?? 0, 'error=', data.error_message || '');
+      if (data.status === 'OK') {
+        setSuggestions(data.predictions || []);
+      } else {
+        console.warn('Places autocomplete failed:', data.status, data.error_message || '');
+        setSuggestions([]);
+      }
     } catch {
       setSuggestions([]);
     } finally {
@@ -266,6 +272,17 @@ const SelectLocation = () => {
       const url  = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=${GOOGLE_API}&language=en&fields=geometry,name,formatted_address,address_components`;
       const res  = await fetch(url);
       const data = await res.json();
+      console.log(
+        '[SelectLocation][details]',
+        'placeId=',
+        placeId,
+        'status=',
+        data.status,
+        'hasGeometry=',
+        !!data.result?.geometry?.location,
+        'error=',
+        data.error_message || '',
+      );
       if (data.result?.geometry?.location) {
         const {lat, lng} = data.result.geometry.location;
         const r = {latitude:lat, longitude:lng, latitudeDelta:0.005, longitudeDelta:0.005};
@@ -278,6 +295,14 @@ const SelectLocation = () => {
           secondary: secondary || data.result.formatted_address,
           formatted: data.result.formatted_address,
           parsed:    p,
+        });
+      } else {
+        console.warn('Places details missing geometry:', data.status, data.error_message || '');
+        setAddrInfo({
+          primary: description.split(',')[0],
+          secondary: description,
+          formatted: description,
+          parsed: {},
         });
       }
     } catch {
@@ -436,6 +461,7 @@ const SelectLocation = () => {
                 returnKeyType="search"
                 autoCorrect={false}
                 autoCapitalize="none"
+                autoComplete="off"
               />
               {query.length > 0 && (
                 <TouchableOpacity onPress={() => { setQuery(''); setSuggestions([]); }} hitSlop={{top:12,bottom:12,left:12,right:12}}>
