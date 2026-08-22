@@ -71,20 +71,30 @@
             </intent-filter>
         </receiver>
 
-         <service
-            android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationListenerService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-        </service>
-        <service
-            android:name="com.google.firebase.messaging.FirebaseMessagingService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
-            </intent-filter>
-        </service>
+        <!-- Firebase Cloud Messaging is handled by @react-native-firebase/messaging's
+             ReactNativeFirebaseMessagingService, which the library contributes to the merged
+             manifest and which index.js already programs against (setBackgroundMessageHandler,
+             onMessage, onNotificationOpenedApp, getInitialNotification).
+
+             RNPushNotificationListenerService must NOT be registered here. It is the first
+             MESSAGING_EVENT service in the merged manifest, so it used to receive onNewToken, and
+             its implementation calls
+             ReactApplication.getReactNativeHost().getReactInstanceManager().createReactContextInBackground().
+             react-native-push-notification 8.1.1 predates the New Architecture: on a bridgeless
+             app getCurrentReactContext() is always null, so that call built a SECOND, legacy-bridge
+             React instance next to the running bridgeless one. The legacy instance creates its
+             Hermes runtime without a microtask queue, while the JS bundle sees
+             enableBridgelessArchitecture() == true and installs the queueMicrotask-based
+             setImmediate shim, so the first callback crashed the process with
+             "Could not enqueue microtask because they are disabled in this runtime".
+             The FCM token refresh fires this on the first launch after install.
+
+             com.google.firebase.messaging.FirebaseMessagingService was also declared here. That is
+             the SDK base class, it does nothing on its own, and declaring it would shadow the
+             react-native-firebase service once the entry above is gone.
+
+             react-native-push-notification is still used from JS for displaying local
+             notifications (createChannel / localNotification); only its FCM entry point is removed. -->
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
