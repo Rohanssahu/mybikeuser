@@ -80,7 +80,7 @@ const GooglePlacesInput = ({ placeholder, onPlaceSelected }) => {
                     placeholderTextColor: "#000"
                 }}
                 query={{
-                    key: 'AIzaSyD-wpc72_cdZesSpttpE2tXHbqlpp84JJA',
+                    key: 'AIzaSyAXxpcdmdcoGs0a4f6606f4kuYnpNxXMzs',
                     language: 'en',
                 }}
                 enablePoweredByContainer={false}

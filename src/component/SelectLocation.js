@@ -16,7 +16,7 @@ import {icon} from './Image';
 import {locationPermission} from './helperFunction';
 import {color} from '../constant';
 
-const GOOGLE_API = 'AIzaSyD-wpc72_cdZesSpttpE2tXHbqlpp84JJA';
+const GOOGLE_API = 'AIzaSyAXxpcdmdcoGs0a4f6606f4kuYnpNxXMzs';
 const {width: W, height: H} = Dimensions.get('window');
 const STATUS_H = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
 const CARD_H = 220;

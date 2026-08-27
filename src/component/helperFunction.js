@@ -59,7 +59,7 @@ export const locationPermission = () =>
 
 
 const getAddressFromLatLng = async (latitude, longitude) => {
-  const API_KEY = 'AIzaSyD-wpc72_cdZesSpttpE2tXHbqlpp84JJA';
+  const API_KEY = 'AIzaSyAXxpcdmdcoGs0a4f6606f4kuYnpNxXMzs';
   const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${API_KEY}`;
 
   try {

@@ -7,6 +7,7 @@ import { name as appName } from './app.json';
 import messaging from '@react-native-firebase/messaging';
 import PushNotification from 'react-native-push-notification';
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
+import { saveRemoteNotification } from './src/utils/notificationInbox';
 
 // Request permissions on iOS
 if (Platform.OS === 'ios') {
@@ -20,8 +21,8 @@ if (Platform.OS === 'ios') {
 messaging().setBackgroundMessageHandler(async remoteMessage => {
     console.log('Background Message Received:', remoteMessage);
 
-    const { notification } = remoteMessage;
-    showLocalNotification(notification);
+    await saveRemoteNotification(remoteMessage);
+    showLocalNotification(remoteMessage);
 });
 
 // 📌 Handle foreground messages
@@ -29,12 +30,8 @@ messaging().onMessage(async remoteMessage => {
     console.log("Foreground message received:", remoteMessage);
 
     // Ensure proper notification format
-    const { notification } = remoteMessage;
-
-    // Show alert (optional)
-
-    // Show local notification
-    showLocalNotification(notification);
+    await saveRemoteNotification(remoteMessage);
+    showLocalNotification(remoteMessage);
 });
 
 // 📌 Handle notification when the app is opened from a background state
@@ -42,19 +39,14 @@ messaging().onNotificationOpenedApp(remoteMessage => {
     console.log("Notification opened from background:", remoteMessage);
 
 
-    const { notification } = remoteMessage;
-    showLocalNotification(notification);
+    saveRemoteNotification(remoteMessage);
 });
 
 // 📌 Handle notification when the app is opened from a quit state
 messaging().getInitialNotification().then(remoteMessage => {
     if (remoteMessage) {
         console.log("App launched by notification:", remoteMessage);
-
-
-
-        const { notification } = remoteMessage;
-        showLocalNotification(notification);
+        saveRemoteNotification(remoteMessage);
     }
 });
 
@@ -73,10 +65,27 @@ PushNotification.configure({
     requestPermissions: Platform.OS === 'ios',
 });
 
+// Create the high-importance channel during app startup as well. FCM
+// notification payloads may be displayed by Android before our JS handler runs.
+PushNotification.createChannel({
+    channelId: 'com.mrbikeuser',
+    channelName: 'mrbikeuser',
+    channelDescription: 'Mr.Bike alerts and campaign notifications',
+    playSound: true,
+    soundName: 'default',
+    importance: 4,
+    vibrate: true,
+});
+
 // 📌 Function to show local notifications
-const showLocalNotification = (value) => {
-    if (!value || !value.title || !value.body) {
-        console.log("No valid notification data found:", value);
+const showLocalNotification = (remoteMessage) => {
+    const notification = remoteMessage?.notification || {};
+    const data = remoteMessage?.data || {};
+    const title = notification?.title || data?.title || data?.notification_title;
+    const message = notification?.body || data?.body || data?.message || data?.description;
+
+    if (!title && !message) {
+        console.log('No valid notification data found:', remoteMessage);
         return;
     }
 
@@ -95,17 +104,22 @@ const showLocalNotification = (value) => {
     );
 
     // Show the local notification
-    const imageUrl = value?.android?.imageUrl || value?.imageUrl;
+    const imageUrl =
+        notification?.android?.imageUrl ||
+        notification?.ios?.imageUrl ||
+        data?.image ||
+        data?.imageUrl;
 
     PushNotification.localNotification({
         channelId: 'com.mrbikeuser',
-        title: value?.title || 'Default Title',
-        message: value?.body || 'Default Message',
+        title: title || 'Notification',
+        message: message || '',
         playSound: true,
         soundName: 'default',
         priority: 'high',
         badge: true,
         smallIcon: 'ic_notification',
+        userInfo: data,
         ...(imageUrl && { bigPictureUrl: imageUrl, largeIconUrl: imageUrl }),
     });
 };

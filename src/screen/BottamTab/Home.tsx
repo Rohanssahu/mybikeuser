@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Text,
   View,
+  DeviceEventEmitter,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
@@ -20,6 +21,10 @@ import ScreenNameEnum from '../../routes/screenName.enum';
 import AnnouncementPopup, {
   AnnouncementBanner,
 } from '../modal/AnnouncementPopup';
+import {
+  consumePendingCampaignPopup,
+  NOTIFICATION_INBOX_UPDATED,
+} from '../../utils/notificationInbox';
 import {
   get_app_banners,
   get_home_services,
@@ -143,6 +148,27 @@ const Home: React.FC = () => {
     null,
   );
   const [announcementVisible, setAnnouncementVisible] = useState(false);
+
+  React.useEffect(() => {
+    const showCampaignPopup = (item: any) => {
+      if (!item || item?.type !== 'campaign') {return;}
+      setAnnouncement({
+        _id: item?.campaignId || item?.messageId || item?.id || String(Date.now()),
+        image: item?.image || '',
+        title: item?.title || 'Notification',
+        description: item?.body || item?.message || '',
+        linkUrl: item?.linkUrl || item?.link_url,
+      });
+      setAnnouncementVisible(true);
+    };
+
+    consumePendingCampaignPopup().then(showCampaignPopup);
+    const subscription = DeviceEventEmitter.addListener(
+      NOTIFICATION_INBOX_UPDATED,
+      showCampaignPopup,
+    );
+    return () => subscription.remove();
+  }, []);
 
   // Which saved bike the bike-swipe carousel is currently on. Quick Services
   // and Recommended re-fetch whenever this changes — see the effect below.

@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { View, SectionList, StyleSheet, Text, RefreshControl, Animated } from 'react-native';
+import { View, SectionList, StyleSheet, Text, RefreshControl, Animated, DeviceEventEmitter } from 'react-native';
 import { useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -11,6 +11,11 @@ import { get_Notification } from '../../redux/Api/apiRequests';
 import ScreenNameEnum from '../../routes/screenName.enum';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { color, notificationColors, TAB_BAR_HEIGHT } from '../../constant';
+import {
+    getLocalNotifications,
+    mergeNotifications,
+    NOTIFICATION_INBOX_UPDATED,
+} from '../../utils/notificationInbox';
 
 const BOOKING_NOTIFICATION_TYPES = [
   'service_completed',
@@ -101,7 +106,18 @@ const Notification = ({ navigation }: any) => {
 
     useEffect(() => {
         get_Notificationlist();
-    }, []);
+        const inboxSubscription = DeviceEventEmitter.addListener(
+            NOTIFICATION_INBOX_UPDATED,
+            get_Notificationlist,
+        );
+        const focusSubscription = navigation.addListener('focus', get_Notificationlist);
+        return () => {
+            inboxSubscription.remove();
+            focusSubscription();
+        };
+        // navigation is stable for the lifetime of this screen.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [navigation]);
 
     const get_Notificationlist = async () => {
         try {
@@ -110,17 +126,19 @@ const Notification = ({ navigation }: any) => {
                 isLogOut?.userData?.user_id ||
                 (await AsyncStorage.getItem('user_id'));
 
-            if (!userId) { return; }
-
-            const res = await get_Notification(userId, setIsLoading);
-            if (res?.success) {
-                const list =
+            const [res, localList] = await Promise.all([
+                userId ? get_Notification(userId, setIsLoading) : Promise.resolve(null),
+                getLocalNotifications(),
+            ]);
+            const serverList = res?.success
+                ? (
                     (Array.isArray(res?.data?.data) && res.data.data) ||
                     (Array.isArray(res?.data?.notifications) && res.data.notifications) ||
                     (Array.isArray(res?.data) && res.data) ||
-                    [];
-                setnotifications(list);
-            }
+                    []
+                )
+                : [];
+            setnotifications(mergeNotifications(serverList, localList));
         } catch (error) {
             console.error('[Notification] Error:', error);
         }

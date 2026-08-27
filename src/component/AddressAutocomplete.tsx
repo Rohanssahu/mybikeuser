@@ -68,7 +68,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
       }}
       enablePoweredByContainer={false}
       query={{
-        key: 'AIzaSyD-wpc72_cdZesSpttpE2tXHbqlpp84JJA',
+        key: 'AIzaSyAXxpcdmdcoGs0a4f6606f4kuYnpNxXMzs',
         language: 'en',
         components: 'country:in',
       }}
