@@ -2,28 +2,40 @@ import {PermissionsAndroid, Platform} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const getCurrentLocation = async () => {
-  // 1️⃣ Check saved location first
-  const saved = await AsyncStorage.getItem('LocationsLat');
+// Location the app starts from before the user has picked one of their own.
+// Pocharam, Secunderabad sits inside the only currently live serviceable area,
+// so a first-time open always lands on a working, bookable Home instead of the
+// "We're not in your area yet" gate. Every caller of getCurrentLocation()
+// previously rejected when permission was denied or the device had no GPS fix,
+// which took Home's whole Promise.all down with it.
+export const DEFAULT_LOCATION = Object.freeze({
+  latitude: 17.4487732,
+  longitude: 78.6324753,
+  name: 'Pocharam, Secunderabad',
+});
 
-  if (saved) {
-    const { lat, lng } = JSON.parse(saved);
-    return { latitude: lat, longitude: lng };
+// Resolves the coordinates the app should use for content. A location the user
+// saved wins; otherwise the default above. Never rejects, so a denied permission
+// or a dead GPS can no longer break a screen that awaits it. Real device GPS is
+// still read directly by the "use my current location" controls in
+// SelectLocation and MapPicker, so the user can always override this.
+export const getCurrentLocation = async () => {
+  try {
+    const saved = await AsyncStorage.getItem('LocationsLat');
+    if (saved) {
+      const {lat, lng} = JSON.parse(saved);
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        return {latitude: lat, longitude: lng};
+      }
+    }
+  } catch (error) {
+    console.log('getCurrentLocation: could not read saved location', error);
   }
 
-  // 2️⃣ Fallback to GPS
-  return new Promise((resolve, reject) => {
-    Geolocation.getCurrentPosition(
-      position => {
-        resolve({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-      },
-      error => reject(error),
-      { enableHighAccuracy: true, timeout: 15000 }
-    );
-  });
+  return {
+    latitude: DEFAULT_LOCATION.latitude,
+    longitude: DEFAULT_LOCATION.longitude,
+  };
 };
 
 export const locationPermission = () =>

@@ -54,9 +54,15 @@
       <meta-data  
             android:name="com.dieam.reactnativepushnotification.notification_color"
             android:resource="@color/white"/> 
+        <!-- react-native-firebase_messaging contributes this same meta-data with an
+             empty value, so the merger cannot pick a winner on its own. Our channel id
+             must win: it is the high-importance channel index.js creates and the one
+             every localNotification() call targets. Without tools:replace the release
+             manifest merge fails outright. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="com.mrbikeuser"/>
+            android:value="com.mrbikeuser"
+            tools:replace="android:value"/>
 
              <receiver android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationActions" />
         <receiver android:name="com.dieam.reactnativepushnotification.modules.RNPushNotificationPublisher" />

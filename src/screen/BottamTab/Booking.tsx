@@ -28,6 +28,7 @@ import {
   showLocalNotificationcancel,
 } from '../../component/Notification';
 import {icon} from '../../component/Image';
+import ScreenNameEnum from '../../routes/screenName.enum';
 
 const FILTER_CHIPS = [
   {label: 'All', value: 'all'},
@@ -240,7 +241,10 @@ const Booking: React.FC<{navigation: any}> = ({navigation}) => {
           {!searchQuery && selectedFilter === 'all' && (
             <TouchableOpacity
               style={styles.bookNowBtn}
-              onPress={() => navigation.navigate('Home')}
+              // The Home tab is registered as HOME_SCREEN (see routes/routes.ts
+              // BOTTOM_TAB). The literal 'Home' matched no route, so React Navigation
+              // dropped the action silently in release builds and the button did nothing.
+              onPress={() => navigation.navigate(ScreenNameEnum.HOME_SCREEN)}
               activeOpacity={0.8}>
               <Text style={styles.bookNowText}>Book Now</Text>
             </TouchableOpacity>
